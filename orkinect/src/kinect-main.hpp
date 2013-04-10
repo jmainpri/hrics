@@ -6,12 +6,10 @@
 #include <boost/bind.hpp>
 #include <iostream>
 
-#define FORIT(it, v) for(it = (v).begin(); it != (v).end(); (it)++)
-
 using namespace std;
 using namespace OpenRAVE;
 
-class SkeletonLinstener;
+class SkeletonListener;
 
 class KinectProblem : public ProblemInstance
 {
@@ -30,7 +28,7 @@ public:
 private:
     string _strRobotName; ///< name of the active robot
     RobotBasePtr robot;
-    SkeletonLinstener* _skel_listen;
+    SkeletonListener* _skel_listen;
 };
 
 #endif // HRICSMAIN_HPP

@@ -1,4 +1,7 @@
 #include "kinect-main.hpp"
+#include "skeletonListener.hpp"
+
+#define FORIT(it, v) for(it = (v).begin(); it != (v).end(); (it)++)
 
 KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
 {
@@ -6,12 +9,14 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     cout << __description << endl;
     RegisterCommand("numbodies",boost::bind(&KinectProblem::NumBodies,this,_1,_2),"returns bodies");
     RegisterCommand("load",boost::bind(&KinectProblem::Load, this,_1,_2),"loads a given file");
+
+    _skel_listen = new SkeletonListener(penv);
 }
 
-void KinectProblem::Destroy() {
+void KinectProblem::Destroy()
+{
     RAVELOG_INFO("module unloaded from environment\n");
 }
-
 
 KinectProblem::~KinectProblem()
 {
@@ -71,11 +76,18 @@ bool KinectProblem::NumBodies(ostream& sout, istream& sinput)
 
 bool KinectProblem::Load(ostream& sout, istream& sinput)
 {
-    string filename;
-    sinput >> filename;
-    bool bSuccess = GetEnv()->Load(filename.c_str());     // load the file
-    return bSuccess;
+//    string filename;
+//    sinput >> filename;
+//    bool bSuccess = GetEnv()->Load(filename.c_str());     // load the file
+//    return bSuccess;
+    _skel_listen->listen();
+    return true;
 }
+
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 InterfaceBasePtr CreateInterfaceValidated(InterfaceType type, const std::string& interfacename, std::istream& sinput, EnvironmentBasePtr penv)
 {

@@ -49,7 +49,7 @@ orEnv.Reset()
 sys.stdin.readline()
 
 print "Try to create problem"
-prob = RaveCreateProblem(orEnv,'HRICS')
+prob = RaveCreateProblem(orEnv,'Kinect')
 cmdout = prob.SendCommand('load data/lab1.env.xml')
 
 if cmdout is None:
@@ -57,3 +57,5 @@ if cmdout is None:
 else:
     cmdout = prob.SendCommand('numbodies')
     print 'number of bodies are: ',cmdout
+    
+sys.stdin.readline()
