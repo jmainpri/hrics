@@ -1,6 +1,8 @@
 #include "kinect-main.hpp"
 #include "skeletonListener.hpp"
 
+#include <boost/thread.hpp>
+
 #define FORIT(it, v) for(it = (v).begin(); it != (v).end(); (it)++)
 
 KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
@@ -82,7 +84,7 @@ bool KinectProblem::Load(ostream& sout, istream& sinput)
 //    sinput >> filename;
 //    bool bSuccess = GetEnv()->Load(filename.c_str());     // load the file
 //    return bSuccess;
-    _skel_listen->listen();
+    boost::thread( &SkeletonListener::listen, _skel_listen );
     return true;
 }
 

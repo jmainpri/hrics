@@ -40,6 +40,8 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
     T.trans.z = 2.81558;
     env_->GetViewer()->SetCamera( T );
     //env_->GetViewer()->setCamera( 0.262839, -0.733602, -0.623389, 0.0642694, 2.99336, -0.755646, 2.81558 );
+
+    print_ = false;
 }
 
 void SkeletonListener::listen()
@@ -59,7 +61,8 @@ void SkeletonListener::listen()
             if( !listener.frameExists("/head_" + num_to_string(i)))
                 continue;
 
-            cout << "listening to user " << i << endl;
+            if( print_ )
+                cout << "listening to user " << i << endl;
 
             ros::Time previous_time = transforms_[i][0].stamp_;
 
@@ -97,13 +100,13 @@ void SkeletonListener::listen()
             }
 
             if( user_is_tracked_[i] ){
-                cout << "tracking id : " << i << endl;
+                if( print_ )
+                    cout << "tracking id : " << i << endl;
                 tracking_ = true;
             }
 
             //listener_.lookupTransform("/openni_depth_frame", "/turtle1", ros::Time(0), transform);
         }
-
 
         draw();
         rate.sleep();

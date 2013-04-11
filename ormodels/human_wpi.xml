@@ -3,12 +3,12 @@
     <!-- Create the base body, it should never move-->
     <!-- Note that all translations and rotations are with respect to this base-->
     <!-- For example, the robot at the identity transformation is equivalent to the identity transformation of the first body.-->
-    <Body name="Base" type="dynamic">
+    <Body name="Pelvis" type="dynamic">
       <Translation>0.0  0.0  0.0</Translation>
       <Geom type="cylinder">
         <rotationaxis>1 0 0 90</rotationaxis>
-        <radius>0.03</radius>
-        <height>0.02</height>
+        <radius>0.20</radius>
+        <height>0.1819</height>
         <diffuseColor>0.05 0.05 0.05</diffuseColor>
       </Geom>
     </Body>
@@ -17,9 +17,9 @@
     <Body name="Arm0" type="dynamic">
       <!-- Offset from is a fast way of specifying that the translation and rotation of this-->
       <!-- body should be relative to another link-->
-      <offsetfrom>Base</offsetfrom>
+      <offsetfrom>Pelvis</offsetfrom>
       <!-- Translation relative to Base-->
-      <Translation>0 0 0.005</Translation>
+      <Translation>0.037432 0 0.139749</Translation>
       <Geom type="box">
         <Translation>0.08 0 0</Translation>
         <Extents>0.08 0.01 0.005</Extents>

@@ -25,6 +25,8 @@ private:
 
     OpenRAVE::EnvironmentBasePtr env_;
     std::vector<boost::shared_ptr<void> > graphptrs_;
+
+    bool print_;
 };
 
 #endif // SKELETONLISTENER_HPP
