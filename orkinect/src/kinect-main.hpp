@@ -11,7 +11,7 @@ using namespace OpenRAVE;
 
 class SkeletonListener;
 
-class KinectProblem : public ProblemInstance
+class KinectProblem : public ModuleBase
 {
 public:
     KinectProblem(EnvironmentBasePtr penv);
@@ -19,7 +19,6 @@ public:
     void Destroy();
 
     virtual int main(const std::string& args);
-    virtual void SetActiveRobots(const std::vector<RobotBasePtr>& robots);
     virtual bool SendCommand(std::ostream& sout, std::istream& sinput);
 
     bool NumBodies(ostream& sout, istream& sinput);

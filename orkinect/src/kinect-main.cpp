@@ -23,6 +23,7 @@ KinectProblem::~KinectProblem()
 
 }
 
+/**
 void KinectProblem::SetActiveRobots(const std::vector<RobotBasePtr >& robots)
 {
     if( robots.size() == 0 ) {
@@ -43,6 +44,7 @@ void KinectProblem::SetActiveRobots(const std::vector<RobotBasePtr >& robots)
         return;
     }
 }
+**/
 
 bool KinectProblem::SendCommand(std::ostream& sout, std::istream& sinput)
 {
@@ -60,9 +62,9 @@ int KinectProblem::main(const std::string& cmd)
     if( p != NULL )
         _strRobotName = p;
 
-    std::vector<RobotBasePtr> robots;
-    GetEnv()->GetRobots(robots);
-    SetActiveRobots(robots);
+    //std::vector<RobotBasePtr> robots;
+    //GetEnv()->GetRobots(robots);
+    //SetActiveRobots(robots);
     return 0;
 }
 
@@ -83,7 +85,6 @@ bool KinectProblem::Load(ostream& sout, istream& sinput)
     _skel_listen->listen();
     return true;
 }
-
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

@@ -29,6 +29,17 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
         user_is_tracked_[i] = false;
         transforms_[i].resize(15);
     }
+
+    OpenRAVE::RaveTransform<float> T;
+    T.rot.x = 0.262839;
+    T.rot.y = -0.733602;
+    T.rot.z = -0.623389;
+    T.rot.w = 0.0642694;
+    T.trans.x = 2.99336;
+    T.trans.y = -0.755646;
+    T.trans.z = 2.81558;
+    env_->GetViewer()->SetCamera( T );
+    //env_->GetViewer()->setCamera( 0.262839, -0.733602, -0.623389, 0.0642694, 2.99336, -0.755646, 2.81558 );
 }
 
 void SkeletonListener::listen()
@@ -39,6 +50,8 @@ void SkeletonListener::listen()
 
     while (node_->ok())
     {
+        tracking_ = false;
+
         for(int i=0;i<10;i++)
         {
             user_is_tracked_[i] = false;
@@ -47,6 +60,8 @@ void SkeletonListener::listen()
                 continue;
 
             cout << "listening to user " << i << endl;
+
+            ros::Time previous_time = transforms_[i][0].stamp_;
 
             try
             {
@@ -70,18 +85,25 @@ void SkeletonListener::listen()
                 listener.lookupTransform("/openni_depth_frame", "/right_knee_" + num_to_string(i), ros::Time(0), transforms_[i][13]);
                 listener.lookupTransform("/openni_depth_frame", "/right_foot_" + num_to_string(i), ros::Time(0), transforms_[i][14]);
 
-                user_is_tracked_[i] = true;
+                user_is_tracked_[i] =  true;
             }
             catch (tf::TransformException ex){
                 //ROS_ERROR("%s",ex.what());
             }
 
+            if( previous_time == transforms_[i][0].stamp_ )
+            {
+                user_is_tracked_[i] = false;
+            }
+
             if( user_is_tracked_[i] ){
                 cout << "tracking id : " << i << endl;
+                tracking_ = true;
             }
 
             //listener_.lookupTransform("/openni_depth_frame", "/turtle1", ros::Time(0), transform);
         }
+
 
         draw();
         rate.sleep();
@@ -90,13 +112,16 @@ void SkeletonListener::listen()
 
 void SkeletonListener::draw()
 {
+    graphptrs_.clear();
+
+    if( !tracking_)
+        return;
+
     OpenRAVE::GraphHandlePtr figure;
     std::vector<OpenRAVE::RaveVector<float> > vpoints;
     std::vector<float> vcolors;
 
-    graphptrs_.clear();
-
-    for(int i = 0; i<max_num_skel_; i++)
+    for(int i=0; i<max_num_skel_; i++)
     {
         if( !user_is_tracked_[i] )
             continue;
@@ -115,6 +140,8 @@ void SkeletonListener::draw()
         }
     }
 
-    figure = env_->plot3( &vpoints[0].x,vpoints.size(), sizeof(vpoints[0]),20.0,&vcolors[0], 0 );
-    graphptrs_.push_back(figure);
+    figure = env_->plot3( &vpoints[0].x, vpoints.size(), sizeof(vpoints[0]), 20.0, &vcolors[0], 0 );
+    graphptrs_.push_back( figure );
+
+    //cout << env_->GetViewer()->GetCameraTransform() << endl;
 }

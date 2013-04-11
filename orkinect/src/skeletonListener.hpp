@@ -20,7 +20,7 @@ private:
     ros::NodeHandle* node_;
     std::vector< std::vector<tf::StampedTransform> > transforms_;
     std::vector<bool> user_is_tracked_;
-
+    bool tracking_;
     int max_num_skel_;
 
     OpenRAVE::EnvironmentBasePtr env_;
