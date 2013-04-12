@@ -1,143 +1,294 @@
-<Robot name="3DOFRobot">
-  <KinBody>
-    <!-- Create the base body, it should never move-->
-    <!-- Note that all translations and rotations are with respect to this base-->
-    <!-- For example, the robot at the identity transformation is equivalent to the identity transformation of the first body.-->
-    <Body name="Pelvis" type="dynamic">
-      <Translation>0.0  0.0  0.0</Translation>
-      <Geom type="cylinder">
-        <rotationaxis>1 0 0 90</rotationaxis>
-        <radius>0.20</radius>
-        <height>0.1819</height>
-        <diffuseColor>0.05 0.05 0.05</diffuseColor>
-      </Geom>
-    </Body>
- 
-    <!-- the first movable link-->
-    <Body name="Arm0" type="dynamic">
-      <!-- Offset from is a fast way of specifying that the translation and rotation of this-->
-      <!-- body should be relative to another link-->
-      <offsetfrom>Pelvis</offsetfrom>
-      <!-- Translation relative to Base-->
-      <Translation>0.037432 0 0.139749</Translation>
-      <Geom type="box">
-        <Translation>0.08 0 0</Translation>
-        <Extents>0.08 0.01 0.005</Extents>
-      </Geom>
-    </Body>
-    <!-- declare a circular hinge joint (circular joints have no limits) -->
-    <Joint circular="true" name="Arm0" type="hinge">
-      <Body>Base</Body>
-      <Body>Arm0</Body>
-      <offsetfrom>Arm0</offsetfrom>
-      <weight>4</weight>
-      <limitsdeg>-180 180</limitsdeg>
-      <axis>0 0 1</axis>
-      <maxvel>3</maxvel>
-      <resolution>1</resolution>
-    </Joint>
- 
-    <!-- the second movable link-->
-    <Body name="Arm1" type="dynamic">
-      <offsetfrom>Arm0</offsetfrom>
-      <Translation>0.14 0 0.01</Translation>
-      <Geom type="box">
-        <Translation>0.08 0.0 0</Translation>
-        <Extents>0.08 0.0075 0.005</Extents>
-      </Geom>
-    </Body>
-    <!-- declare a circular hinge joint (circular joints have no limits) -->
-    <Joint circular="true" name="Arm1" type="hinge">
-      <Body>Arm0</Body>
-      <Body>Arm1</Body>
-      <offsetfrom>Arm1</offsetfrom>
-      <weight>3</weight>
-      <limitsdeg>-180 180</limitsdeg>
-      <axis>0 0 1</axis>
-      <maxvel>4</maxvel>
-      <resolution>1</resolution>
-    </Joint>
- 
-    <!-- the third movable link-->
-    <Body name="Arm2" type="dynamic">
-      <offsetfrom>Arm1</offsetfrom>
-      <Translation>0.14 0 0.01</Translation>
-      <Geom type="box">
-        <Translation>0.04 0 0</Translation>
-        <Extents>0.04 0.005 0.005</Extents>
-      </Geom>
-    </Body>
-    <!-- declare a circular hinge joint (circular joints have no limits) -->
-    <Joint circular="true" name="Arm2" type="hinge">
-      <Body>Arm1</Body>
-      <Body>Arm2</Body>
-      <offsetfrom>Arm2</offsetfrom>
-      <weight>3</weight>
-      <limitsdeg>-180 180</limitsdeg>
-      <axis>0 0 1</axis>
-      <maxvel>2</maxvel>
-      <resolution>2</resolution>
-    </Joint>
- 
-    <!-- Create the gripper joints:-->
-    <!-- right gripper-->
-    <Body name="RClaw" type="dynamic">
-      <offsetfrom>Arm2</offsetfrom>
-      <Translation>0.08 0 0.005</Translation>
-      <rotationaxis>0 0 1 -90</rotationaxis>
-      <Geom type="trimesh">
-        <Data>models/puma/RClaw.iv</Data>
-        <Render>models/puma/RClaw.iv</Render>
-      </Geom>
-    </Body>
-    <Joint name="j1" type="hinge">
-      <Body>Arm2</Body>
-      <Body>RClaw</Body>
-      <offsetfrom>RClaw</offsetfrom>
-      <weight>0.2</weight>
-      <limitsdeg>-56 16</limitsdeg>
-      <axis>0 0 1</axis>
-      <maxvel>0.4</maxvel>
-      <resolution>3</resolution>
-    </Joint>
- 
-    <!--left gripper-->
-    <Body name="LClaw" type="dynamic">
-      <Translation>0.08 0.005 0</Translation>
-      <rotationaxis>0 0 1 -90</rotationaxis>
-      <offsetfrom>Arm2</offsetfrom>
-      <Geom type="trimesh">
-        <Data>models/puma/LClaw.iv</Data>
-        <Render>models/puma/LClaw.iv</Render>
-      </Geom>
-    </Body>
-    <Joint name="j2" type="hinge">
-      <Body>Arm2</Body>
-      <Body>LClaw</Body>
-      <offsetfrom>LClaw</offsetfrom>
-      <weight>0.2</weight>
-      <limitsdeg>-56 16</limitsdeg>
-      <axis>0 0 -1</axis>
-      <maxvel>0.4</maxvel>
-      <resolution>3</resolution>
-    </Joint>
-    <!-- set the transparency of every geometry in the KinBody-->
-    <transparency>0.1</transparency>
-  </KinBody>
- 
-  <!-- Specifying the manipulator structure-->
-  <Manipulator name="arm">
-    <effector>Arm2</effector>   <!-- last link where end effector is attached-->
-    <base>Base</base>           <!-- base link-->
-    <joints>j1 j2</joints>      <!-- the gripper joints used for contact-->
-    <!-- the id of the inverse kinematics solver, it is not necessary to-->
-    <!-- specify an ik solver for every robot. But if there is one,-->
-    <!-- use iksolver field to identity it.-->
-    <!-- <iksolver>MyTriDOFSolver</iksolver> -->
-    <!-- joint values of the closed and opened positions-->
-    <closingdirection>1 1</closingdirection>
-    <direction>1 0 0</direction>
-    <!-- grasp goal with respect to the effector-->
-    <Translation>0.125 0 0</Translation>
-  </Manipulator>
-</Robot>
+<!-- Exported at: 10/6/2012 6:01:17 PM -->
+
+<kinbody name="human_kinbody">
+
+    <modelsdir>models</modelsdir>
+    
+    <body name="pelvis">
+        <!--Body_Torso Parent Center of Mass to Base -->
+        <translation>0.0 0.0 0.0</translation>
+   
+        <geom type="cylinder">
+            <translation>0.027581 -0.003062 -0.037279</translation>
+            <rotationaxis>1 0 0 90</rotationaxis>
+            <radius>0.1595</radius>
+            <height>0.25</height>
+            <diffuseColor>0.3 0.3 0.3</diffuseColor>
+        </geom>
+    </body>
+
+    <body name="torso">
+        <offsetfrom>pelvis</offsetfrom>
+        <translation>0 0 0</translation>
+
+        <geom type="cylinder">
+            <translation>0.026467 -0.002893 0.242837</translation>
+            <rotationaxis>1 0 0 90</rotationaxis>
+            <radius>0.203</radius>
+            <height>0.257</height>
+            <diffuseColor>0.800 0.000 0.0100</diffuseColor>
+        </geom>
+         <geom type="box">    
+            <translation>0.010646 -0.004374 0.447362</translation>
+            <rotationaxis>0 0 1 90</rotationaxis>
+            <extents>0.20 0.10 0.075</extents>
+            <diffuseColor>0.800 0.000 0.0100</diffuseColor>
+        </geom>
+        <geom type="cylinder">
+            <translation>0.013842 -0.004374 0.540227</translation>
+            <rotationaxis>1 0 0 90</rotationaxis>
+            <radius>0.073</radius>
+            <height>0.126</height>
+            <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+        </geom>
+    </body>
+    
+    <joint name="TorsoX" type="hinge">
+        <body>pelvis</body>
+        <body>torso</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>0.037432 0 0.139749</anchor>
+        <axis>1 0 0</axis>
+        <limitsdeg>-45 45</limitsdeg>
+    </joint>
+    <joint name="TorsoY" type="hinge">
+        <body>pelvis</body>
+        <body>torso</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>0.037432 0 0.139749</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-45 45</limitsdeg>
+    </joint>
+    <joint name="TorsoZ" type="hinge">
+        <body>pelvis</body>
+        <body>torso</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>0.037432 0 0.139749</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-45 45</limitsdeg>
+    </joint>
+    
+    <body name="head">
+        <offsetfrom>pelvis</offsetfrom>
+        <translation>0 0 0</translation>
+        <geom type="sphere">
+            <translation>0.057591 -0.004925 0.682654</translation>
+            <radius>0.13</radius>
+            <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+        </geom>
+    </body>
+    
+    <joint name="HeadZ" type="hinge">
+        <body>pelvis</body>
+        <body>torso</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>0.023497 0 0.593966</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-45 45</limitsdeg>
+    </joint>
+    <joint name="HeadX" type="hinge">
+        <body>torso</body>
+        <body>head</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>0.023497 0 0.593966</anchor>
+        <axis>1 0 0</axis>
+        <limitsdeg>-45 45</limitsdeg>
+    </joint>
+    <joint name="HeadY" type="hinge">
+        <body>pelvis</body>
+        <body>torso</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>0.023497 0 0.593966</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-45 45</limitsdeg>
+    </joint>
+    
+    <!-- ******************* RIGHT ARM ***************************** -->
+    <!-- *********************************************************** -->
+      
+    <body name="rHumerus">
+        <offsetfrom>pelvis</offsetfrom>
+        <translation>0 0 0</translation>
+        <geom type="cylinder">
+            <translation>-0.007111 -0.326332 0.437434</translation>
+            <radius>0.053</radius>
+            <height>0.24</height>
+            <diffuseColor>0.800 0.000 0.0100</diffuseColor>
+        </geom>
+    </body>
+    
+    <joint name="rShoulderX" type="hinge">
+        <body>torso</body>
+        <body>rHumerus</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.0112 -0.23982 0.428571</anchor>
+        <axis>1 0 0</axis>
+        <limitsdeg>-180 180</limitsdeg>
+    </joint>
+    <joint name="rShoulderZ" type="hinge">
+        <body>torso</body>
+        <body>rHumerus</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.0112 -0.23982 0.428571</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-180 180</limitsdeg>
+    </joint>
+    <joint name="rShoulderY" type="hinge">
+        <body>torso</body>
+        <body>rHumerus</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.0112 -0.23982 0.428571</anchor>
+        <axis>0 -1 0</axis>
+        <limitsdeg>-180 180</limitsdeg>
+    </joint>
+    
+    <body name="rRadius">
+        <offsetfrom>pelvis</offsetfrom>
+        <translation>0 0 0</translation>
+        <geom type="cylinder">
+            <translation>0.003544 -0.581679 0.43217</translation>
+            <rotationaxis>1 0 0 90</rotationaxis>
+            <radius>0.053</radius>
+            <height>0.281</height>
+            <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+        </geom>
+    </body>
+    
+    <joint name="rArmTrans" type="slider">
+        <body>rHumerus</body>
+        <body>rRadius</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>0.037432 0 0.139749</anchor>
+        <axis>0 0 1</axis>
+        <limits>-0.50 0.50</limits>
+    </joint>
+    
+    <body name="rHand">
+        <offsetfrom>pelvis</offsetfrom>
+        <translation>0 0 0</translation>
+    </body>
+    
+    <joint name="rWristX" type="hinge">
+        <body>rRadius</body>
+        <body>rHand</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.004259 -0.697 0.43478</anchor>
+        <axis>1 0 0</axis>
+        <limitsdeg>-90 90</limitsdeg>
+    </joint>
+    <joint name="rWristY" type="hinge">
+        <body>rRadius</body>
+        <body>rHand</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.004259 -0.697 0.43478</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-180 0</limitsdeg>
+    </joint>
+    <joint name="rWristZ" type="hinge">
+        <body>rRadius</body>
+        <body>rHand</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.004259 -0.697 0.43478</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-40 40</limitsdeg>
+    </joint>
+    
+    <!-- ******************* LEFT ARM ***************************** -->
+    <!-- *********************************************************** -->
+    
+    <body name="lHumerus">
+        <offsetfrom>pelvis</offsetfrom>
+        <translation>0 0 0</translation>
+        <geom type="cylinder">
+            <translation>-0.007111 0.319938 0.432528</translation>
+            <radius>0.053</radius>
+            <height>0.2475</height>
+            <diffuseColor>0.800 0.000 0.0100</diffuseColor>
+        </geom>
+    </body>
+    
+    <joint name="lShoulderX" type="hinge">
+        <body>torso</body>
+        <body>lHumerus</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.0112 0.23982 0.428571</anchor>
+        <axis>1 0 0</axis>
+        <limitsdeg>-180 180</limitsdeg>
+    </joint>
+    <joint name="lShoulderZ" type="hinge">
+        <body>torso</body>
+        <body>lHumerus</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.0112 0.23982 0.428571</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-180 180</limitsdeg>
+    </joint>
+    <joint name="lShoulderY" type="hinge">
+        <body>torso</body>
+        <body>lHumerus</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.0112 0.23982 0.428571</anchor>
+        <axis>0 -1 0</axis>
+        <limitsdeg>-180 180</limitsdeg>
+    </joint>
+    
+    <body name="lRadius">
+        <offsetfrom>pelvis</offsetfrom>
+        <translation>0 0 0</translation>
+        <geom type="cylinder">
+            <translation>0.003544 0.575555 0.43217</translation>
+            <rotationaxis>1 0 0 90</rotationaxis>
+            <radius>0.053</radius>
+            <height>0.281</height>
+            <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+        </geom>
+    </body>
+    
+    <joint name="lArmTrans" type="slider">
+        <body>lHumerus</body>
+        <body>lRadius</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.007033 0.446428 0.430224</anchor>
+        <axis>0 0 1</axis>
+        <limits>-0.50 0.50</limits>
+    </joint>
+    
+    <body name="lHand">
+        <offsetfrom>pelvis</offsetfrom>
+        <translation>0 0 0</translation>
+    </body>
+    
+    <joint name="lWristX" type="hinge">
+        <body>lRadius</body>
+        <body>lHand</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.004259 0.697 0.43478</anchor>
+        <axis>1 0 0</axis>
+        <limitsdeg>-90 90</limitsdeg>
+    </joint>
+    <joint name="lWristY" type="hinge">
+        <body>rRadius</body>
+        <body>rHand</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.004259 0.697 0.43478</anchor>
+        <axis>0 1 0</axis>
+        <limitsdeg>-180 0</limitsdeg>
+    </joint>
+    <joint name="lWristZ" type="hinge">
+        <body>lRadius</body>
+        <body>lHand</body>
+        <offsetfrom>pelvis</offsetfrom>
+        <anchor>-0.004259 0.697 0.43478</anchor>
+        <axis>0 0 1</axis>
+        <limitsdeg>-40 40</limitsdeg>
+    </joint>
+    
+    <!-- ******************* RIGHT LEG ***************************** -->
+    <!-- *********************************************************** -->
+
+    <!-- Adjacent Bodies -->
+
+    <!-- Torso -->
+    <!-- Body_Torso 
+    <adjacent>Body_Torso Body_Hip</adjacent> -->
+</kinbody>
