@@ -147,7 +147,7 @@
         <translation>0 0 0</translation>
         <geom type="cylinder">
             <translation>0.003544 -0.581679 0.43217</translation>
-            <rotationaxis>1 0 0 90</rotationaxis>
+            <!-- <rotationaxis>1 0 0 90</rotationaxis> -->
             <radius>0.053</radius>
             <height>0.281</height>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
@@ -166,6 +166,24 @@
     <body name="rHand">
         <offsetfrom>pelvis</offsetfrom>
         <translation>0 0 0</translation>
+        <geom type="box">    
+            <translation>0.001872 -0.75993 0.44719</translation>
+            <rotationaxis>0 0 1 90</rotationaxis>
+            <extents>0.068800 0.048000 0.027500</extents>
+            <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+        </geom>
+        <geom type="box">    
+            <translation>0.001872 -0.864078 0.472072</translation>
+            <rotationaxis>0 0 1 90</rotationaxis>
+            <extents>0.045150 0.049350 0.015200</extents>
+            <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+        </geom>
+        <geom type="box">    
+            <translation>0.063221 -0.789444 0.437595</translation>
+            <rotationaxis>0 0 1 90</rotationaxis>
+            <extents>0.044700 0.012400 0.015600</extents>
+            <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+        </geom>
     </body>
     
     <joint name="rWristX" type="hinge">
@@ -237,7 +255,7 @@
         <translation>0 0 0</translation>
         <geom type="cylinder">
             <translation>0.003544 0.575555 0.43217</translation>
-            <rotationaxis>1 0 0 90</rotationaxis>
+            <!--<rotationaxis>1 0 0 90</rotationaxis> -->
             <radius>0.053</radius>
             <height>0.281</height>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
@@ -256,6 +274,24 @@
     <body name="lHand">
         <offsetfrom>pelvis</offsetfrom>
         <translation>0 0 0</translation>
+        <geom type="box">    
+            <translation>0.001872 0.753806 0.44719</translation>
+            <rotationaxis>0 0 1 90</rotationaxis>
+            <extents>0.068800 0.048000 0.027500</extents>
+            <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+        </geom>
+        <geom type="box">    
+            <translation>0.001872 0.857954 0.472072</translation>
+            <rotationaxis>0 0 1 90</rotationaxis>
+            <extents>0.045150 0.049350 0.015200</extents>
+            <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+        </geom>
+        <geom type="box">    
+            <translation>0.063221 0.78332 0.437595</translation>
+            <rotationaxis>0 0 1 90</rotationaxis>
+            <extents>0.044700 0.012400 0.015600</extents>
+            <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+        </geom>
     </body>
     
     <joint name="lWristX" type="hinge">
