@@ -69,7 +69,7 @@
         <offsetfrom>pelvis</offsetfrom>
         <anchor>0.037432 0 0.139749</anchor>
         <axis>0 1 0</axis>
-        <limitsdeg>-45 45</limitsdeg>
+        <limitsdeg>-20 40</limitsdeg>
     </joint>
     <joint name="TorsoZ" type="hinge">
         <body>TorsoDummyY</body>
