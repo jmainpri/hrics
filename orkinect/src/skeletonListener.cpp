@@ -40,15 +40,23 @@ std::vector<double> eigen_vector_to_or(const Eigen::Vector3d& pos)
     return p;
 }
 
+void print_config(const std::vector<double>& q)
+{
+    for( int i=0;i<int(q.size());i++)
+    {
+        cout << "q[" << i << "] = " << q[i] << endl;
+    }
+}
+
 Eigen::Affine3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
 {
-//    m[0] = 1; m[1] = 0; m[2] = 0;
-//    m[4] = 0; m[5] = 1; m[6] = 0;
-//    m[8] = 0; m[9] = 0; m[10] = 1;
+    //    m[0] = 1; m[1] = 0; m[2] = 0;
+    //    m[4] = 0; m[5] = 1; m[6] = 0;
+    //    m[8] = 0; m[9] = 0; m[10] = 1;
 
-//    right.x = m[0]; up.x = m[1]; dir.x = m[2];
-//    right.y = m[4]; up.y = m[5]; dir.y = m[6];
-//    right.z = m[8]; up.z = m[9]; dir.z = m[10];
+    //    right.x = m[0]; up.x = m[1]; dir.x = m[2];
+    //    right.y = m[4]; up.y = m[5]; dir.y = m[6];
+    //    right.z = m[8]; up.z = m[9]; dir.z = m[10];
 
     OpenRAVE::RaveTransformMatrix<double> t( joint->GetFirstAttached()->GetTransform() );
     OpenRAVE::Vector right,up,dir,pos;
@@ -61,6 +69,9 @@ Eigen::Affine3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
     Eigen::Affine3d T;
     T.linear() = rot;
     T.translation() = or_vector_to_eigen( joint->GetAnchor() );
+
+    cout << "T : " << endl << T.matrix() << endl;
+
     return T;
 }
 
@@ -97,6 +108,8 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
     T.trans.z = 2.81558;
     env_->GetViewer()->SetCamera( T );
     //env_->GetViewer()->setCamera( 0.262839, -0.733602, -0.623389, 0.0642694, 2.99336, -0.755646, 2.81558 );
+
+    setKinectFrame();
 
     print_ = true;
 }
@@ -169,11 +182,27 @@ void SkeletonListener::listen()
 
         for(int i=0; i<int(tracked_user_id_.size()); i++)
         {
+            setEigenPositions( tracked_user_id_[i] );
             setHumanConfiguration( tracked_user_id_[i] );
         }
 
         draw();
         rate.sleep();
+    }
+}
+
+void SkeletonListener::setEigenPositions(int id)
+{
+    pos_.clear();
+    pos_.resize(15);
+    for(int i=0;i<15;i++)
+    {
+        tf::Vector3 p = transforms_[id][i].getOrigin();
+        pos_[i][0] = p[0];
+        pos_[i][1] = p[1];
+        pos_[i][2] = p[2];
+
+        pos_[i] = kinect_to_origin_ * pos_[i];
     }
 }
 
@@ -190,14 +219,15 @@ void SkeletonListener::draw()
 
     for(int i=0; i<int(tracked_user_id_.size()); i++)
     {
-        if( !user_is_tracked_[i] )
-            continue;
-
         for(int j = 0; j<15; j++)
         {
-            float x = transforms_[ tracked_user_id_[i] ][j].getOrigin().getX();
-            float y = transforms_[ tracked_user_id_[i] ][j].getOrigin().getY();
-            float z = transforms_[ tracked_user_id_[i] ][j].getOrigin().getZ();
+            //            float x = transforms_[ tracked_user_id_[i] ][j].getOrigin().getX();
+            //            float y = transforms_[ tracked_user_id_[i] ][j].getOrigin().getY();
+            //            float z = transforms_[ tracked_user_id_[i] ][j].getOrigin().getZ();
+
+            float x = pos_[j][0];
+            float y = pos_[j][1];
+            float z = pos_[j][2];
 
             OpenRAVE::RaveVector<float> pnt(x,y,z);
             vpoints.push_back(pnt);
@@ -205,25 +235,62 @@ void SkeletonListener::draw()
             vcolors.push_back(0);
             vcolors.push_back(0);
         }
+
+        if( print_ )
+            cout << "draw cubes for user : " <<  tracked_user_id_[i] << endl;
     }
 
     figure = env_->plot3( &vpoints[0].x, vpoints.size(), sizeof(vpoints[0]), 20.0, &vcolors[0], 0 );
     graphptrs_.push_back( figure );
-
-    //cout << env_->GetViewer()->GetCameraTransform() << endl;
 }
 
-void SkeletonListener::setEigenPositions(int id)
+void SkeletonListener::setKinectFrame()
 {
-    pos_.clear();
-    pos_.resize(15);
-    for(int i=0;i<15;i++)
-    {
-        tf::Vector3 p = transforms_[id][i].getOrigin();
-        pos_[i][0] = p[0];
-        pos_[i][1] = p[1];
-        pos_[i][2] = p[2];
-    }
+    Eigen::Affine3d T_Tra,T_Pan,T_Til;
+    Eigen::Matrix3d kin_cam;
+
+    double TX = 0; double TY = 0; double TZ = 0;
+    double RotZ = 0; double RotY = 0;
+
+    //         Y  X                  Z  Y
+    //         | /                   | /
+    // Kinect  |/ ____ Z  ,   World  |/_____X
+
+    //    kin_cam(0,0) = 0.0;  kin_cam(0,1) = 0.0;  kin_cam(0,2) = 1.0;
+    //    kin_cam(1,0) = 1.0;  kin_cam(1,1) = 0.0;  kin_cam(1,2) = 0.0;
+    //    kin_cam(2,0) = 0.0;  kin_cam(2,1) = 1.0;  kin_cam(2,2) = 0.0;
+
+    kin_cam(0,0) = 1.0;  kin_cam(0,1) = 0.0;  kin_cam(0,2) = 0.0;
+    kin_cam(1,0) = 0.0;  kin_cam(1,1) = -1.0;  kin_cam(1,2) = 0.0;
+    kin_cam(2,0) = 0.0;  kin_cam(2,1) = 0.0;  kin_cam(2,2) = 1.0;
+
+    kinect_to_origin_.linear() = kin_cam;
+    kinect_to_origin_.translation() = Eigen::Vector3d::Zero();
+
+    T_Tra.linear() = Eigen::Matrix3d::Identity();
+    T_Tra.translation() << TX , TY , TZ ;
+
+    T_Pan.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( RotZ, Eigen::Vector3d::UnitZ() ));
+    T_Pan.translation() = Eigen::Vector3d::Zero();
+    cout << "T_Pan : " << endl << T_Pan.matrix() << endl;
+
+    T_Til.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( RotY, Eigen::Vector3d::UnitY() ));
+    T_Til.translation() = Eigen::Vector3d::Zero();
+    cout << "T_Til : " << endl << T_Til.matrix() << endl;
+
+    kinect_to_origin_ =  T_Tra * T_Pan * T_Til * kinect_to_origin_;
+
+    //    Eigen::AngleAxisd( TorsoX, Eigen::Vector3d::UnitX() ));
+
+    //    p3d_mat4Pos( T_Tra, mKinectTX, mKinectTY, mKinectTZ, 0, 0, 0 );
+    //    p3d_mat4Pos( T_Pan, 0, 0, 0, 0, 0, mKinectRotZ );
+    //    p3d_mat4Pos( T_Til, 0, 0, 0, 0, mKinectRotY, 0 );
+
+    //    // Trans * Pan * Tilt * Cam = KinectToOrigin
+    //    p3d_mat4Mult( T_Tra , T_Pan , tmp1 );
+    //    p3d_mat4Mult( tmp1, T_Til, tmp2 );
+    //    p3d_mat4Mult( tmp2, mKinectToOrigin, tmp1);
+    //    p3d_mat4Copy( tmp1, mKinectToOrigin );
 }
 
 //! @ingroup KINECT
@@ -233,233 +300,261 @@ void SkeletonListener::setHumanConfiguration(int id)
 {
     cout << "Set Human Configuration" << endl;
 
-    setEigenPositions(id);
+    //setEigenPositions(id);
 
     // Set pelvis
-    OpenRAVE::KinBody::JointPtr joint; // = human_->GetJoint("Pelvis");
-    int index_dof; //= joint->GetDOFIndex();
+    OpenRAVE::KinBody::JointPtr joint = human_->GetJoint("PelvisTransX");
+    int index_dof = joint->GetDOFIndex();
 
     std::vector<double> q;
     human_->GetDOFValues(q);
 
     Eigen::Vector3d pos;
 
-////    if( data.TORSO.confidence > 0 && data.HIP_LEFT.confidence > 0 && data.HIP_RIGHT.confidence > 0 )
-////    {
-//        q[index_dof+0] = pos_[TORSO][0];
-//        q[index_dof+1] = pos_[TORSO][1];
-//        q[index_dof+2] = pos_[TORSO][2] - 0.20 ; // Hack 1 meter
+    cout << "Index dof is : " << index_dof << endl;
 
-//        // calcul de l'orientation du pelvis
-//        Eigen::Vector3d sum, midP;
-//        sum = pos_[HIP_LEFT] + pos_[HIP_RIGHT];
-//        midP = 05*sum;
+    //    if( data.TORSO.confidence > 0 && data.HIP_LEFT.confidence > 0 && data.HIP_RIGHT.confidence > 0 )
+    //    {
+    q[index_dof+0] = pos_[TORSO][0];
+    q[index_dof+1] = pos_[TORSO][1];
+    q[index_dof+2] = pos_[TORSO][2] - 0.20 ; // Hack 1 meter
 
-//        q[index_dof+5] = atan2( pos_[HIP_LEFT][1]-midP[1] , pos_[HIP_LEFT][0]-midP[0]  );
-//        q[index_dof+5] += -M_PI/2; // Hack +  Pi / 2
-////    }
+    // calcul de l'orientation du pelvis
+    Eigen::Vector3d sum, midP;
+    sum = pos_[HIP_LEFT] + pos_[HIP_RIGHT];
+    midP = 0.5*sum;
+
+    q[index_dof+5] = atan2( pos_[HIP_LEFT][1]-midP[1] , pos_[HIP_LEFT][0]-midP[0]  );
+    q[index_dof+5] -= M_PI/2; // Hack +  Pi / 2
+
+    cout << " q[0] : " << q[0] << endl;
+    cout << " q[1] : " << q[1] << endl;
+    cout << " q[2] : " << q[2] << endl;
+    cout << " q[3] : " << q[3] << endl;
+    cout << " q[4] : " << q[4] << endl;
+    cout << " q[5] : " << q[5] << endl;
+
+    human_->SetJointValues(q);
+    //return;
+    //    }
 
     //--------------------------------------------------------------
-      Eigen::Affine3d Tinv,Tpelv;
-      Eigen::Vector3d shoulder;
-      //Eigen::Vector3d Xaxis; Xaxis << 1 , 0 , 0 ;
-      Eigen::Affine3d TrotX,TrotXtmp;
-      //Eigen::Vector3d Yaxis; Yaxis << 0 , 1 , 0 ;
-      Eigen::Affine3d TrotY,TrotYtmp;
+    Eigen::Affine3d Tinv,Tpelv;
+    Eigen::Vector3d shoulder;
+    //Eigen::Vector3d Xaxis; Xaxis << 1 , 0 , 0 ;
+    Eigen::Affine3d TrotX,TrotXtmp;
+    //Eigen::Vector3d Yaxis; Yaxis << 0 , 1 , 0 ;
+    Eigen::Affine3d TrotY,TrotYtmp;
 
-//    p3d_matrix4 Tinv,Tpelv;
-//    p3d_vector3 shoulder;
-//    p3d_vector3 Xaxis = { 1 , 0 , 0 };
-//    p3d_matrix4 TrotX,TrotXtmp;
-//    p3d_vector3 Yaxis = { 0 , 1 , 0 };
-//    p3d_matrix4 TrotY,TrotYtmp;
+    //    p3d_matrix4 Tinv,Tpelv;
+    //    p3d_vector3 shoulder;
+    //    p3d_vector3 Xaxis = { 1 , 0 , 0 };
+    //    p3d_matrix4 TrotX,TrotXtmp;
+    //    p3d_vector3 Yaxis = { 0 , 1 , 0 };
+    //    p3d_matrix4 TrotY,TrotYtmp;
 
-//    if( data.NECK.confidence > 0 && data.SHOULDER_LEFT.confidence > 0 )
-//    {
-        human_->SetJointValues(q);
+    //    if( data.NECK.confidence > 0 && data.SHOULDER_LEFT.confidence > 0 )
+    //    {
+    joint = human_->GetJoint("PelvisTransX");
 
-        joint = human_->GetJoint("TorsoX");
+    Tpelv = get_joint_transform( joint );
+    //m_absPos = get_joint_transform( joint );
 
-        Tpelv = get_joint_transform( joint );
-        //m_absPos = get_joint_transform( joint );
+    Tinv = Tpelv.inverse();
+    pos = Tinv*pos_[NECK];
 
-        Tinv = Tpelv.inverse();
-        pos = Tinv*pos_[NECK];
+    double TorsoX = atan2( -pos[1] , pos[2] );
+    index_dof = human_->GetJoint("TorsoX")->GetDOFIndex();
+    q[index_dof] = TorsoX;
 
-        double TorsoX = atan2( -pos[1] , pos[2] );
-        index_dof = human_->GetJoint("TorsoX")->GetDOFIndex();
-        q[index_dof] = TorsoX;
+    TrotX.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( TorsoX, Eigen::Vector3d::UnitX() ));
+    TrotX.translation() = Eigen::Vector3d::Zero();
+    TrotXtmp = Tpelv * TrotX;
+    Tinv = TrotXtmp.inverse();
+    pos = Tinv*pos_[NECK];
 
-        TrotX.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( TorsoX, Eigen::Vector3d::UnitX() ));
-        TrotX.translation() = Eigen::Vector3d::Zero();
-        TrotXtmp = Tpelv * TrotX;
-        Tinv = TrotXtmp.inverse();
-        pos = Tinv*pos_[NECK];
+    double TorsoY = atan2( pos[0] , pos[2] );
+    index_dof = human_->GetJoint("TorsoY")->GetDOFIndex();
+    q[index_dof] = TorsoY;
 
-        double TorsoY = atan2( pos[0] , pos[2] );
-        index_dof = human_->GetJoint("TorsoY")->GetDOFIndex();
-        q[index_dof] = TorsoY;
+    TrotY.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( TorsoY, Eigen::Vector3d::UnitY() ));
+    TrotY.translation() = Eigen::Vector3d::Zero();
+    TrotYtmp = TrotXtmp * TrotY;
+    Tinv = TrotYtmp.inverse();
+    pos = Tinv*pos_[SHOULDER_LEFT];
 
-        TrotY.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( TorsoX, Eigen::Vector3d::UnitX() ));
-        TrotY.translation() = Eigen::Vector3d::Zero();
-        TrotYtmp = TrotXtmp * TrotY;
-        Tinv = TrotYtmp.inverse();
-        pos = Tinv*pos_[SHOULDER_LEFT];
+    double TorsoZ = atan2( -pos[0] , pos[1] );
+    index_dof = human_->GetJoint("TorsoZ")->GetDOFIndex();
+    q[index_dof] = TorsoZ;
 
-        double TorsoZ = atan2( -pos[0] , pos[1] );
-        index_dof = human_->GetJoint("TorsoZ")->GetDOFIndex();
-        q[index_dof] = TorsoZ;
-//    }
+    human_->SetJointValues(q);
+    return;
+    //    }
 
     // -----------------------------------------------------------------
-        // Set and update robot to
-        // new position
-        // -----------------------------------------------------------------
-        Eigen::Affine3d Trot;
-        Eigen::Affine3d Trot2,Trot3;
-        Eigen::Affine3d Trot4;
-        Eigen::Vector3d vect1,vect2,vect3;
+    // Set and update robot to
+    // new position
+    // -----------------------------------------------------------------
+    Eigen::Affine3d Trot;
+    Eigen::Affine3d Trot2,Trot3;
+    Eigen::Affine3d Trot4;
+    Eigen::Vector3d vect1,vect2,vect3;
 
-//    if( data.ELBOW_RIGHT.confidence > 0 && data.HAND_RIGHT.confidence > 0 )
-//    {
-        human_->SetJointValues(q);
+    //    if( data.ELBOW_RIGHT.confidence > 0 && data.HAND_RIGHT.confidence > 0 )
+    //    {
+    human_->SetJointValues(q);
 
-        joint = human_->GetJoint("rShoulderX");
-        Eigen::Affine3d T = get_joint_transform( joint );
-        pos = T.translation();
-        shoulder = T.translation();
+    cout << "Set human torso configuration" << endl;
 
-        index_dof = human_->GetJoint("rArmTrans")->GetDOFIndex();
-        q[index_dof] = ( pos_[ELBOW_RIGHT] - pos ).norm() - 0.2066 ;
+    joint = human_->GetJoint("rShoulderX");
+    Eigen::Affine3d T = get_joint_transform( joint );
+    pos = T.translation();
+    shoulder = T.translation();
 
-        joint = human_->GetJoint("TorsoZ");
+    index_dof = human_->GetJoint("rArmTrans")->GetDOFIndex();
+    q[index_dof] = ( pos_[ELBOW_RIGHT] - pos ).norm() - 0.2066 ;
 
-        Trot = get_joint_transform( joint );
-        Trot.translation() = pos;
+    joint = human_->GetJoint("TorsoZ");
 
-        //  p3d_mat4Copy( Trot , m_absPos );
+    Trot = get_joint_transform( joint );
+    Trot.translation() = pos;
 
-        Tinv = Trot.inverse();
-        pos = Tinv*pos_[ELBOW_RIGHT];
+    Tinv = Trot.inverse();
+    pos = Tinv*pos_[ELBOW_RIGHT];
 
-        // calcul de la direction pour le bras droit
-        Eigen::Vector3d dir,sub;
-        dir = pos / pos.norm();
+    // calcul de la direction pour le bras droit
+    Eigen::Vector3d dir,sub;
+    dir = pos / pos.norm();
 
-        // JP
-        // selon x
-        double alpha1r = atan2( -pos[2] , -pos[1] );
+    // JP
+    // selon x
+    double alpha1r = atan2( -pos[2] , -pos[1] );
 
-        TrotX.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( alpha1r, Eigen::Vector3d::UnitX() ));
-        TrotX.translation() = Eigen::Vector3d::Zero();
-        Trot3 = Trot*Trot2;
-        Tinv = Trot3.inverse();
-        pos = Tinv*pos_[ELBOW_RIGHT];
+    cout << "get joint rShoulderX" << endl;
+    index_dof = human_->GetJoint("rShoulderX")->GetDOFIndex();
+    q[index_dof] = alpha1r;
+    cout << "alpha1r : " << alpha1r << endl;
 
-        index_dof = human_->GetJoint("rShoulderX")->GetDOFIndex();
-        q[index_dof] = alpha1r;
+    Trot2.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( alpha1r, Eigen::Vector3d::UnitX() ));
+    Trot2.translation() = Eigen::Vector3d::Zero();
 
-        // selon z
-        double alpha2r = atan2( pos[0] , -pos[1] );
+    Trot3 = Trot*Trot2;
+    Tinv = Trot3.inverse();
+    pos = Tinv*pos_[ELBOW_RIGHT];
 
-        Trot2.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( alpha2r, Eigen::Vector3d::UnitZ() ));
-        Trot2.translation() = Eigen::Vector3d::Zero();
-        Trot4 = Trot3*Trot2;
-        Tinv = Trot4.inverse();
-        pos = Tinv*pos_[HAND_RIGHT];
+    // selon z
+    double alpha2r = atan2( pos[0] , -pos[1] );
 
-        index_dof =  human_->GetJoint("rShoulderZ")->GetDOFIndex();
-        q[index_dof] = alpha2r;
+    cout << "get joint rShoulderZ" << endl;
+    index_dof =  human_->GetJoint("rShoulderZ")->GetDOFIndex();
+    q[index_dof] = alpha2r;
+    cout << "alpha2r : " << alpha2r << endl;
 
-        // selon y
-        double alpha3r = atan2( pos[2], pos[0] );
+    Trot2.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( alpha2r, Eigen::Vector3d::UnitZ() ));
+    Trot2.translation() = Eigen::Vector3d::Zero();
+    Trot4 = Trot3*Trot2;
+    Tinv = Trot4.inverse();
+    pos = Tinv*pos_[HAND_RIGHT];
 
-        index_dof = human_->GetJoint("rShoulderY")->GetDOFIndex();
-        q[index_dof] = alpha3r;
+    // selon y
+    double alpha3r = atan2( pos[2], pos[0] );
 
-        vect1 = shoulder - pos_[ELBOW_RIGHT];
-        vect1.normalize();
+    cout << "get joint rShoulderY" << endl;
+    index_dof = human_->GetJoint("rShoulderY")->GetDOFIndex();
+    q[index_dof] = alpha3r;
+    cout << "alpha3r : " << alpha3r << endl;
 
-        vect2 = pos_[HAND_RIGHT] - pos_[ELBOW_RIGHT];
-        vect2.normalize();
+    vect1 = shoulder - pos_[ELBOW_RIGHT];
+    vect1.normalize();
 
-        // Elbow
-        double alpha4r = M_PI - acos( vect1.dot(vect2) ) ;
+    vect2 = pos_[HAND_RIGHT] - pos_[ELBOW_RIGHT];
+    vect2.normalize();
 
-        index_dof = human_->GetJoint("rElbowZ")->GetDOFIndex();
-        q[index_dof] = alpha4r;
-//    }
+    // Elbow
+    double alpha4r = M_PI - acos( vect1.dot(vect2) ) ;
+
+    cout << "get joint rElbowZ" << endl;
+    index_dof = human_->GetJoint("rElbowZ")->GetDOFIndex();
+    q[index_dof] = alpha4r;
+    cout << "alpha4r : " << alpha4r << endl;
+
+    print_config(q);
+
+    human_->SetJointValues(q);
+    cout << "Set human right arm configuration" << endl;
+    //        /return;
+    //    }
 
     //---------------------------------------------------------------------------
     //---------------------------------------------------------------------------
-//    if( data.ELBOW_LEFT.confidence > 0 && data.HAND_LEFT.confidence > 0 )
-//    {
-        joint = human_->GetJoint("lShoulderX");
-        T = get_joint_transform( joint );
-        pos = T.translation();
-        shoulder = T.translation();
+    //    if( data.ELBOW_LEFT.confidence > 0 && data.HAND_LEFT.confidence > 0 )
+    //    {
+    joint = human_->GetJoint("lShoulderX");
+    T = get_joint_transform( joint );
+    pos = T.translation();
+    shoulder = T.translation();
 
-        index_dof = human_->GetJoint("rArmTrans")->GetDOFIndex();
-        q[index_dof] = ( pos_[ELBOW_LEFT] - pos ).norm() - 0.2066 ;
+    index_dof = human_->GetJoint("rArmTrans")->GetDOFIndex();
+    q[index_dof] = ( pos_[ELBOW_LEFT] - pos ).norm() - 0.2066 ;
 
-        joint = human_->GetJoint("TorsoZ");
+    joint = human_->GetJoint("TorsoZ");
 
-        Trot = get_joint_transform( joint );
-        Trot.translation() = pos;
+    Trot = get_joint_transform( joint );
+    Trot.translation() = pos;
 
-        //  p3d_mat4Copy( Trot , m_absPos );
+    //  p3d_mat4Copy( Trot , m_absPos );
 
-        Tinv = Trot.inverse();
-        pos = Tinv*pos_[ELBOW_LEFT];
+    Tinv = Trot.inverse();
+    pos = Tinv*pos_[ELBOW_LEFT];
 
-        // calcul de la direction pour le bras droit
-        //Eigen::Vector3d dir,sub;
-        dir = pos / pos.norm();
+    // calcul de la direction pour le bras droit
+    //Eigen::Vector3d dir,sub;
+    dir = pos / pos.norm();
 
-        // JP //********************************************
-        // selon x
-        double alpha1l = atan2( -pos[2] , -pos[1] );
+    // JP //********************************************
+    // selon x
+    double alpha1l = atan2( -pos[2] , -pos[1] );
 
-        index_dof = human_->GetJoint("lShoulderX")->GetDOFIndex();
-        q[index_dof] = alpha1l;
+    index_dof = human_->GetJoint("lShoulderX")->GetDOFIndex();
+    q[index_dof] = alpha1l;
 
-        Trot2.linear() = Eigen::Matrix3d(Eigen::AngleAxisd( alpha1l, Eigen::Vector3d::UnitX() ));
-        Trot2.translation() = Eigen::Vector3d::Zero();
-        Trot3 = Trot*Trot2;
-        Tinv = Trot3.inverse();
-        pos = Tinv*pos_[ELBOW_RIGHT];
+    Trot2.linear() = Eigen::Matrix3d(Eigen::AngleAxisd( alpha1l, Eigen::Vector3d::UnitX() ));
+    Trot2.translation() = Eigen::Vector3d::Zero();
+    Trot3 = Trot*Trot2;
+    Tinv = Trot3.inverse();
+    pos = Tinv*pos_[ELBOW_RIGHT];
 
-        // selon z
-        double alpha2l = atan2( pos[0] , -pos[1] );
+    // selon z
+    double alpha2l = atan2( pos[0] , -pos[1] );
 
-        index_dof = human_->GetJoint("lShoulderZ")->GetDOFIndex();
-        q[index_dof] = alpha2l;
+    index_dof = human_->GetJoint("lShoulderZ")->GetDOFIndex();
+    q[index_dof] = alpha2l;
 
-        Trot2.linear() = Eigen::Matrix3d(Eigen::AngleAxisd( alpha2l, Eigen::Vector3d::UnitZ() ));
-        Trot2.translation() = Eigen::Vector3d::Zero();
-        Trot4 = Trot3*Trot2;
-        Tinv = Trot4.inverse();
-        pos = Tinv*pos_[HAND_LEFT];
+    Trot2.linear() = Eigen::Matrix3d(Eigen::AngleAxisd( alpha2l, Eigen::Vector3d::UnitZ() ));
+    Trot2.translation() = Eigen::Vector3d::Zero();
+    Trot4 = Trot3*Trot2;
+    Tinv = Trot4.inverse();
+    pos = Tinv*pos_[HAND_LEFT];
 
-        // selon y
-        double alpha3l = atan2( pos[2], pos[0] );
+    // selon y
+    double alpha3l = atan2( pos[2], pos[0] );
 
-        index_dof = human_->GetJoint("lShoulderY")->GetDOFIndex();
-        q[index_dof] = alpha3l;
+    index_dof = human_->GetJoint("lShoulderY")->GetDOFIndex();
+    q[index_dof] = alpha3l;
 
-        vect1 = shoulder - pos_[ELBOW_LEFT];
-        vect1.normalize();
+    vect1 = shoulder - pos_[ELBOW_LEFT];
+    vect1.normalize();
 
-        vect2 = pos_[HAND_LEFT] - pos_[ELBOW_LEFT];
-        vect2.normalize();
+    vect2 = pos_[HAND_LEFT] - pos_[ELBOW_LEFT];
+    vect2.normalize();
 
-        // Elbow
-        double alpha4l = -M_PI + acos( vect1.dot(vect2) ) ;
+    // Elbow
+    double alpha4l = -M_PI + acos( vect1.dot(vect2) ) ;
 
-        index_dof = human_->GetJoint("lElbowZ")->GetDOFIndex();
-        q[index_dof] = alpha4l;
+    index_dof = human_->GetJoint("lElbowZ")->GetDOFIndex();
+    q[index_dof] = alpha4l;
 
-//    }
+    //    }
 
     human_->SetJointValues(q);
 }

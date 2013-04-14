@@ -43,12 +43,14 @@ private:
     void draw();
     void setEigenPositions(int id);
     void setHumanConfiguration(int id);
+    void setKinectFrame();
 
     ros::NodeHandle* node_;
     std::vector< std::vector<tf::StampedTransform> > transforms_;
     std::vector<Eigen::Vector3d> pos_;
     std::vector<bool> user_is_tracked_;
     std::vector<int> tracked_user_id_;
+    Eigen::Affine3d kinect_to_origin_;
     int max_num_skel_;
 
     OpenRAVE::EnvironmentBasePtr env_;

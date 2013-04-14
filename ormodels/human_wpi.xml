@@ -100,8 +100,8 @@
         <body>PelvisBody</body>
         <offsetfrom>base</offsetfrom>
         <anchor>0.037432 0 0.139749</anchor>
-        <axis>0 1 0</axis>
-        <limitsdeg>-20 40</limitsdeg>
+        <axis>0 0 1</axis>
+        <limitsdeg>-180 180</limitsdeg>
     </joint>
     
     <body name="torso">
