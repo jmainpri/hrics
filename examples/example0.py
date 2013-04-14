@@ -47,7 +47,6 @@ def launch_kinect():
     global orEnv
     global h
     
-
     orEnv.SetViewer('qtcoin')
     
     print "start"
@@ -79,9 +78,8 @@ def launch_kinect():
     #else:
     #    cmdout = prob.SendCommand('numbodies')
     #    print 'number of bodies are: ',cmdout
-      
-        
-    #sys.stdin.readline()
+    
+    sys.stdin.readline()
     
 if __name__ == "__main__":
     print "main function"
