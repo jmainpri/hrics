@@ -84,6 +84,7 @@ bool KinectProblem::Load(ostream& sout, istream& sinput)
 //    sinput >> filename;
 //    bool bSuccess = GetEnv()->Load(filename.c_str());     // load the file
 //    return bSuccess;
+    //_skel_listen->listen();
     boost::thread( &SkeletonListener::listen, _skel_listen );
     return true;
 }
