@@ -98,20 +98,30 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
 
     cout << "Set Human Robot : " << human_->GetName() << endl;
 
-    OpenRAVE::RaveTransform<float> T;
-    T.rot.x = 0.262839;
-    T.rot.y = -0.733602;
-    T.rot.z = -0.623389;
-    T.rot.w = 0.0642694;
-    T.trans.x = 2.99336;
-    T.trans.y = -0.755646;
-    T.trans.z = 2.81558;
-    env_->GetViewer()->SetCamera( T );
+    OpenRAVE::RaveTransform<float> Tcam;
+    Tcam.rot.x = 0.420745;
+    Tcam.rot.y = -0.574182;
+    Tcam.rot.z = 0.605033;
+    Tcam.rot.w = -0.356683;
+    Tcam.trans.x = -2.61378;
+    Tcam.trans.y = -0.0481125;
+    Tcam.trans.z =  0.888456;
+
+//    0.420745 -0.574182 0.605033 -0.356683 -2.61378 -0.0481125 0.888456
+
+//     OpenRAVE::RaveTransformMatrix<float> T;
+//     T.m[0] = -0.704743; T.m[1] = 0.304894; T.m[2] = -0.640607;  T.trans.x =  0; 1.11025;
+//     T.m[4] = -0.310475; T.m[5] =-0.944433; T.m[6] = -0.10794;   T.trans.y = 0.112955;
+//     T.m[8] = -0.637921; T.m[9] = 0.122822; T.m[10] =  0.760244; T.trans.z = -0.589495;
+
+    env_->GetViewer()->SetCamera( Tcam );
     //env_->GetViewer()->setCamera( 0.262839, -0.733602, -0.623389, 0.0642694, 2.99336, -0.755646, 2.81558 );
 
     setKinectFrame();
 
-    print_ = true;
+    printDofNames();
+
+    print_ = false;
 }
 
 void SkeletonListener::listen()
@@ -180,6 +190,10 @@ void SkeletonListener::listen()
             //listener_.lookupTransform("/openni_depth_frame", "/turtle1", ros::Time(0), transform);
         }
 
+        cout << "Camera : " << env_->GetViewer()->GetCameraTransform() << endl;
+
+        graphptrs_.clear();
+
         for(int i=0; i<int(tracked_user_id_.size()); i++)
         {
             setEigenPositions( tracked_user_id_[i] );
@@ -188,6 +202,16 @@ void SkeletonListener::listen()
 
         draw();
         rate.sleep();
+    }
+}
+
+void SkeletonListener::printDofNames()
+{
+    const std::vector<OpenRAVE::KinBody::JointPtr> joints = human_->GetJoints();
+
+    for( int i=0;i<int(joints.size());i++)
+    {
+        cout << joints[i]->GetName() << " : " << joints[i]->GetDOFIndex() << endl;
     }
 }
 
@@ -206,10 +230,39 @@ void SkeletonListener::setEigenPositions(int id)
     }
 }
 
+void SkeletonListener::drawFrame(const Eigen::Affine3d &T)
+{
+    if( print_ )
+    {
+        cout << "draw Frame" << endl;
+        cout << T.matrix() << endl;
+    }
+
+    OpenRAVE::GraphHandlePtr fig1,fig2,fig3;
+
+    Eigen::Matrix3d m = T.linear();
+    Eigen::Vector3d p = T.translation();
+
+    OpenRAVE::Vector pos;
+    OpenRAVE::Vector right,up,dir;
+
+    pos.x = p(0); pos.y = p(1); pos.z = p(2);
+
+    right.x = m(0,0); up.x = m(0,1); dir.x = m(0,2);
+    right.y = m(1,0); up.y = m(1,1); dir.y = m(1,2);
+    right.z = m(2,0); up.z = m(2,1); dir.z = m(2,2);
+
+    fig1 = env_->drawarrow( pos, pos+0.5*right, 0.02, OpenRAVE::Vector(1,0,0,1));
+    fig2 = env_->drawarrow( pos, pos+0.5*up,    0.02, OpenRAVE::Vector(0,1,0,1));
+    fig3 = env_->drawarrow( pos, pos+0.5*dir,   0.02, OpenRAVE::Vector(0,0,1,1));
+
+    graphptrs_.push_back( fig1 );
+    graphptrs_.push_back( fig2 );
+    graphptrs_.push_back( fig3 );
+}
+
 void SkeletonListener::draw()
 {
-    graphptrs_.clear();
-
     if( tracked_user_id_.empty() )
         return;
 
@@ -221,9 +274,9 @@ void SkeletonListener::draw()
     {
         for(int j = 0; j<15; j++)
         {
-            //            float x = transforms_[ tracked_user_id_[i] ][j].getOrigin().getX();
-            //            float y = transforms_[ tracked_user_id_[i] ][j].getOrigin().getY();
-            //            float z = transforms_[ tracked_user_id_[i] ][j].getOrigin().getZ();
+            // float x = transforms_[ tracked_user_id_[i] ][j].getOrigin().getX();
+            // float y = transforms_[ tracked_user_id_[i] ][j].getOrigin().getY();
+            // float z = transforms_[ tracked_user_id_[i] ][j].getOrigin().getZ();
 
             float x = pos_[j][0];
             float y = pos_[j][1];
@@ -237,10 +290,10 @@ void SkeletonListener::draw()
         }
 
         if( print_ )
-            cout << "draw cubes for user : " <<  tracked_user_id_[i] << endl;
+            cout << "draw spheres for user : " <<  tracked_user_id_[i] << endl;
     }
 
-    figure = env_->plot3( &vpoints[0].x, vpoints.size(), sizeof(vpoints[0]), 20.0, &vcolors[0], 0 );
+    figure = env_->plot3( &vpoints[0].x, vpoints.size(), sizeof(vpoints[0]), 0.05, &vcolors[0], 1 );
     graphptrs_.push_back( figure );
 }
 
@@ -256,13 +309,13 @@ void SkeletonListener::setKinectFrame()
     //         | /                   | /
     // Kinect  |/ ____ Z  ,   World  |/_____X
 
-    //    kin_cam(0,0) = 0.0;  kin_cam(0,1) = 0.0;  kin_cam(0,2) = 1.0;
-    //    kin_cam(1,0) = 1.0;  kin_cam(1,1) = 0.0;  kin_cam(1,2) = 0.0;
-    //    kin_cam(2,0) = 0.0;  kin_cam(2,1) = 1.0;  kin_cam(2,2) = 0.0;
+    //  kin_cam(0,0) = 0.0;  kin_cam(0,1) = 0.0;  kin_cam(0,2) = 1.0;
+    //  kin_cam(1,0) = 1.0;  kin_cam(1,1) = 0.0;  kin_cam(1,2) = 0.0;
+    //  kin_cam(2,0) = 0.0;  kin_cam(2,1) = 1.0;  kin_cam(2,2) = 0.0;
 
-    kin_cam(0,0) = 1.0;  kin_cam(0,1) = 0.0;  kin_cam(0,2) = 0.0;
+    kin_cam(0,0) = 1.0;  kin_cam(0,1) =  0.0;  kin_cam(0,2) = 0.0;
     kin_cam(1,0) = 0.0;  kin_cam(1,1) = -1.0;  kin_cam(1,2) = 0.0;
-    kin_cam(2,0) = 0.0;  kin_cam(2,1) = 0.0;  kin_cam(2,2) = 1.0;
+    kin_cam(2,0) = 0.0;  kin_cam(2,1) =  0.0;  kin_cam(2,2) = 1.0;
 
     kinect_to_origin_.linear() = kin_cam;
     kinect_to_origin_.translation() = Eigen::Vector3d::Zero();
@@ -327,12 +380,12 @@ void SkeletonListener::setHumanConfiguration(int id)
     q[index_dof+5] = atan2( pos_[HIP_LEFT][1]-midP[1] , pos_[HIP_LEFT][0]-midP[0]  );
     q[index_dof+5] -= M_PI/2; // Hack +  Pi / 2
 
-    cout << " q[0] : " << q[0] << endl;
-    cout << " q[1] : " << q[1] << endl;
-    cout << " q[2] : " << q[2] << endl;
-    cout << " q[3] : " << q[3] << endl;
-    cout << " q[4] : " << q[4] << endl;
-    cout << " q[5] : " << q[5] << endl;
+    //    cout << " q[0] : " << q[0] << endl;
+    //    cout << " q[1] : " << q[1] << endl;
+    //    cout << " q[2] : " << q[2] << endl;
+    //    cout << " q[3] : " << q[3] << endl;
+    //    cout << " q[4] : " << q[4] << endl;
+    //    cout << " q[5] : " << q[5] << endl;
 
     human_->SetJointValues(q);
     //return;
@@ -346,18 +399,10 @@ void SkeletonListener::setHumanConfiguration(int id)
     //Eigen::Vector3d Yaxis; Yaxis << 0 , 1 , 0 ;
     Eigen::Affine3d TrotY,TrotYtmp;
 
-    //    p3d_matrix4 Tinv,Tpelv;
-    //    p3d_vector3 shoulder;
-    //    p3d_vector3 Xaxis = { 1 , 0 , 0 };
-    //    p3d_matrix4 TrotX,TrotXtmp;
-    //    p3d_vector3 Yaxis = { 0 , 1 , 0 };
-    //    p3d_matrix4 TrotY,TrotYtmp;
-
-    //    if( data.NECK.confidence > 0 && data.SHOULDER_LEFT.confidence > 0 )
-    //    {
-    joint = human_->GetJoint("PelvisTransX");
+    joint = human_->GetJoint("TorsoX");
 
     Tpelv = get_joint_transform( joint );
+    drawFrame( Tpelv );
     //m_absPos = get_joint_transform( joint );
 
     Tinv = Tpelv.inverse();
@@ -388,7 +433,7 @@ void SkeletonListener::setHumanConfiguration(int id)
     q[index_dof] = TorsoZ;
 
     human_->SetJointValues(q);
-    return;
+    //return;
     //    }
 
     // -----------------------------------------------------------------
@@ -484,17 +529,16 @@ void SkeletonListener::setHumanConfiguration(int id)
     cout << "Set human right arm configuration" << endl;
     //        /return;
     //    }
+    //---------------------------------------------------------------------------
+    //---------------------------------------------------------------------------
 
-    //---------------------------------------------------------------------------
-    //---------------------------------------------------------------------------
-    //    if( data.ELBOW_LEFT.confidence > 0 && data.HAND_LEFT.confidence > 0 )
-    //    {
+
     joint = human_->GetJoint("lShoulderX");
     T = get_joint_transform( joint );
     pos = T.translation();
     shoulder = T.translation();
 
-    index_dof = human_->GetJoint("rArmTrans")->GetDOFIndex();
+    index_dof = human_->GetJoint("lArmTrans")->GetDOFIndex();
     q[index_dof] = ( pos_[ELBOW_LEFT] - pos ).norm() - 0.2066 ;
 
     joint = human_->GetJoint("TorsoZ");
@@ -513,7 +557,7 @@ void SkeletonListener::setHumanConfiguration(int id)
 
     // JP //********************************************
     // selon x
-    double alpha1l = atan2( -pos[2] , -pos[1] );
+    double alpha1l = atan2( pos[2] , pos[1] );
 
     index_dof = human_->GetJoint("lShoulderX")->GetDOFIndex();
     q[index_dof] = alpha1l;
@@ -522,10 +566,10 @@ void SkeletonListener::setHumanConfiguration(int id)
     Trot2.translation() = Eigen::Vector3d::Zero();
     Trot3 = Trot*Trot2;
     Tinv = Trot3.inverse();
-    pos = Tinv*pos_[ELBOW_RIGHT];
+    pos = Tinv*pos_[ELBOW_LEFT];
 
     // selon z
-    double alpha2l = atan2( pos[0] , -pos[1] );
+    double alpha2l = atan2( -pos[0] , pos[1] );
 
     index_dof = human_->GetJoint("lShoulderZ")->GetDOFIndex();
     q[index_dof] = alpha2l;
@@ -537,7 +581,7 @@ void SkeletonListener::setHumanConfiguration(int id)
     pos = Tinv*pos_[HAND_LEFT];
 
     // selon y
-    double alpha3l = atan2( pos[2], pos[0] );
+    double alpha3l = -atan2( -pos[2], pos[0] );
 
     index_dof = human_->GetJoint("lShoulderY")->GetDOFIndex();
     q[index_dof] = alpha3l;

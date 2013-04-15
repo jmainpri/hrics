@@ -40,10 +40,12 @@ private:
       FOOT_RIGHT = 14
     };
 
+    void drawFrame(const Eigen::Affine3d& t);
     void draw();
     void setEigenPositions(int id);
     void setHumanConfiguration(int id);
     void setKinectFrame();
+    void printDofNames();
 
     ros::NodeHandle* node_;
     std::vector< std::vector<tf::StampedTransform> > transforms_;

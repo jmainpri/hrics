@@ -33,7 +33,7 @@
     <joint name="PelvisTransX" type="slider">
         <body>base</body>
         <body>PlevisDummyTransX</body>
-        <offsetfrom>Pelvis</offsetfrom>
+        <offsetfrom>PelvisBody</offsetfrom>
         <anchor>0 0 0</anchor>
         <axis>1 0 0</axis>
         <limits>-30 30</limits>
@@ -236,7 +236,7 @@
     </body>
     <joint name="rShoulderX" type="hinge">
         <body>torso</body>
-        <body>rHumerus</body>
+        <body>rSholderDummyX</body>
         <offsetfrom>base</offsetfrom>
         <anchor>-0.0112 -0.23982 0.428571</anchor>
         <axis>1 0 0</axis>
@@ -288,7 +288,7 @@
         <body>rElbowDummy</body>
         <offsetfrom>base</offsetfrom>
         <anchor>-0.007033 -0.446428 0.430224</anchor>
-        <axis>0 0 1</axis>
+        <axis>0 -1 0</axis>
         <limits>-0.50 0.50</limits>
     </joint>
     <joint name="rElbowZ" type="hinge">
@@ -434,7 +434,7 @@
         <body>lElbowDummy</body>
         <offsetfrom>base</offsetfrom>
         <anchor>-0.007033 0.446428 0.430224</anchor>
-        <axis>0 0 1</axis>
+        <axis>0 1 0</axis>
         <limits>-0.50 0.50</limits>
     </joint>
     <joint name="lElbowZ" type="hinge">
