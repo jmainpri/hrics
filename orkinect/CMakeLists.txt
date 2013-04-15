@@ -26,7 +26,9 @@ if(POLICY CMP0015)
    cmake_policy(SET CMP0015 NEW)
 endif()
 
-message("CMAKE_SOURCE_DIR : " ${CMAKE_SOURCE_DIR})
+message(STATUS "CMAKE_SOURCE_DIR : " ${CMAKE_SOURCE_DIR})
+message(STATUS "CMAKE_MODULE_PATH : " ${CMAKE_MODULE_PATH})
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../cmake")
 
 if( NOT DEFINED ENV{PLUGIN_INSTALL_DIR} )
@@ -35,12 +37,21 @@ else( NOT DEFINED ENV{PLUGIN_INSTALL_DIR} )
     set(PLUGIN_INSTALL_DIR "$ENV{PLUGIN_INSTALL_DIR}")
 endif( NOT DEFINED ENV{PLUGIN_INSTALL_DIR} )
 
-message("PLUGIN_INSTALL_DIR : " ${PLUGIN_INSTALL_DIR})
+message(STATUS "PLUGIN_INSTALL_DIR : " ${PLUGIN_INSTALL_DIR})
 
 # Find important packages
+# --------------------------------------------------
+#find_package(LibXml2 REQUIRED)
+#include_directories(${LIBXML2_INCLUDE_DIR})
+
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+message(STATUS "EIGEN3_INCLUDE_DIR : " ${EIGEN3_INCLUDE_DIR})
+
 find_package(OpenRAVE REQUIRED)
-message("OPENRAVE_INCLUDE_DIRS : " ${OPENRAVE_INCLUDE_DIRS})
-message("OPENRAVE_LIBRARY : " ${OPENRAVE_LIBRARY})
+include_directories(${OPENRAVE_INCLUDE_DIRS})
+message(STATUS "OPENRAVE_INCLUDE_DIRS : " ${OPENRAVE_INCLUDE_DIRS})
+message(STATUS "OPENRAVE_LIBRARY : " ${OPENRAVE_LIBRARY})
   #include(FindOpenRAVE.cmake)
 
 if( NOT OPENRAVE_FOUND )
@@ -65,8 +76,6 @@ target_link_libraries(${PROJECT_NAME} ${OPENRAVE_LIBRARY})
 set_target_properties(${PROJECT_NAME} PROPERTIES
                         LINK_FLAGS ${OPENRAVE_LINK_FLAGS}
                         COMPILE_FLAGS ${OPENRAVE_CXXFLAGS})
-                        
-include_directories(${OPENRAVE_INCLUDE_DIRS})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${PLUGIN_INSTALL_DIR} )
 
