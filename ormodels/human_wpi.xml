@@ -9,6 +9,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
      
@@ -28,6 +29,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body> 
     <joint name="PelvisTransX" type="slider">
@@ -42,6 +44,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="PelvisTransY" type="slider">
@@ -70,6 +73,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     
@@ -85,6 +89,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="PelvisRotY" type="hinge">
@@ -134,6 +139,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="TorsoX" type="hinge">
@@ -148,6 +154,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="TorsoY" type="hinge">
@@ -181,6 +188,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="HeadZ" type="hinge">
@@ -195,6 +203,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="HeadY" type="hinge">
@@ -232,6 +241,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="rShoulderX" type="hinge">
@@ -246,6 +256,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="rShoulderZ" type="hinge">
@@ -281,6 +292,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="rArmTrans" type="slider">
@@ -327,6 +339,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>    
     <joint name="rWristX" type="hinge">
@@ -341,6 +354,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="rWristY" type="hinge">
@@ -378,6 +392,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>    
     <joint name="lShoulderX" type="hinge">
@@ -392,6 +407,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="lShoulderZ" type="hinge">
@@ -427,6 +443,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="lArmTrans" type="slider">
@@ -473,6 +490,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>    
     <joint name="lWristX" type="hinge">
@@ -487,6 +505,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="lWristY" type="hinge">
@@ -532,6 +551,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>    
     <joint name="rHipX" type="hinge">
@@ -546,6 +566,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="rHipY" type="hinge">
@@ -601,6 +622,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>   
      <joint name="rAnkleX" type="hinge">
@@ -615,6 +637,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="rAnkleY" type="hinge">
@@ -660,6 +683,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="lHipX" type="hinge">
@@ -674,6 +698,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="lHipY" type="hinge">
@@ -729,6 +754,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>    
      <joint name="lAnkleX" type="hinge">
@@ -743,6 +769,7 @@
         <translation>0.0 0.0 0.0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     <joint name="lAnkleY" type="hinge">
