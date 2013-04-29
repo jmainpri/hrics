@@ -43,6 +43,7 @@ message(STATUS "PLUGIN_INSTALL_DIR : " ${PLUGIN_INSTALL_DIR})
 # --------------------------------------------------
 #find_package(LibXml2 REQUIRED)
 #include_directories(${LIBXML2_INCLUDE_DIR})
+include_directories("/home/jmainpri/fuerte_workspace/openni_tracker/msg_gen/cpp/include")
 
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -52,14 +53,13 @@ find_package(OpenRAVE REQUIRED)
 include_directories(${OPENRAVE_INCLUDE_DIRS})
 message(STATUS "OPENRAVE_INCLUDE_DIRS : " ${OPENRAVE_INCLUDE_DIRS})
 message(STATUS "OPENRAVE_LIBRARY : " ${OPENRAVE_LIBRARY})
-  #include(FindOpenRAVE.cmake)
 
 if( NOT OPENRAVE_FOUND )
     message(FATAL_ERROR "could not find openrave, check for openrave-config in path")
 endif( NOT OPENRAVE_FOUND )
 
 #uncomment if you have defined messages
-#rosbuild_genmsg()
+rosbuild_genmsg()
 #uncomment if you have defined services
 #rosbuild_gensrv()
 

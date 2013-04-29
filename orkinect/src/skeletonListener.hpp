@@ -3,6 +3,8 @@
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
+#include "openni_tracker/confidence.h"
+#include "openni_tracker/confidence_array.h"
 
 #include <openrave/openrave.h>
 
@@ -46,9 +48,15 @@ private:
     void setHumanConfiguration(int id);
     void setKinectFrame();
     void printDofNames();
+    void setConfidence( std::string name, double conf );
+    void readConfidence(const openni_tracker::confidence_array& msg );
+    void set_joint_name_map();
 
     ros::NodeHandle* node_;
+    ros::Subscriber sub_;
+
     std::vector< std::vector<tf::StampedTransform> > transforms_;
+    std::vector<Eigen::VectorXd> confidences_;
     std::vector<Eigen::Vector3d> pos_;
     std::vector<bool> user_is_tracked_;
     std::vector<int> tracked_user_id_;
@@ -60,6 +68,8 @@ private:
     std::vector<boost::shared_ptr<void> > graphptrs_;
 
     bool print_;
+
+    std::vector<std::string> names_;
 };
 
 #endif // SKELETONLISTENER_HPP

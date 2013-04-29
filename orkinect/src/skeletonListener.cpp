@@ -13,6 +13,16 @@ std::string num_to_string ( T Number )
     return ss.str();
 }
 
+template <class T>
+bool string_to_num(T& t,
+                 const std::string& s,
+                 std::ios_base& (*f)(std::ios_base&))
+{
+  std::istringstream iss(s);
+  return !(iss >> f >> t).fail();
+}
+
+
 Eigen::Vector3d or_vector_to_eigen(const OpenRAVE::Vector& pos)
 {
     Eigen::Vector3d p;
@@ -70,28 +80,38 @@ Eigen::Affine3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
     T.linear() = rot;
     T.translation() = or_vector_to_eigen( joint->GetAnchor() );
 
-    cout << "T : " << endl << T.matrix() << endl;
+    //cout << "T : " << endl << T.matrix() << endl;
 
     return T;
 }
 
 SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
 {
+    cout << "Enter constructer" << endl;
+
     env_ = penv;
 
     int argc = 0;
     char** argv;
     ros::init( argc, argv, "orkinect" );
     node_ = new ros::NodeHandle;
+    sub_ = node_->subscribe( "openni_tracker/openni_confidences", 1, &SkeletonListener::readConfidence, this );
+
+    cout << "start suscriber" << endl;
 
     max_num_skel_ = 10;
 
+    cout << "resize vectors" << endl;
+
     user_is_tracked_.resize(max_num_skel_);
     transforms_.resize(max_num_skel_);
+    confidences_.resize(max_num_skel_);
 
-    for(int i=0;i<max_num_skel_;i++) {
+    for(int i=0;i<max_num_skel_;i++)
+    {
         user_is_tracked_[i] = false;
         transforms_[i].resize(15);
+        confidences_[i] = Eigen::VectorXd::Zero(15);
     }
 
     human_ = env_->GetRobot( "human_model" );
@@ -121,7 +141,36 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
 
     printDofNames();
 
+    set_joint_name_map();
+
     print_ = false;
+}
+
+void SkeletonListener::set_joint_name_map()
+{
+    cout << "set names" << endl;
+
+    names_.clear();
+
+    names_.push_back("head_");
+    names_.push_back("neck_");
+    names_.push_back("torso_");
+
+    names_.push_back("left_shoulder_");
+    names_.push_back("left_elbow_");
+    names_.push_back("left_hand_");
+
+    names_.push_back("right_shoulder_");
+    names_.push_back("right_elbow_" );
+    names_.push_back("right_hand_" );
+
+    names_.push_back("left_hip_");
+    names_.push_back("left_knee_");
+    names_.push_back("left_foot_");
+
+    names_.push_back("right_hip_");
+    names_.push_back("right_knee_");
+    names_.push_back("right_foot_");
 }
 
 void SkeletonListener::listen()
@@ -148,27 +197,15 @@ void SkeletonListener::listen()
 
             try
             {
-                listener.lookupTransform("/openni_depth_frame", "/head_" + num_to_string(i) , ros::Time(0), transforms_[i][0]);
-                listener.lookupTransform("/openni_depth_frame", "/neck_" + num_to_string(i) , ros::Time(0), transforms_[i][1]);
-                listener.lookupTransform("/openni_depth_frame", "/torso_" + num_to_string(i) , ros::Time(0), transforms_[i][2]);
+                for(int j=0;j<int(names_.size()); j++)
+                {
+                    //if( print_ )
+                    //    cout << "listent to pair (" << i << " , " << j << ")" << endl;
 
-                listener.lookupTransform("/openni_depth_frame", "/left_shoulder_" + num_to_string(i) , ros::Time(0), transforms_[i][3]);
-                listener.lookupTransform("/openni_depth_frame", "/left_elbow_" + num_to_string(i), ros::Time(0), transforms_[i][4]);
-                listener.lookupTransform("/openni_depth_frame", "/left_hand_" + num_to_string(i), ros::Time(0), transforms_[i][5]);
+                    listener.lookupTransform( "/openni_depth_frame", names_[j] + num_to_string(i) , ros::Time(0), transforms_[i][j]);
+                }
 
-                listener.lookupTransform("/openni_depth_frame", "/right_shoulder_" + num_to_string(i), ros::Time(0), transforms_[i][6]);
-                listener.lookupTransform("/openni_depth_frame", "/right_elbow_" + num_to_string(i), ros::Time(0), transforms_[i][7]);
-                listener.lookupTransform("/openni_depth_frame", "/right_hand_" + num_to_string(i), ros::Time(0), transforms_[i][8]);
-
-                listener.lookupTransform("/openni_depth_frame", "/left_hip_" + num_to_string(i), ros::Time(0), transforms_[i][9]);
-                listener.lookupTransform("/openni_depth_frame", "/left_knee_" + num_to_string(i), ros::Time(0), transforms_[i][10]);
-                listener.lookupTransform("/openni_depth_frame", "/left_foot_" + num_to_string(i), ros::Time(0), transforms_[i][11]);
-
-                listener.lookupTransform("/openni_depth_frame", "/right_hip_" + num_to_string(i), ros::Time(0), transforms_[i][12]);
-                listener.lookupTransform("/openni_depth_frame", "/right_knee_" + num_to_string(i), ros::Time(0), transforms_[i][13]);
-                listener.lookupTransform("/openni_depth_frame", "/right_foot_" + num_to_string(i), ros::Time(0), transforms_[i][14]);
-
-                user_is_tracked_[i] =  true;
+                user_is_tracked_[i] = true;
             }
             catch (tf::TransformException ex){
                 //ROS_ERROR("%s",ex.what());
@@ -190,7 +227,7 @@ void SkeletonListener::listen()
             //listener_.lookupTransform("/openni_depth_frame", "/turtle1", ros::Time(0), transform);
         }
 
-        cout << "Camera : " << env_->GetViewer()->GetCameraTransform() << endl;
+        //cout << "Camera : " << env_->GetViewer()->GetCameraTransform() << endl;
 
         graphptrs_.clear();
 
@@ -201,7 +238,39 @@ void SkeletonListener::listen()
         }
 
         draw();
+        ros::spinOnce();
         rate.sleep();
+    }
+}
+
+void SkeletonListener::setConfidence( std::string name, double conf )
+{
+    //cout << "set : " << name << endl;
+
+    for(int i=0;i<int(names_.size());i++)
+    {
+        if( name.find( names_[i] ) != std::string::npos )
+        {
+            std::string skel_id = name.substr(names_[i].size());
+            //cout << "--" << name.substr(names_[i].size()) << "--" << endl;
+            int id;
+
+            if( string_to_num<int>( id, skel_id, std::dec) )
+            {
+                cout << "id : " << id << " , " << i << endl;
+                confidences_[id][i] = conf;
+            }
+        }
+    }
+}
+
+void SkeletonListener::readConfidence(const openni_tracker::confidence_array& msg )
+{
+    //cout << "read confidence" << endl;
+
+    for(int i=0;i<int(msg.confidence_array.size()); i++)
+    {
+        setConfidence( msg.confidence_array[i].child_frame_id , msg.confidence_array[i].confidence );
     }
 }
 
@@ -351,7 +420,10 @@ void SkeletonListener::setKinectFrame()
 //! from a set of points
 void SkeletonListener::setHumanConfiguration(int id)
 {
+    if( print_ )
     cout << "Set Human Configuration" << endl;
+
+    cout << "confidence for (" << id  << "): " << confidences_[id].transpose() << endl;
 
     //setEigenPositions(id);
 
@@ -364,6 +436,7 @@ void SkeletonListener::setHumanConfiguration(int id)
 
     Eigen::Vector3d pos;
 
+    if( print_ )
     cout << "Index dof is : " << index_dof << endl;
 
     //    if( data.TORSO.confidence > 0 && data.HIP_LEFT.confidence > 0 && data.HIP_RIGHT.confidence > 0 )
@@ -449,6 +522,7 @@ void SkeletonListener::setHumanConfiguration(int id)
     //    {
     human_->SetJointValues(q);
 
+    if( print_ )
     cout << "Set human torso configuration" << endl;
 
     joint = human_->GetJoint("rShoulderX");
@@ -475,9 +549,12 @@ void SkeletonListener::setHumanConfiguration(int id)
     // selon x
     double alpha1r = atan2( -pos[2] , -pos[1] );
 
+    if( print_ )
     cout << "get joint rShoulderX" << endl;
     index_dof = human_->GetJoint("rShoulderX")->GetDOFIndex();
     q[index_dof] = alpha1r;
+
+    if( print_ )
     cout << "alpha1r : " << alpha1r << endl;
 
     Trot2.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( alpha1r, Eigen::Vector3d::UnitX() ));
@@ -490,9 +567,12 @@ void SkeletonListener::setHumanConfiguration(int id)
     // selon z
     double alpha2r = atan2( pos[0] , -pos[1] );
 
+    if( print_ )
     cout << "get joint rShoulderZ" << endl;
     index_dof =  human_->GetJoint("rShoulderZ")->GetDOFIndex();
     q[index_dof] = alpha2r;
+
+    if( print_ )
     cout << "alpha2r : " << alpha2r << endl;
 
     Trot2.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( alpha2r, Eigen::Vector3d::UnitZ() ));
@@ -504,9 +584,12 @@ void SkeletonListener::setHumanConfiguration(int id)
     // selon y
     double alpha3r = atan2( pos[2], pos[0] );
 
+    if( print_ )
     cout << "get joint rShoulderY" << endl;
     index_dof = human_->GetJoint("rShoulderY")->GetDOFIndex();
     q[index_dof] = alpha3r;
+
+    if( print_ )
     cout << "alpha3r : " << alpha3r << endl;
 
     vect1 = shoulder - pos_[ELBOW_RIGHT];
@@ -518,14 +601,20 @@ void SkeletonListener::setHumanConfiguration(int id)
     // Elbow
     double alpha4r = M_PI - acos( vect1.dot(vect2) ) ;
 
+    if( print_ )
     cout << "get joint rElbowZ" << endl;
     index_dof = human_->GetJoint("rElbowZ")->GetDOFIndex();
     q[index_dof] = alpha4r;
+
+    if( print_ )
     cout << "alpha4r : " << alpha4r << endl;
 
-    print_config(q);
+    if( print_ )
+        print_config(q);
 
     human_->SetJointValues(q);
+
+    if( print_ )
     cout << "Set human right arm configuration" << endl;
     //        /return;
     //    }
