@@ -171,7 +171,7 @@
         <offsetfrom>base</offsetfrom>
         <anchor>0.037432 0 0.139749</anchor>
         <axis>0 0 1</axis>
-        <limitsdeg>-45 45</limitsdeg>
+        <limitsdeg>-180 180</limitsdeg>
     </joint>
     
     <body name="head">

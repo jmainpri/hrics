@@ -10,6 +10,29 @@
 
 #include <Eigen/Dense>
 
+enum kinect_frames
+{
+  HEAD = 0,
+  NECK = 1,
+  TORSO = 2,
+
+  SHOULDER_LEFT = 3,
+  ELBOW_LEFT = 4,
+  HAND_LEFT = 5,
+
+  SHOULDER_RIGHT = 6,
+  ELBOW_RIGHT = 7,
+  HAND_RIGHT = 8,
+
+  HIP_LEFT = 9,
+  KNEE_LEFT = 10,
+  FOOT_LEFT = 11,
+
+  HIP_RIGHT = 12,
+  KNEE_RIGHT = 13,
+  FOOT_RIGHT = 14
+};
+
 class SkeletonListener
 {
 public:
@@ -19,31 +42,9 @@ public:
 
 private:
 
-    enum kinect_frames
-    {
-      HEAD = 0,
-      NECK = 1,
-      TORSO = 2,
-
-      SHOULDER_LEFT = 3,
-      ELBOW_LEFT = 4,
-      HAND_LEFT = 5,
-
-      SHOULDER_RIGHT = 6,
-      ELBOW_RIGHT = 7,
-      HAND_RIGHT = 8,
-
-      KNEE_RIGHT = 9,
-      HIP_LEFT = 10,
-      FOOT_LEFT = 11,
-
-      KNEE_LEFT = 12,
-      HIP_RIGHT = 13,
-      FOOT_RIGHT = 14
-    };
-
     void drawFrame(const Eigen::Affine3d& t);
     void draw();
+
     void setEigenPositions(int id);
     void setHumanConfiguration(int id);
     void setKinectFrame();
