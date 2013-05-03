@@ -10,7 +10,8 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     __description = "A very simple plugin.";
     cout << __description << endl;
     RegisterCommand("numbodies",boost::bind(&KinectProblem::NumBodies,this,_1,_2),"returns bodies");
-    RegisterCommand("load",boost::bind(&KinectProblem::Load, this,_1,_2),"loads a given file");
+    RegisterCommand("startlistening",boost::bind(&KinectProblem::StartListening, this,_1,_2),"starts listening to the tf frames");
+    RegisterCommand("setkinectframe",boost::bind(&KinectProblem::SetKinectFrame, this,_1,_2),"sets the kinect frame");
 
     _skel_listen = new SkeletonListener(penv);
 }
@@ -78,14 +79,29 @@ bool KinectProblem::NumBodies(ostream& sout, istream& sinput)
     return true;
 }
 
-bool KinectProblem::Load(ostream& sout, istream& sinput)
+bool KinectProblem::StartListening(ostream& sout, istream& sinput)
 {
-//    string filename;
-//    sinput >> filename;
-//    bool bSuccess = GetEnv()->Load(filename.c_str());     // load the file
-//    return bSuccess;
     //_skel_listen->listen();
     boost::thread( &SkeletonListener::listen, _skel_listen );
+    return true;
+}
+
+bool KinectProblem::SetKinectFrame(ostream& sout, istream& sinput)
+{
+    double TX = 0;
+    double TY = 0;
+    double TZ = 0;
+    double RotZ = 0;
+    double RotY = 0;
+
+    sinput >> TX;
+    sinput >> TY;
+    sinput >> TZ;
+    sinput >> RotZ;
+    sinput >> RotY;
+
+    _skel_listen->setKinectFrame(TX,TY,TZ,RotZ,RotY);
+
     return true;
 }
 

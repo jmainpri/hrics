@@ -22,7 +22,8 @@ public:
     virtual bool SendCommand(std::ostream& sout, std::istream& sinput);
 
     bool NumBodies(ostream& sout, istream& sinput);
-    bool Load(ostream& sout, istream& sinput);
+    bool StartListening(ostream& sout, istream& sinput);
+    bool SetKinectFrame(ostream& sout, istream& sinput);
 
 private:
     string _strRobotName; ///< name of the active robot

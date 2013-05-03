@@ -40,6 +40,8 @@ public:
 
     void listen();
 
+    void setKinectFrame(double TX = 0, double TY = 0, double TZ = 0, double RotZ = 0, double RotY = 0);
+
 private:
 
     void drawFrame(const Eigen::Affine3d& t);
@@ -47,7 +49,7 @@ private:
 
     void setEigenPositions(int id);
     void setHumanConfiguration(int id);
-    void setKinectFrame();
+
     void printDofNames();
     //void setConfidence( std::string name, double conf );
     //void readConfidence(const openni_tracker::confidence_array& msg );

@@ -3,9 +3,6 @@
 
 #include <Eigen/Geometry>
 
-using std::cout;
-using std::endl;
-
 template <typename T>
 std::string num_to_string ( T Number )
 {
@@ -23,6 +20,8 @@ bool string_to_num(T& t,
     return !(iss >> f >> t).fail();
 }
 
+using std::cout;
+using std::endl;
 
 Eigen::Vector3d or_vector_to_eigen(const OpenRAVE::Vector& pos)
 {
@@ -140,7 +139,7 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
     env_->GetViewer()->SetCamera( Tcam );
     //env_->GetViewer()->setCamera( 0.262839, -0.733602, -0.623389, 0.0642694, 2.99336, -0.755646, 2.81558 );
 
-    setKinectFrame();
+    //setKinectFrame();
 
     printDofNames();
 
@@ -384,21 +383,17 @@ void SkeletonListener::draw()
     graphptrs_.push_back( figure );
 }
 
-void SkeletonListener::setKinectFrame()
+void SkeletonListener::setKinectFrame( double TX, double TY, double TZ, double RotZ, double RotY )
 {
+    RotZ = M_PI * RotZ / 180;
+    RotY = M_PI * RotY / 180;
+
     Eigen::Affine3d T_Tra,T_Pan,T_Til;
     Eigen::Matrix3d kin_cam;
-
-    double TX = 0; double TY = 0; double TZ = 0;
-    double RotZ = 0; double RotY = 0;
 
     //         Y  X                  Z  Y
     //         | /                   | /
     // Kinect  |/ ____ Z  ,   World  |/_____X
-
-    //  kin_cam(0,0) = 0.0;  kin_cam(0,1) = 0.0;  kin_cam(0,2) = 1.0;
-    //  kin_cam(1,0) = 1.0;  kin_cam(1,1) = 0.0;  kin_cam(1,2) = 0.0;
-    //  kin_cam(2,0) = 0.0;  kin_cam(2,1) = 1.0;  kin_cam(2,2) = 0.0;
 
     kin_cam(0,0) = 1.0;  kin_cam(0,1) =  0.0;  kin_cam(0,2) = 0.0;
     kin_cam(1,0) = 0.0;  kin_cam(1,1) = -1.0;  kin_cam(1,2) = 0.0;
@@ -419,18 +414,6 @@ void SkeletonListener::setKinectFrame()
     cout << "T_Til : " << endl << T_Til.matrix() << endl;
 
     kinect_to_origin_ =  T_Tra * T_Pan * T_Til * kinect_to_origin_;
-
-    //    Eigen::AngleAxisd( TorsoX, Eigen::Vector3d::UnitX() ));
-
-    //    p3d_mat4Pos( T_Tra, mKinectTX, mKinectTY, mKinectTZ, 0, 0, 0 );
-    //    p3d_mat4Pos( T_Pan, 0, 0, 0, 0, 0, mKinectRotZ );
-    //    p3d_mat4Pos( T_Til, 0, 0, 0, 0, mKinectRotY, 0 );
-
-    //    // Trans * Pan * Tilt * Cam = KinectToOrigin
-    //    p3d_mat4Mult( T_Tra , T_Pan , tmp1 );
-    //    p3d_mat4Mult( tmp1, T_Til, tmp2 );
-    //    p3d_mat4Mult( tmp2, mKinectToOrigin, tmp1);
-    //    p3d_mat4Copy( tmp1, mKinectToOrigin );
 }
 
 //! @ingroup KINECT
