@@ -239,7 +239,7 @@ void SkeletonListener::listen()
             setEigenPositions( tracked_user_id_[i] );
 
             if( human_ )
-                setHumanfiguration( tracked_user_id_[i] );
+                setHumanConfiguration( tracked_user_id_[i] );
         }
 
         draw();

@@ -59,7 +59,7 @@ if( NOT OPENRAVE_FOUND )
 endif( NOT OPENRAVE_FOUND )
 
 #uncomment if you have defined messages
-rosbuild_genmsg()
+#rosbuild_genmsg()
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
