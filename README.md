@@ -3,12 +3,12 @@ hrics-or-plugins
 
 hrics-or-plugins is a Human Robot Interaction Cost Space (HRICS) plugin suite for Openrave
 
-== How to run the kinect update ==
+##  How to run the kinect update
 
 To use the get the kinect data you need to install ros (fuerte) though
 this might work in groovy (not tested).
 
-=== Install and launch openni_tracker ===
+### Install and launch openni_tracker
 
 First your need to install the ROS package named openni_tracker in fuerte
 
@@ -29,7 +29,7 @@ And then:
 In case your not able to make that part work there is a package relying on the 
 new version of NiTE in the repository.
 
-=== Install and launch the openrave plugin ===
+### Install and launch the openrave plugin
 
 This plugin relies on the 0.8.2 version of OR.
 
