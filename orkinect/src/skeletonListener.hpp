@@ -3,8 +3,8 @@
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
-#include "openni_tracker/confidence.h"
-#include "openni_tracker/confidence_array.h"
+//#include "openni_tracker/confidence.h"
+//#include "openni_tracker/confidence_array.h"
 
 #include <openrave/openrave.h>
 
@@ -49,8 +49,8 @@ private:
     void setHumanConfiguration(int id);
     void setKinectFrame();
     void printDofNames();
-    void setConfidence( std::string name, double conf );
-    void readConfidence(const openni_tracker::confidence_array& msg );
+    //void setConfidence( std::string name, double conf );
+    //void readConfidence(const openni_tracker::confidence_array& msg );
     void set_joint_name_map();
 
     ros::NodeHandle* node_;

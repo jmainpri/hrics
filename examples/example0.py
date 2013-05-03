@@ -52,7 +52,7 @@ def launch_kinect():
     print "start"
     orEnv.SetDebugLevel(DebugLevel.Verbose)
     orEnv.Reset()
-    orEnv.Load("../ormodels/human_wpi.xml")
+    #orEnv.Load("../ormodels/human_wpi.xml")
     
     #array([[ 0.04479408, -0.01490569,  0.99888503, -2.46015573],
     #       [-0.98325896, -0.17743756,  0.04144557,  0.13977778],

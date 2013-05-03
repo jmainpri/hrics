@@ -43,7 +43,7 @@ message(STATUS "PLUGIN_INSTALL_DIR : " ${PLUGIN_INSTALL_DIR})
 # --------------------------------------------------
 #find_package(LibXml2 REQUIRED)
 #include_directories(${LIBXML2_INCLUDE_DIR})
-include_directories("/home/jmainpri/fuerte_workspace/openni_tracker/msg_gen/cpp/include")
+#include_directories("/home/jmainpri/fuerte_workspace/openni_tracker/msg_gen/cpp/include")
 
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})

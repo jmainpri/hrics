@@ -72,14 +72,6 @@ void print_config(const std::vector<double>& q)
 
 Eigen::Affine3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
 {
-    //    m[0] = 1; m[1] = 0; m[2] = 0;
-    //    m[4] = 0; m[5] = 1; m[6] = 0;
-    //    m[8] = 0; m[9] = 0; m[10] = 1;
-
-    //    right.x = m[0]; up.x = m[1]; dir.x = m[2];
-    //    right.y = m[4]; up.y = m[5]; dir.y = m[6];
-    //    right.z = m[8]; up.z = m[9]; dir.z = m[10];
-
     OpenRAVE::RaveTransformMatrix<double> t( joint->GetFirstAttached()->GetTransform() );
     OpenRAVE::Vector right,up,dir,pos;
     t.Extract( right, up, dir, pos);
@@ -107,7 +99,7 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
     char** argv;
     ros::init( argc, argv, "orkinect" );
     node_ = new ros::NodeHandle;
-    sub_ = node_->subscribe( "openni_tracker/openni_confidences", 1, &SkeletonListener::readConfidence, this );
+    //sub_ = node_->subscribe( "openni_tracker/openni_confidences", 1, &SkeletonListener::readConfidence, this );
 
     cout << "start suscriber" << endl;
 
@@ -140,12 +132,10 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
     Tcam.trans.y = -0.0481125;
     Tcam.trans.z =  0.888456;
 
-    //    0.420745 -0.574182 0.605033 -0.356683 -2.61378 -0.0481125 0.888456
-
-    //     OpenRAVE::RaveTransformMatrix<float> T;
-    //     T.m[0] = -0.704743; T.m[1] = 0.304894; T.m[2] = -0.640607;  T.trans.x =  0; 1.11025;
-    //     T.m[4] = -0.310475; T.m[5] =-0.944433; T.m[6] = -0.10794;   T.trans.y = 0.112955;
-    //     T.m[8] = -0.637921; T.m[9] = 0.122822; T.m[10] =  0.760244; T.trans.z = -0.589495;
+    // OpenRAVE::RaveTransformMatrix<float> T;
+    // T.m[0] = -0.704743; T.m[1] = 0.304894; T.m[2] = -0.640607;  T.trans.x =  0; 1.11025;
+    // T.m[4] = -0.310475; T.m[5] =-0.944433; T.m[6] = -0.10794;   T.trans.y = 0.112955;
+    // T.m[8] = -0.637921; T.m[9] = 0.122822; T.m[10] =  0.760244; T.trans.z = -0.589495;
 
     env_->GetViewer()->SetCamera( Tcam );
     //env_->GetViewer()->setCamera( 0.262839, -0.733602, -0.623389, 0.0642694, 2.99336, -0.755646, 2.81558 );
@@ -249,7 +239,7 @@ void SkeletonListener::listen()
             setEigenPositions( tracked_user_id_[i] );
 
             if( human_ )
-                setHumanConfiguration( tracked_user_id_[i] );
+                setHumanfiguration( tracked_user_id_[i] );
         }
 
         draw();
@@ -262,6 +252,7 @@ void SkeletonListener::listen()
     }
 }
 
+/**
 void SkeletonListener::setConfidence( std::string name, double conf )
 {
     //cout << "set : " << name << endl;
@@ -296,6 +287,7 @@ void SkeletonListener::readConfidence(const openni_tracker::confidence_array& ms
         setConfidence( msg.confidence_array[i].child_frame_id , msg.confidence_array[i].confidence );
     }
 }
+**/
 
 void SkeletonListener::printDofNames()
 {
@@ -391,8 +383,6 @@ void SkeletonListener::draw()
     figure = env_->plot3( &vpoints[0].x, vpoints.size(), sizeof(vpoints[0]), 0.05, &vcolors[0], 1 );
     graphptrs_.push_back( figure );
 }
-
-
 
 void SkeletonListener::setKinectFrame()
 {
