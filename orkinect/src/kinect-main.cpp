@@ -1,6 +1,5 @@
 #include "kinect-main.hpp"
 #include "skeletonListener.hpp"
-
 #include <boost/thread.hpp>
 
 #define FORIT(it, v) for(it = (v).begin(); it != (v).end(); (it)++)
@@ -12,8 +11,20 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("numbodies",boost::bind(&KinectProblem::NumBodies,this,_1,_2),"returns bodies");
     RegisterCommand("startlistening",boost::bind(&KinectProblem::StartListening, this,_1,_2),"starts listening to the tf frames");
     RegisterCommand("setkinectframe",boost::bind(&KinectProblem::SetKinectFrame, this,_1,_2),"sets the kinect frame");
+    RegisterCommand("setbuttonstate",boost::bind(&KinectProblem::SetButtonState, this,_1,_2),"sets the button state");
+    RegisterCommand("startrecording",boost::bind(&KinectProblem::StartRecording, this,_1,_2),"start recording motion");
+    RegisterCommand("savetofile",boost::bind(&KinectProblem::SaveToFile, this, _1, _2), "save recorded motion to file");
 
     _skel_listen = new SkeletonListener(penv);
+    RobotBasePtr human=penv->GetRobot( "human_model" );
+    if (human == NULL){
+      _motion_recorder = NULL;
+      cout << "No Human in Scene" << endl;
+    }
+    else {
+         _motion_recorder = new HRICS::RecordMotion(human);
+    }
+
 }
 
 void KinectProblem::Destroy()
@@ -82,6 +93,7 @@ bool KinectProblem::NumBodies(ostream& sout, istream& sinput)
 bool KinectProblem::StartListening(ostream& sout, istream& sinput)
 {
     //_skel_listen->listen();
+    _skel_listen->setMotionRecorder(_motion_recorder);
     boost::thread( &SkeletonListener::listen, _skel_listen );
     return true;
 }
@@ -102,6 +114,29 @@ bool KinectProblem::SetKinectFrame(ostream& sout, istream& sinput)
 
     _skel_listen->setKinectFrame(TX,TY,TZ,RotZ,RotY);
 
+    return true;
+}
+
+bool KinectProblem::SetButtonState(ostream &sout, istream &sinput)
+{
+    bool temp;
+    sinput >> temp;
+    _skel_listen->setRecord(temp);
+
+//    cout << "set buton to " << temp << endl;
+
+    return true;
+}
+
+bool KinectProblem::StartRecording(ostream& sout, istream &sinput)
+{
+    _motion_recorder->setRobot(_strRobotName);
+    return true;
+}
+
+bool KinectProblem::SaveToFile(ostream& sout, istream &sinput)
+{
+    _motion_recorder->saveCurrentConfig();
     return true;
 }
 

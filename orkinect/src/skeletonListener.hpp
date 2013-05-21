@@ -6,9 +6,12 @@
 //#include "openni_tracker/confidence.h"
 //#include "openni_tracker/confidence_array.h"
 
+#include "recordMotion.hpp"
+
 #include <openrave/openrave.h>
 
 #include <Eigen/Dense>
+
 
 enum kinect_frames
 {
@@ -38,9 +41,15 @@ class SkeletonListener
 public:
     SkeletonListener(OpenRAVE::EnvironmentBasePtr penv);
 
+    void listen_once();
+
     void listen();
 
     void setKinectFrame(double TX = 0, double TY = 0, double TZ = 0, double RotZ = 0, double RotY = 0);
+
+    void setMotionRecorder(HRICS::RecordMotion* motion_recorder);
+
+    void setRecord(bool buttonState);
 
 private:
 
@@ -57,6 +66,10 @@ private:
 
     ros::NodeHandle* node_;
     ros::Subscriber sub_;
+    ros::Rate* rate_;
+    tf::TransformListener* listener_;
+
+    int listen_iter_;
 
     std::vector< std::vector<tf::StampedTransform> > transforms_;
     std::vector<Eigen::VectorXd> confidences_;
@@ -66,6 +79,8 @@ private:
     Eigen::Affine3d kinect_to_origin_;
     int max_num_skel_;
 
+    bool button_pressed_;
+
     OpenRAVE::EnvironmentBasePtr env_;
     OpenRAVE::RobotBasePtr human_;
     std::vector<boost::shared_ptr<void> > graphptrs_;
@@ -73,6 +88,7 @@ private:
     bool print_;
 
     std::vector<std::string> names_;
+    HRICS::RecordMotion* _motion_recorder;
 };
 
 #endif // SKELETONLISTENER_HPP

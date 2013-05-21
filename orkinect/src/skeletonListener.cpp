@@ -83,6 +83,8 @@ Eigen::Affine3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
     T.linear() = rot;
     T.translation() = or_vector_to_eigen( joint->GetAnchor() );
 
+
+
     //cout << "T : " << endl << T.matrix() << endl;
 
     return T;
@@ -145,7 +147,10 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
 
     set_joint_name_map();
 
+//    listen_iter_= 0;
+    button_pressed_ = false;
     print_ = false;
+
 }
 
 void SkeletonListener::set_joint_name_map()
@@ -175,81 +180,107 @@ void SkeletonListener::set_joint_name_map()
     names_.push_back("right_foot_");
 }
 
+void SkeletonListener::setRecord(bool buttonState){
+    button_pressed_ = buttonState;
+}
+
+void SkeletonListener::listen_once()
+{
+//    cout << "listen once " << listen_iter_++ << endl;
+
+    tracked_user_id_.clear();
+
+    for(int i=0;i<10;i++)
+    {
+        user_is_tracked_[i] = false;
+
+        if( !listener_->frameExists("/head_" + num_to_string(i)))
+            continue;
+
+        if( print_ )
+            cout << "listening to user " << i << endl;
+
+        ros::Time previous_time = transforms_[i][0].stamp_;
+
+        try
+        {
+            for(int j=0;j<int(names_.size()); j++)
+            {
+                //if( print_ )
+                //    cout << "listent to pair (" << i << " , " << j << ")" << endl;
+
+                listener_->lookupTransform( "/openni_depth_frame", names_[j] + num_to_string(i) , ros::Time(0), transforms_[i][j]);
+            }
+
+            user_is_tracked_[i] = true;
+        }
+        catch (tf::TransformException ex){
+            //ROS_ERROR("%s",ex.what());
+        }
+
+        if( previous_time == transforms_[i][0].stamp_ )
+        {
+            user_is_tracked_[i] = false;
+        }
+
+        if( user_is_tracked_[i] )
+        {
+            tracked_user_id_.push_back( i );
+
+            if( print_ )
+                cout << "tracking id : " << i << endl;
+        }
+
+        //listener_.lookupTransform("/openni_depth_frame", "/turtle1", ros::Time(0), transform);
+    }
+
+    //cout << "Camera : " << env_->GetViewer()->GetCameraTransform() << endl;
+
+    graphptrs_.clear();
+
+    for(int i=0; i<int(tracked_user_id_.size()); i++)
+    {
+        setEigenPositions( tracked_user_id_[i] );
+
+        if( human_ )
+            setHumanConfiguration( tracked_user_id_[i] );
+    }
+
+    if(button_pressed_)
+    {
+        _motion_recorder->m_is_recording = true;
+        _motion_recorder->saveCurrentConfig();
+//        cout << "Button Pressed!" << endl;
+    }
+    else if (!button_pressed_ && _motion_recorder->m_is_recording )
+    {
+        _motion_recorder->saveCurrentToCSV();
+        //_motion_recorder->reset();
+        _motion_recorder->clearCurrentMotion();
+        _motion_recorder->m_is_recording = false;
+    }
+
+    draw();
+
+    if( human_ == NULL && !tracked_user_id_.empty() )
+        SkeletonDrawing::drawLineSegmentModel( env_, graphptrs_, pos_ );
+
+    ros::spinOnce();
+    rate_->sleep();
+}
+
 void SkeletonListener::listen()
 {
-    ros::Rate rate(10.0);
-
-    tf::TransformListener listener;
+    //global_motionRecorder->setRobot(_strRobotName);
+    rate_ = new ros::Rate(40.0);
+    listener_ = new tf::TransformListener;
 
     while (node_->ok())
     {
-        tracked_user_id_.clear();
-
-        for(int i=0;i<10;i++)
-        {
-            user_is_tracked_[i] = false;
-
-            if( !listener.frameExists("/head_" + num_to_string(i)))
-                continue;
-
-            if( print_ )
-                cout << "listening to user " << i << endl;
-
-            ros::Time previous_time = transforms_[i][0].stamp_;
-
-            try
-            {
-                for(int j=0;j<int(names_.size()); j++)
-                {
-                    //if( print_ )
-                    //    cout << "listent to pair (" << i << " , " << j << ")" << endl;
-
-                    listener.lookupTransform( "/openni_depth_frame", names_[j] + num_to_string(i) , ros::Time(0), transforms_[i][j]);
-                }
-
-                user_is_tracked_[i] = true;
-            }
-            catch (tf::TransformException ex){
-                //ROS_ERROR("%s",ex.what());
-            }
-
-            if( previous_time == transforms_[i][0].stamp_ )
-            {
-                user_is_tracked_[i] = false;
-            }
-
-            if( user_is_tracked_[i] )
-            {
-                tracked_user_id_.push_back( i );
-
-                if( print_ )
-                    cout << "tracking id : " << i << endl;
-            }
-
-            //listener_.lookupTransform("/openni_depth_frame", "/turtle1", ros::Time(0), transform);
-        }
-
-        //cout << "Camera : " << env_->GetViewer()->GetCameraTransform() << endl;
-
-        graphptrs_.clear();
-
-        for(int i=0; i<int(tracked_user_id_.size()); i++)
-        {
-            setEigenPositions( tracked_user_id_[i] );
-
-            if( human_ )
-                setHumanConfiguration( tracked_user_id_[i] );
-        }
-
-        draw();
-
-        if( human_ == NULL && !tracked_user_id_.empty() )
-            SkeletonDrawing::drawLineSegmentModel( env_, graphptrs_, pos_ );
-
-        ros::spinOnce();
-        rate.sleep();
+        listen_once();
     }
 }
+
 
 /**
 void SkeletonListener::setConfidence( std::string name, double conf )
@@ -415,6 +446,13 @@ void SkeletonListener::setKinectFrame( double TX, double TY, double TZ, double R
 
     kinect_to_origin_ =  T_Tra * T_Pan * T_Til * kinect_to_origin_;
 }
+
+void SkeletonListener::setMotionRecorder(HRICS::RecordMotion* motion_recorder)
+{
+    _motion_recorder = motion_recorder;
+}
+
+
 
 //! @ingroup KINECT
 //! Computes a condfiguration

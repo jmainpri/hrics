@@ -41,8 +41,8 @@ message(STATUS "PLUGIN_INSTALL_DIR : " ${PLUGIN_INSTALL_DIR})
 
 # Find important packages
 # --------------------------------------------------
-#find_package(LibXml2 REQUIRED)
-#include_directories(${LIBXML2_INCLUDE_DIR})
+find_package(LibXml2 REQUIRED)
+include_directories(${LIBXML2_INCLUDE_DIR})
 #include_directories("/home/jmainpri/fuerte_workspace/openni_tracker/msg_gen/cpp/include")
 
 find_package(Eigen3 REQUIRED)
@@ -66,7 +66,7 @@ endif( NOT OPENRAVE_FOUND )
 link_directories(${OPENRAVE_LINK_DIRS})
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(${PROJECT_NAME} src/kinect-main.cpp src/skeletonListener.cpp src/skeletonDrawing.cpp )
+rosbuild_add_library(${PROJECT_NAME} src/kinect-main.cpp src/skeletonListener.cpp src/skeletonDrawing.cpp src/recordMotion.cpp )
 target_link_libraries(${PROJECT_NAME} ${OPENRAVE_LIBRARY})
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)

@@ -1,6 +1,7 @@
 #ifndef KINECTMAIN_HPP
 #define KINECTMAIN_HPP
 
+#include "recordMotion.hpp"
 #include <openrave/openrave.h>
 #include <openrave/plugin.h>
 #include <boost/bind.hpp>
@@ -24,11 +25,17 @@ public:
     bool NumBodies(ostream& sout, istream& sinput);
     bool StartListening(ostream& sout, istream& sinput);
     bool SetKinectFrame(ostream& sout, istream& sinput);
+    bool SetButtonState(ostream& sout, istream& sinput);
+    bool StartRecording(ostream& sout, istream& sinput);
+    bool SaveToFile(ostream& sout, istream& sinput);
+
 
 private:
     string _strRobotName; ///< name of the active robot
     RobotBasePtr robot;
     SkeletonListener* _skel_listen;
+    HRICS::RecordMotion* _motion_recorder;
+
 };
 
 #endif // HRICSMAIN_HPP
