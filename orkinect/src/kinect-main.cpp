@@ -12,19 +12,35 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("startlistening",boost::bind(&KinectProblem::StartListening, this,_1,_2),"starts listening to the tf frames");
     RegisterCommand("setkinectframe",boost::bind(&KinectProblem::SetKinectFrame, this,_1,_2),"sets the kinect frame");
     RegisterCommand("setbuttonstate",boost::bind(&KinectProblem::SetButtonState, this,_1,_2),"sets the button state");
-    RegisterCommand("startrecording",boost::bind(&KinectProblem::StartRecording, this,_1,_2),"start recording motion");
-    RegisterCommand("savetofile",boost::bind(&KinectProblem::SaveToFile, this, _1, _2), "save recorded motion to file");
+    RegisterCommand("loadtrajectoryfile",boost::bind(&KinectProblem::LoadTrajectoryFile, this,_1,_2),"Loads the trajectory file from given path");
+    RegisterCommand("playtrajectoryfiles",boost::bind(&KinectProblem::PlayTrajectoryFiles, this,_1,_2),"Plays the trajectory files");
 
     _skel_listen = new SkeletonListener(penv);
-    RobotBasePtr human=penv->GetRobot( "human_model" );
-    if (human == NULL){
-      _motion_recorder = NULL;
+    RobotBasePtr human1 = penv->GetRobot( "human_model" );
+    RobotBasePtr human2 = penv->GetRobot("human_model_blue");
+
+    if (human1 == NULL && human2 == NULL){
+//      _motion_recorders = NULL;
       cout << "No Human in Scene" << endl;
     }
-    else {
-         _motion_recorder = new HRICS::RecordMotion(human);
+    if(human1 != NULL){
+        HRICS::RecordMotion* temp = new HRICS::RecordMotion(human1);
+        temp->setRobotId(0);
+        _motion_recorders.push_back( temp );
+    }
+    if(human2 != NULL){
+        HRICS::RecordMotion* temp = new HRICS::RecordMotion(human2);
+        temp->setRobotId(1);
+        _motion_recorders.push_back( temp );
     }
 
+    if( !_motion_recorders.empty() )
+    {
+        _motion_player = new PlayMotion( penv, _motion_recorders );
+    }
+    else {
+        _motion_player = NULL;
+    }
 }
 
 void KinectProblem::Destroy()
@@ -93,7 +109,7 @@ bool KinectProblem::NumBodies(ostream& sout, istream& sinput)
 bool KinectProblem::StartListening(ostream& sout, istream& sinput)
 {
     //_skel_listen->listen();
-    _skel_listen->setMotionRecorder(_motion_recorder);
+    _skel_listen->setMotionRecorder(_motion_recorders);
     boost::thread( &SkeletonListener::listen, _skel_listen );
     return true;
 }
@@ -128,15 +144,28 @@ bool KinectProblem::SetButtonState(ostream &sout, istream &sinput)
     return true;
 }
 
-bool KinectProblem::StartRecording(ostream& sout, istream &sinput)
+bool KinectProblem::LoadTrajectoryFile(ostream& sout, istream& sinput)
 {
-    _motion_recorder->setRobot(_strRobotName);
+    string path;
+    sinput >> path;
+    _filepaths.push_back( path );
+
     return true;
 }
 
-bool KinectProblem::SaveToFile(ostream& sout, istream &sinput)
+bool KinectProblem::PlayTrajectoryFiles(ostream& sout, istream& sinput)
 {
-    _motion_recorder->saveCurrentConfig();
+    if( _motion_player == NULL )
+        cout << "motion player is not initialized" << endl;
+
+//    std::vector<std::string> filepaths;
+
+//    filepaths.push_back( "/home/rafihayne/statFiles/recorded_motion/motion_saved_00000_00000.csv" );
+//  filepaths.push_back( "/home/rafihayne/statFiles/recorded_motion/motion_saved_00001_00000.csv" );
+
+    boost::thread( &PlayMotion::play, _motion_player, _filepaths );
+//    _motion_player->play( _filepaths );
+
     return true;
 }
 

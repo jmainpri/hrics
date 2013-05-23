@@ -111,18 +111,30 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
     user_is_tracked_.resize(max_num_skel_);
     transforms_.resize(max_num_skel_);
     confidences_.resize(max_num_skel_);
+    pos_.resize(max_num_skel_);
 
     for(int i=0;i<max_num_skel_;i++)
     {
         user_is_tracked_[i] = false;
         transforms_[i].resize(15);
-        confidences_[i] = Eigen::VectorXd::Zero(15);
+        confidences_[i] = Eigen::VectorXd::Zero(15);    
     }
 
-    human_ = env_->GetRobot( "human_model" );
 
-    if( human_ )
-        cout << "Set Human Robot : " << human_->GetName() << endl;
+    humans_.clear();
+
+    OpenRAVE::RobotBasePtr human1 = env_->GetRobot( "human_model" );
+    OpenRAVE::RobotBasePtr human2 = env_->GetRobot( "human_model_blue" );
+
+    if( human1 != NULL ) {
+        cout << "Add Human Robot : " << human1->GetName() << endl;
+        humans_.push_back( human1 );
+    }
+
+    if( human2 != NULL ) {
+        cout << "Add Human Robot : " << human2->GetName() << endl;
+        humans_.push_back( human2 );
+    }
 
     OpenRAVE::RaveTransform<float> Tcam;
     Tcam.rot.x = 0.420745;
@@ -187,7 +199,6 @@ void SkeletonListener::setRecord(bool buttonState){
 void SkeletonListener::listen_once()
 {
 //    cout << "listen once " << listen_iter_++ << endl;
-
     tracked_user_id_.clear();
 
     for(int i=0;i<10;i++)
@@ -242,28 +253,47 @@ void SkeletonListener::listen_once()
     {
         setEigenPositions( tracked_user_id_[i] );
 
-        if( human_ )
-            setHumanConfiguration( tracked_user_id_[i] );
+        if( !humans_.empty() )
+        {
+            if( i < humans_.size() )
+            {
+                setHumanConfiguration( tracked_user_id_[i], humans_[i] );
+            }
+        }
     }
 
-    if(button_pressed_)
+    if( !_motion_recorders.empty() )
     {
-        _motion_recorder->m_is_recording = true;
-        _motion_recorder->saveCurrentConfig();
-//        cout << "Button Pressed!" << endl;
-    }
-    else if (!button_pressed_ && _motion_recorder->m_is_recording )
-    {
-        _motion_recorder->saveCurrentToCSV();
-        //_motion_recorder->reset();
-        _motion_recorder->clearCurrentMotion();
-        _motion_recorder->m_is_recording = false;
+        if( button_pressed_ )
+        {
+            for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
+                _motion_recorders[i]->m_is_recording = true;
+                _motion_recorders[i]->saveCurrentConfig();
+            }
+            //        cout << "Button Pressed!" << endl;
+        }
+        else if (!button_pressed_)
+        {
+            for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
+                if (_motion_recorders[i]->m_is_recording) {
+                    cout << "record " << i << endl;
+                    _motion_recorders[i]->saveCurrentToCSV();
+                    _motion_recorders[i]->clearCurrentMotion();
+                    _motion_recorders[i]->m_is_recording = false;
+                }
+            }
+        }
     }
 
     draw();
 
-    if( human_ == NULL && !tracked_user_id_.empty() )
-        SkeletonDrawing::drawLineSegmentModel( env_, graphptrs_, pos_ );
+    if( humans_.empty() && !tracked_user_id_.empty() )
+    {
+        for(int i=0; i<int(tracked_user_id_.size()); i++)
+        {
+            SkeletonDrawing::drawLineSegmentModel( tracked_user_id_[i], env_, graphptrs_, pos_ );
+        }
+    }
 
     ros::spinOnce();
     rate_->sleep();
@@ -321,10 +351,10 @@ void SkeletonListener::readConfidence(const openni_tracker::confidence_array& ms
 
 void SkeletonListener::printDofNames()
 {
-    if( human_ == NULL )
+    if( humans_.empty() )
         return;
 
-    const std::vector<OpenRAVE::KinBody::JointPtr> joints = human_->GetJoints();
+    const std::vector<OpenRAVE::KinBody::JointPtr> joints = humans_[0]->GetJoints();
 
     for( int i=0;i<int(joints.size());i++)
     {
@@ -334,16 +364,16 @@ void SkeletonListener::printDofNames()
 
 void SkeletonListener::setEigenPositions(int id)
 {
-    pos_.clear();
-    pos_.resize(15);
+    pos_[id].clear();
+    pos_[id].resize(15);
     for(int i=0;i<15;i++)
     {
         tf::Vector3 p = transforms_[id][i].getOrigin();
-        pos_[i][0] = p[0];
-        pos_[i][1] = p[1];
-        pos_[i][2] = p[2];
+        pos_[id][i][0] = p[0];
+        pos_[id][i][1] = p[1];
+        pos_[id][i][2] = p[2];
 
-        pos_[i] = kinect_to_origin_ * pos_[i];
+        pos_[id][i] = kinect_to_origin_ * pos_[id][i];
     }
 }
 
@@ -395,9 +425,9 @@ void SkeletonListener::draw()
             // float y = transforms_[ tracked_user_id_[i] ][j].getOrigin().getY();
             // float z = transforms_[ tracked_user_id_[i] ][j].getOrigin().getZ();
 
-            float x = pos_[j][0];
-            float y = pos_[j][1];
-            float z = pos_[j][2];
+            float x = pos_[tracked_user_id_[i]][j][0];
+            float y = pos_[tracked_user_id_[i]][j][1];
+            float z = pos_[tracked_user_id_[i]][j][2];
 
             OpenRAVE::RaveVector<float> pnt(x,y,z);
             vpoints.push_back(pnt);
@@ -447,9 +477,9 @@ void SkeletonListener::setKinectFrame( double TX, double TY, double TZ, double R
     kinect_to_origin_ =  T_Tra * T_Pan * T_Til * kinect_to_origin_;
 }
 
-void SkeletonListener::setMotionRecorder(HRICS::RecordMotion* motion_recorder)
+void SkeletonListener::setMotionRecorder(std::vector<HRICS::RecordMotion*> motion_recorder)
 {
-    _motion_recorder = motion_recorder;
+    _motion_recorders = motion_recorder;
 }
 
 
@@ -457,9 +487,9 @@ void SkeletonListener::setMotionRecorder(HRICS::RecordMotion* motion_recorder)
 //! @ingroup KINECT
 //! Computes a condfiguration
 //! from a set of points
-void SkeletonListener::setHumanConfiguration(int id)
+void SkeletonListener::setHumanConfiguration(int id, OpenRAVE::RobotBasePtr human)
 {
-    if( human_ == NULL)
+    if( human == NULL)
         return;
 
     if( print_ )
@@ -468,11 +498,11 @@ void SkeletonListener::setHumanConfiguration(int id)
     //setEigenPositions(id);
 
     // Set pelvis
-    OpenRAVE::KinBody::JointPtr joint = human_->GetJoint("PelvisTransX");
+    OpenRAVE::KinBody::JointPtr joint = human->GetJoint("PelvisTransX");
     int index_dof = joint->GetDOFIndex();
 
     std::vector<double> q;
-    human_->GetDOFValues(q);
+    human->GetDOFValues(q);
 
     Eigen::Vector3d pos;
 
@@ -481,21 +511,21 @@ void SkeletonListener::setHumanConfiguration(int id)
 
     //    if( data.TORSO.confidence > 0 && data.HIP_LEFT.confidence > 0 && data.HIP_RIGHT.confidence > 0 )
     //    {
-    q[index_dof+0] = pos_[TORSO][0];
-    q[index_dof+1] = pos_[TORSO][1];
-    q[index_dof+2] = pos_[TORSO][2] - 0.20 ; // Hack 1 meter
+    q[index_dof+0] = pos_[id][TORSO][0];
+    q[index_dof+1] = pos_[id][TORSO][1];
+    q[index_dof+2] = pos_[id][TORSO][2] - 0.20 ; // Hack 1 meter
 
     // calcul de l'orientation du pelvis
     Eigen::Vector3d sum, midP;
-    sum = pos_[HIP_LEFT] + pos_[HIP_RIGHT];
+    sum = pos_[id][HIP_LEFT] + pos_[id][HIP_RIGHT];
     midP = 0.5*sum;
 
-    q[index_dof+5] = atan2( pos_[HIP_LEFT][1]-midP[1] , pos_[HIP_LEFT][0]-midP[0]  );
+    q[index_dof+5] = atan2( pos_[id][HIP_LEFT][1]-midP[1] , pos_[id][HIP_LEFT][0]-midP[0]  );
     q[index_dof+5] -= M_PI/2; // Hack +  Pi / 2
     q[index_dof+5] = angle_limit_PI( q[index_dof+5] );
 
-    cout << "HIP_LEFT : " << pos_[HIP_LEFT] << endl;
-    cout << "HIP_RIGHT : " << pos_[HIP_RIGHT] << endl;
+//    cout << "HIP_LEFT : " << pos_[id][HIP_LEFT] << endl;
+//    cout << "HIP_RIGHT : " << pos_[id][HIP_RIGHT] << endl;
 
     //    cout << " q[0] : " << q[0] << endl;
     //    cout << " q[1] : " << q[1] << endl;
@@ -504,7 +534,7 @@ void SkeletonListener::setHumanConfiguration(int id)
     //    cout << " q[4] : " << q[4] << endl;
     //    cout << " q[5] : " << q[5] << endl;
 
-    human_->SetJointValues(q);
+    human->SetJointValues(q);
     //return;
     //    }
 
@@ -516,40 +546,40 @@ void SkeletonListener::setHumanConfiguration(int id)
     //Eigen::Vector3d Yaxis; Yaxis << 0 , 1 , 0 ;
     Eigen::Affine3d TrotY,TrotYtmp;
 
-    joint = human_->GetJoint("TorsoX");
+    joint = human->GetJoint("TorsoX");
 
     Tpelv = get_joint_transform( joint );
     drawFrame( Tpelv );
     //m_absPos = get_joint_transform( joint );
 
     Tinv = Tpelv.inverse();
-    pos = Tinv*pos_[NECK];
+    pos = Tinv*pos_[id][NECK];
 
     double TorsoX = atan2( -pos[1] , pos[2] );
-    index_dof = human_->GetJoint("TorsoX")->GetDOFIndex();
+    index_dof = human->GetJoint("TorsoX")->GetDOFIndex();
     q[index_dof] = TorsoX;
 
     TrotX.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( TorsoX, Eigen::Vector3d::UnitX() ));
     TrotX.translation() = Eigen::Vector3d::Zero();
     TrotXtmp = Tpelv * TrotX;
     Tinv = TrotXtmp.inverse();
-    pos = Tinv*pos_[NECK];
+    pos = Tinv*pos_[id][NECK];
 
     double TorsoY = atan2( pos[0] , pos[2] );
-    index_dof = human_->GetJoint("TorsoY")->GetDOFIndex();
+    index_dof = human->GetJoint("TorsoY")->GetDOFIndex();
     q[index_dof] = TorsoY;
 
     TrotY.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( TorsoY, Eigen::Vector3d::UnitY() ));
     TrotY.translation() = Eigen::Vector3d::Zero();
     TrotYtmp = TrotXtmp * TrotY;
     Tinv = TrotYtmp.inverse();
-    pos = Tinv*pos_[SHOULDER_LEFT];
+    pos = Tinv*pos_[id][SHOULDER_LEFT];
 
     double TorsoZ = atan2( -pos[0] , pos[1] );
-    index_dof = human_->GetJoint("TorsoZ")->GetDOFIndex();
+    index_dof = human->GetJoint("TorsoZ")->GetDOFIndex();
     q[index_dof] = TorsoZ;
 
-    human_->SetJointValues(q);
+    human->SetJointValues(q);
     //return;
     //    }
 
@@ -564,26 +594,26 @@ void SkeletonListener::setHumanConfiguration(int id)
 
     //    if( data.ELBOW_RIGHT.confidence > 0 && data.HAND_RIGHT.confidence > 0 )
     //    {
-    human_->SetJointValues(q);
+    human->SetJointValues(q);
 
     if( print_ )
         cout << "Set human torso configuration" << endl;
 
-    joint = human_->GetJoint("rShoulderX");
+    joint = human->GetJoint("rShoulderX");
     Eigen::Affine3d T = get_joint_transform( joint );
     pos = T.translation();
     shoulder = T.translation();
 
-    index_dof = human_->GetJoint("rArmTrans")->GetDOFIndex();
-    q[index_dof] = ( pos_[ELBOW_RIGHT] - pos ).norm() - 0.2066 ;
+    index_dof = human->GetJoint("rArmTrans")->GetDOFIndex();
+    q[index_dof] = ( pos_[id][ELBOW_RIGHT] - pos ).norm() - 0.2066 ;
 
-    joint = human_->GetJoint("TorsoZ");
+    joint = human->GetJoint("TorsoZ");
 
     Trot = get_joint_transform( joint );
     Trot.translation() = pos;
 
     Tinv = Trot.inverse();
-    pos = Tinv*pos_[ELBOW_RIGHT];
+    pos = Tinv*pos_[id][ELBOW_RIGHT];
 
     // calcul de la direction pour le bras droit
     Eigen::Vector3d dir,sub;
@@ -595,7 +625,7 @@ void SkeletonListener::setHumanConfiguration(int id)
 
     if( print_ )
         cout << "get joint rShoulderX" << endl;
-    index_dof = human_->GetJoint("rShoulderX")->GetDOFIndex();
+    index_dof = human->GetJoint("rShoulderX")->GetDOFIndex();
     q[index_dof] = alpha1r;
 
     if( print_ )
@@ -606,14 +636,14 @@ void SkeletonListener::setHumanConfiguration(int id)
 
     Trot3 = Trot*Trot2;
     Tinv = Trot3.inverse();
-    pos = Tinv*pos_[ELBOW_RIGHT];
+    pos = Tinv*pos_[id][ELBOW_RIGHT];
 
     // selon z
     double alpha2r = atan2( pos[0] , -pos[1] );
 
     if( print_ )
         cout << "get joint rShoulderZ" << endl;
-    index_dof =  human_->GetJoint("rShoulderZ")->GetDOFIndex();
+    index_dof =  human->GetJoint("rShoulderZ")->GetDOFIndex();
     q[index_dof] = alpha2r;
 
     if( print_ )
@@ -623,23 +653,23 @@ void SkeletonListener::setHumanConfiguration(int id)
     Trot2.translation() = Eigen::Vector3d::Zero();
     Trot4 = Trot3*Trot2;
     Tinv = Trot4.inverse();
-    pos = Tinv*pos_[HAND_RIGHT];
+    pos = Tinv*pos_[id][HAND_RIGHT];
 
     // selon y
     double alpha3r = atan2( pos[2], pos[0] );
 
     if( print_ )
         cout << "get joint rShoulderY" << endl;
-    index_dof = human_->GetJoint("rShoulderY")->GetDOFIndex();
+    index_dof = human->GetJoint("rShoulderY")->GetDOFIndex();
     q[index_dof] = alpha3r;
 
     if( print_ )
         cout << "alpha3r : " << alpha3r << endl;
 
-    vect1 = shoulder - pos_[ELBOW_RIGHT];
+    vect1 = shoulder - pos_[id][ELBOW_RIGHT];
     vect1.normalize();
 
-    vect2 = pos_[HAND_RIGHT] - pos_[ELBOW_RIGHT];
+    vect2 = pos_[id][HAND_RIGHT] - pos_[id][ELBOW_RIGHT];
     vect2.normalize();
 
     // Elbow
@@ -647,7 +677,7 @@ void SkeletonListener::setHumanConfiguration(int id)
 
     if( print_ )
         cout << "get joint rElbowZ" << endl;
-    index_dof = human_->GetJoint("rElbowZ")->GetDOFIndex();
+    index_dof = human->GetJoint("rElbowZ")->GetDOFIndex();
     q[index_dof] = alpha4r;
 
     if( print_ )
@@ -656,7 +686,7 @@ void SkeletonListener::setHumanConfiguration(int id)
     if( print_ )
         print_config(q);
 
-    human_->SetJointValues(q);
+    human->SetJointValues(q);
 
     if( print_ )
         cout << "Set human right arm configuration" << endl;
@@ -666,15 +696,15 @@ void SkeletonListener::setHumanConfiguration(int id)
     //---------------------------------------------------------------------------
 
 
-    joint = human_->GetJoint("lShoulderX");
+    joint = human->GetJoint("lShoulderX");
     T = get_joint_transform( joint );
     pos = T.translation();
     shoulder = T.translation();
 
-    index_dof = human_->GetJoint("lArmTrans")->GetDOFIndex();
-    q[index_dof] = ( pos_[ELBOW_LEFT] - pos ).norm() - 0.2066 ;
+    index_dof = human->GetJoint("lArmTrans")->GetDOFIndex();
+    q[index_dof] = ( pos_[id][ELBOW_LEFT] - pos ).norm() - 0.2066 ;
 
-    joint = human_->GetJoint("TorsoZ");
+    joint = human->GetJoint("TorsoZ");
 
     Trot = get_joint_transform( joint );
     Trot.translation() = pos;
@@ -682,7 +712,7 @@ void SkeletonListener::setHumanConfiguration(int id)
     //  p3d_mat4Copy( Trot , m_absPos );
 
     Tinv = Trot.inverse();
-    pos = Tinv*pos_[ELBOW_LEFT];
+    pos = Tinv*pos_[id][ELBOW_LEFT];
 
     // calcul de la direction pour le bras droit
     //Eigen::Vector3d dir,sub;
@@ -692,46 +722,46 @@ void SkeletonListener::setHumanConfiguration(int id)
     // selon x
     double alpha1l = atan2( pos[2] , pos[1] );
 
-    index_dof = human_->GetJoint("lShoulderX")->GetDOFIndex();
+    index_dof = human->GetJoint("lShoulderX")->GetDOFIndex();
     q[index_dof] = alpha1l;
 
     Trot2.linear() = Eigen::Matrix3d(Eigen::AngleAxisd( alpha1l, Eigen::Vector3d::UnitX() ));
     Trot2.translation() = Eigen::Vector3d::Zero();
     Trot3 = Trot*Trot2;
     Tinv = Trot3.inverse();
-    pos = Tinv*pos_[ELBOW_LEFT];
+    pos = Tinv*pos_[id][ELBOW_LEFT];
 
     // selon z
     double alpha2l = atan2( -pos[0] , pos[1] );
 
-    index_dof = human_->GetJoint("lShoulderZ")->GetDOFIndex();
+    index_dof = human->GetJoint("lShoulderZ")->GetDOFIndex();
     q[index_dof] = alpha2l;
 
     Trot2.linear() = Eigen::Matrix3d(Eigen::AngleAxisd( alpha2l, Eigen::Vector3d::UnitZ() ));
     Trot2.translation() = Eigen::Vector3d::Zero();
     Trot4 = Trot3*Trot2;
     Tinv = Trot4.inverse();
-    pos = Tinv*pos_[HAND_LEFT];
+    pos = Tinv*pos_[id][HAND_LEFT];
 
     // selon y
     double alpha3l = -atan2( -pos[2], pos[0] );
 
-    index_dof = human_->GetJoint("lShoulderY")->GetDOFIndex();
+    index_dof = human->GetJoint("lShoulderY")->GetDOFIndex();
     q[index_dof] = alpha3l;
 
-    vect1 = shoulder - pos_[ELBOW_LEFT];
+    vect1 = shoulder - pos_[id][ELBOW_LEFT];
     vect1.normalize();
 
-    vect2 = pos_[HAND_LEFT] - pos_[ELBOW_LEFT];
+    vect2 = pos_[id][HAND_LEFT] - pos_[id][ELBOW_LEFT];
     vect2.normalize();
 
     // Elbow
     double alpha4l = -M_PI + acos( vect1.dot(vect2) ) ;
 
-    index_dof = human_->GetJoint("lElbowZ")->GetDOFIndex();
+    index_dof = human->GetJoint("lElbowZ")->GetDOFIndex();
     q[index_dof] = alpha4l;
 
     //    }
 
-    human_->SetJointValues(q);
+    human->SetJointValues(q);
 }

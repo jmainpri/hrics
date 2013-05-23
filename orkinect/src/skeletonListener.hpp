@@ -47,7 +47,7 @@ public:
 
     void setKinectFrame(double TX = 0, double TY = 0, double TZ = 0, double RotZ = 0, double RotY = 0);
 
-    void setMotionRecorder(HRICS::RecordMotion* motion_recorder);
+    void setMotionRecorder(std::vector<HRICS::RecordMotion*> motion_recorder);
 
     void setRecord(bool buttonState);
 
@@ -57,7 +57,7 @@ private:
     void draw();
 
     void setEigenPositions(int id);
-    void setHumanConfiguration(int id);
+    void setHumanConfiguration(int id, OpenRAVE::RobotBasePtr human);
 
     void printDofNames();
     //void setConfidence( std::string name, double conf );
@@ -73,7 +73,7 @@ private:
 
     std::vector< std::vector<tf::StampedTransform> > transforms_;
     std::vector<Eigen::VectorXd> confidences_;
-    std::vector<Eigen::Vector3d> pos_;
+    std::vector< std::vector<Eigen::Vector3d> > pos_;
     std::vector<bool> user_is_tracked_;
     std::vector<int> tracked_user_id_;
     Eigen::Affine3d kinect_to_origin_;
@@ -82,13 +82,13 @@ private:
     bool button_pressed_;
 
     OpenRAVE::EnvironmentBasePtr env_;
-    OpenRAVE::RobotBasePtr human_;
+    std::vector<OpenRAVE::RobotBasePtr> humans_;
     std::vector<boost::shared_ptr<void> > graphptrs_;
 
     bool print_;
 
     std::vector<std::string> names_;
-    HRICS::RecordMotion* _motion_recorder;
+    std::vector<HRICS::RecordMotion*> _motion_recorders;
 };
 
 #endif // SKELETONLISTENER_HPP

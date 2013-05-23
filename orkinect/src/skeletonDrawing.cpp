@@ -2,7 +2,8 @@
 
 //! @ingroup KINECT
 //! Draw line segment
-void SkeletonDrawing::drawLineSegmentModel( OpenRAVE::EnvironmentBasePtr env, std::vector<boost::shared_ptr<void> >& graph, const std::vector<Eigen::Vector3d>& pos )
+void SkeletonDrawing::drawLineSegmentModel( int id, OpenRAVE::EnvironmentBasePtr env, std::vector<boost::shared_ptr<void> >& graph,
+                                            const std::vector< std::vector<Eigen::Vector3d> >& pos )
 {
 //    HEAD = 0,
 //    NECK = 1,
@@ -33,172 +34,172 @@ void SkeletonDrawing::drawLineSegmentModel( OpenRAVE::EnvironmentBasePtr env, st
 
     int i=0;
 
-    ppoints[i+0] = pos[HEAD][0];
-    ppoints[i+1] = pos[HEAD][1];
-    ppoints[i+2] = pos[HEAD][2];
+    ppoints[i+0] = pos[id][HEAD][0];
+    ppoints[i+1] = pos[id][HEAD][1];
+    ppoints[i+2] = pos[id][HEAD][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[NECK][0];
-    ppoints[i+1] = pos[NECK][1];
-    ppoints[i+2] = pos[NECK][2];
+    ppoints[i+0] = pos[id][NECK][0];
+    ppoints[i+1] = pos[id][NECK][1];
+    ppoints[i+2] = pos[id][NECK][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[SHOULDER_LEFT][0];
-    ppoints[i+1] = pos[SHOULDER_LEFT][1];
-    ppoints[i+2] = pos[SHOULDER_LEFT][2];
+    ppoints[i+0] = pos[id][SHOULDER_LEFT][0];
+    ppoints[i+1] = pos[id][SHOULDER_LEFT][1];
+    ppoints[i+2] = pos[id][SHOULDER_LEFT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[NECK][0];
-    ppoints[i+1] = pos[NECK][1];
-    ppoints[i+2] = pos[NECK][2];
+    ppoints[i+0] = pos[id][NECK][0];
+    ppoints[i+1] = pos[id][NECK][1];
+    ppoints[i+2] = pos[id][NECK][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[SHOULDER_RIGHT][0];
-    ppoints[i+1] = pos[SHOULDER_RIGHT][1];
-    ppoints[i+2] = pos[SHOULDER_RIGHT][2];
+    ppoints[i+0] = pos[id][SHOULDER_RIGHT][0];
+    ppoints[i+1] = pos[id][SHOULDER_RIGHT][1];
+    ppoints[i+2] = pos[id][SHOULDER_RIGHT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[NECK][0];
-    ppoints[i+1] = pos[NECK][1];
-    ppoints[i+2] = pos[NECK][2];
+    ppoints[i+0] = pos[id][NECK][0];
+    ppoints[i+1] = pos[id][NECK][1];
+    ppoints[i+2] = pos[id][NECK][2];
 
 
     i += 3;
 
-    ppoints[i+0] = pos[SHOULDER_LEFT][0];
-    ppoints[i+1] = pos[SHOULDER_LEFT][1];
-    ppoints[i+2] = pos[SHOULDER_LEFT][2];
+    ppoints[i+0] = pos[id][SHOULDER_LEFT][0];
+    ppoints[i+1] = pos[id][SHOULDER_LEFT][1];
+    ppoints[i+2] = pos[id][SHOULDER_LEFT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[ELBOW_LEFT][0];
-    ppoints[i+1] = pos[ELBOW_LEFT][1];
-    ppoints[i+2] = pos[ELBOW_LEFT][2];
+    ppoints[i+0] = pos[id][ELBOW_LEFT][0];
+    ppoints[i+1] = pos[id][ELBOW_LEFT][1];
+    ppoints[i+2] = pos[id][ELBOW_LEFT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[ELBOW_LEFT][0];
-    ppoints[i+1] = pos[ELBOW_LEFT][1];
-    ppoints[i+2] = pos[ELBOW_LEFT][2];
+    ppoints[i+0] = pos[id][ELBOW_LEFT][0];
+    ppoints[i+1] = pos[id][ELBOW_LEFT][1];
+    ppoints[i+2] = pos[id][ELBOW_LEFT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[HAND_LEFT][0];
-    ppoints[i+1] = pos[HAND_LEFT][1];
-    ppoints[i+2] = pos[HAND_LEFT][2];
+    ppoints[i+0] = pos[id][HAND_LEFT][0];
+    ppoints[i+1] = pos[id][HAND_LEFT][1];
+    ppoints[i+2] = pos[id][HAND_LEFT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[SHOULDER_RIGHT][0];
-    ppoints[i+1] = pos[SHOULDER_RIGHT][1];
-    ppoints[i+2] = pos[SHOULDER_RIGHT][2];
+    ppoints[i+0] = pos[id][SHOULDER_RIGHT][0];
+    ppoints[i+1] = pos[id][SHOULDER_RIGHT][1];
+    ppoints[i+2] = pos[id][SHOULDER_RIGHT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[ELBOW_RIGHT][0];
-    ppoints[i+1] = pos[ELBOW_RIGHT][1];
-    ppoints[i+2] = pos[ELBOW_RIGHT][2];
+    ppoints[i+0] = pos[id][ELBOW_RIGHT][0];
+    ppoints[i+1] = pos[id][ELBOW_RIGHT][1];
+    ppoints[i+2] = pos[id][ELBOW_RIGHT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[ELBOW_RIGHT][0];
-    ppoints[i+1] = pos[ELBOW_RIGHT][1];
-    ppoints[i+2] = pos[ELBOW_RIGHT][2];
+    ppoints[i+0] = pos[id][ELBOW_RIGHT][0];
+    ppoints[i+1] = pos[id][ELBOW_RIGHT][1];
+    ppoints[i+2] = pos[id][ELBOW_RIGHT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[HAND_RIGHT][0];
-    ppoints[i+1] = pos[HAND_RIGHT][1];
-    ppoints[i+2] = pos[HAND_RIGHT][2];
+    ppoints[i+0] = pos[id][HAND_RIGHT][0];
+    ppoints[i+1] = pos[id][HAND_RIGHT][1];
+    ppoints[i+2] = pos[id][HAND_RIGHT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[NECK][0];
-    ppoints[i+1] = pos[NECK][1];
-    ppoints[i+2] = pos[NECK][2];
+    ppoints[i+0] = pos[id][NECK][0];
+    ppoints[i+1] = pos[id][NECK][1];
+    ppoints[i+2] = pos[id][NECK][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[TORSO][0];
-    ppoints[i+1] = pos[TORSO][1];
-    ppoints[i+2] = pos[TORSO][2];
+    ppoints[i+0] = pos[id][TORSO][0];
+    ppoints[i+1] = pos[id][TORSO][1];
+    ppoints[i+2] = pos[id][TORSO][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[TORSO][0];
-    ppoints[i+1] = pos[TORSO][1];
-    ppoints[i+2] = pos[TORSO][2];
+    ppoints[i+0] = pos[id][TORSO][0];
+    ppoints[i+1] = pos[id][TORSO][1];
+    ppoints[i+2] = pos[id][TORSO][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[HIP_LEFT][0];
-    ppoints[i+1] = pos[HIP_LEFT][1];
-    ppoints[i+2] = pos[HIP_LEFT][2];
+    ppoints[i+0] = pos[id][HIP_LEFT][0];
+    ppoints[i+1] = pos[id][HIP_LEFT][1];
+    ppoints[i+2] = pos[id][HIP_LEFT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[TORSO][0];
-    ppoints[i+1] = pos[TORSO][1];
-    ppoints[i+2] = pos[TORSO][2];
+    ppoints[i+0] = pos[id][TORSO][0];
+    ppoints[i+1] = pos[id][TORSO][1];
+    ppoints[i+2] = pos[id][TORSO][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[HIP_RIGHT][0];
-    ppoints[i+1] = pos[HIP_RIGHT][1];
-    ppoints[i+2] = pos[HIP_RIGHT][2];
+    ppoints[i+0] = pos[id][HIP_RIGHT][0];
+    ppoints[i+1] = pos[id][HIP_RIGHT][1];
+    ppoints[i+2] = pos[id][HIP_RIGHT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[HIP_RIGHT][0];
-    ppoints[i+1] = pos[HIP_RIGHT][1];
-    ppoints[i+2] = pos[HIP_RIGHT][2];
+    ppoints[i+0] = pos[id][HIP_RIGHT][0];
+    ppoints[i+1] = pos[id][HIP_RIGHT][1];
+    ppoints[i+2] = pos[id][HIP_RIGHT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[KNEE_RIGHT][0];
-    ppoints[i+1] = pos[KNEE_RIGHT][1];
-    ppoints[i+2] = pos[KNEE_RIGHT][2];
+    ppoints[i+0] = pos[id][KNEE_RIGHT][0];
+    ppoints[i+1] = pos[id][KNEE_RIGHT][1];
+    ppoints[i+2] = pos[id][KNEE_RIGHT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[KNEE_RIGHT][0];
-    ppoints[i+1] = pos[KNEE_RIGHT][1];
-    ppoints[i+2] = pos[KNEE_RIGHT][2];
+    ppoints[i+0] = pos[id][KNEE_RIGHT][0];
+    ppoints[i+1] = pos[id][KNEE_RIGHT][1];
+    ppoints[i+2] = pos[id][KNEE_RIGHT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[FOOT_RIGHT][0];
-    ppoints[i+1] = pos[FOOT_RIGHT][1];
-    ppoints[i+2] = pos[FOOT_RIGHT][2];
+    ppoints[i+0] = pos[id][FOOT_RIGHT][0];
+    ppoints[i+1] = pos[id][FOOT_RIGHT][1];
+    ppoints[i+2] = pos[id][FOOT_RIGHT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[HIP_LEFT][0];
-    ppoints[i+1] = pos[HIP_LEFT][1];
-    ppoints[i+2] = pos[HIP_LEFT][2];
+    ppoints[i+0] = pos[id][HIP_LEFT][0];
+    ppoints[i+1] = pos[id][HIP_LEFT][1];
+    ppoints[i+2] = pos[id][HIP_LEFT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[KNEE_LEFT][0];
-    ppoints[i+1] = pos[KNEE_LEFT][1];
-    ppoints[i+2] = pos[KNEE_LEFT][2];
+    ppoints[i+0] = pos[id][KNEE_LEFT][0];
+    ppoints[i+1] = pos[id][KNEE_LEFT][1];
+    ppoints[i+2] = pos[id][KNEE_LEFT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[KNEE_LEFT][0];
-    ppoints[i+1] = pos[KNEE_LEFT][1];
-    ppoints[i+2] = pos[KNEE_LEFT][2];
+    ppoints[i+0] = pos[id][KNEE_LEFT][0];
+    ppoints[i+1] = pos[id][KNEE_LEFT][1];
+    ppoints[i+2] = pos[id][KNEE_LEFT][2];
 
     i += 3;
 
-    ppoints[i+0] = pos[FOOT_LEFT][0];
-    ppoints[i+1] = pos[FOOT_LEFT][1];
-    ppoints[i+2] = pos[FOOT_LEFT][2];
+    ppoints[i+0] = pos[id][FOOT_LEFT][0];
+    ppoints[i+1] = pos[id][FOOT_LEFT][1];
+    ppoints[i+2] = pos[id][FOOT_LEFT][2];
 
     OpenRAVE::GraphHandlePtr fig = env->drawlinelist( ppoints, nb_points, 3*sizeof(float), 3.0, colors);
 

@@ -2,6 +2,8 @@
 #define KINECTMAIN_HPP
 
 #include "recordMotion.hpp"
+#include "playMotion.hpp"
+
 #include <openrave/openrave.h>
 #include <openrave/plugin.h>
 #include <boost/bind.hpp>
@@ -28,14 +30,17 @@ public:
     bool SetButtonState(ostream& sout, istream& sinput);
     bool StartRecording(ostream& sout, istream& sinput);
     bool SaveToFile(ostream& sout, istream& sinput);
+    bool LoadTrajectoryFile(ostream& sout, istream& sinput);
+    bool PlayTrajectoryFiles(ostream& sout, istream& sinput);
 
 
 private:
     string _strRobotName; ///< name of the active robot
     RobotBasePtr robot;
     SkeletonListener* _skel_listen;
-    HRICS::RecordMotion* _motion_recorder;
-
+    std::vector<HRICS::RecordMotion*> _motion_recorders;
+    PlayMotion* _motion_player;
+    std::vector<std::string> _filepaths;
 };
 
 #endif // HRICSMAIN_HPP

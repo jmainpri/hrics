@@ -22,6 +22,15 @@ using namespace HRICS;
 
 RecordMotion* global_motionRecorder;
 
+void print_config_rec(confPtr_t q)
+{
+    for(int i=0;i<q.size(); i++)
+    {
+        std::cout << q[i] << "";
+    }
+    std::cout << std::endl;
+}
+
 template <class T>
 bool convert_text_to_num(T& t,
                  const std::string& s,
@@ -100,6 +109,7 @@ void RecordMotion::saveCurrentToCSV()
     string home = "/home/rafihayne";
     ostringstream file_name;
     file_name << "/statFiles/recorded_motion/motion_saved_";
+    file_name << std::setw( 5 ) << std::setfill( '0' ) << m_id_human << "_";
     file_name << std::setw( 5 ) << std::setfill( '0' ) << m_id_file++ << ".csv";
     cout << "calling saveToCSVJoins with path: " << home+file_name.str() << endl;
     saveToCSVJoints( home+file_name.str(), m_motion );
@@ -376,15 +386,44 @@ void RecordMotion::storeMotion( const motion_t& motion, bool new_motion )
     }
 }
 
-bool RecordMotion::setConfiguration(int ith)
+
+bool RecordMotion::setRobotToStoredMotionConfig(int motion_id, int config_id)
+{
+    if( motion_id < 0 || ( motion_id > int(m_stored_motions[motion_id].size())))
+    {
+        cout << "index out of stored motion range in " << __func__ << endl;
+        return false;
+    }
+
+    if( config_id < 0 || config_id >= int(m_stored_motions[motion_id].size()) ) {
+        cout << "index out of range in " << __func__ << endl;
+        return false;
+    }
+
+//    cout << m_motion[ith].first << endl;
+//    m_robot->setAndUpdate( *m_motion[ith].second );
+//    cout << m_stored_motions[motion_id].size() << endl;
+//    cout << m_stored_motions[motion_id][ith].second.size() << endl;
+//    for(int i=0;i<m_stored_motions[motion_id][config_id].second.size(); i++)
+//    {
+//        cout << m_stored_motions[motion_id][config_id].second[i] ;
+//    }
+//    cout << endl;
+    m_robot->SetJointValues( m_stored_motions[motion_id][config_id].second );
+    return true;
+}
+
+bool RecordMotion::setRobotToConfiguration(int ith)
 {
     if( ith < 0 || ith >= int(m_motion.size()) ) {
         cout << "index out of range in " << __func__ << endl;
         return false;
     }
 
-    cout << m_motion[ith].first << endl;
+//    cout << m_motion[ith].first << endl;
 //    m_robot->setAndUpdate( *m_motion[ith].second );
+    cout << m_motion.size() << endl;
+    cout << m_motion[ith].second.size() << endl;
     m_robot->SetJointValues( m_motion[ith].second );
     return true;
 }
@@ -463,7 +502,7 @@ void RecordMotion::showMotion( const motion_t& motion )
 //            cout << "dt : " << dt << " , m_motion[i].first : " << motion[i].first << endl;
 //            motion[i].second->print();
 //            motion[i].second->adaptCircularJointsLimits();
-            cout << motion[i].second[11] << endl;
+//            cout << motion[i].second[11] << endl;
             //g3d_draw_allwin_active();
             dt = 0.0;
             i++;
@@ -1022,30 +1061,46 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
         cout << "no data has been loaded" << endl;
         return motion;
     }
-//    cout << "matrix fully loaded" << endl;
-//    cout << "size : " << matrix.size() << " , " << matrix[0].size() << endl;
+    cout << "matrix fully loaded" << endl;
+    cout << "size : " << matrix.size() << " , " << matrix[0].size() << endl;
+
+//    for (int i=0; i<int(matrix.size()); i++)
+//    {
+//        for (int j=0; j<int(matrix[i].size()); j++)
+//        {
+//            cout << matrix[i][j] << " ";
+//        }
+//        cout << endl;
+//    }
 
     for (int i=0; i<int(matrix.size()); i++)
     {
-        confPtr_t q; //= m_robot->getCurrentPos();
+        confPtr_t q;
+        m_robot->GetDOFValues( q );
+
+        for(int j=0; j<int(matrix[i].size()); j++)
+        {
+            convert_text_to_num<double>( q[j], matrix[i][j], std::dec );
+        }
+
+//        convert_text_to_num<double>( q[6], matrix[i][1], std::dec ); // Pelvis
+//        convert_text_to_num<double>( q[7], matrix[i][2], std::dec ); // Pelvis
+//        convert_text_to_num<double>( q[8], matrix[i][3], std::dec ); // Pelvis
+//        convert_text_to_num<double>( q[11], matrix[i][4], std::dec ); // Pelvis
+//        convert_text_to_num<double>( q[12], matrix[i][5], std::dec ); // TorsoX
+//        convert_text_to_num<double>( q[13], matrix[i][6], std::dec ); // TorsoY
+//        convert_text_to_num<double>( q[14], matrix[i][7], std::dec ); // TorsoZ
+
+//        convert_text_to_num<double>( q[18], matrix[i][8], std::dec ); // rShoulderX
+//        convert_text_to_num<double>( q[19], matrix[i][9], std::dec ); // rShoulderZ
+//        convert_text_to_num<double>( q[20], matrix[i][10], std::dec ); // rShoulderY
+//        convert_text_to_num<double>( q[21], matrix[i][11], std::dec ); // rArmTrans
+//        convert_text_to_num<double>( q[22], matrix[i][12], std::dec ); // rElbowZ
 
         motion.push_back( make_pair(0.02,q) );
-//        cout << "Add configuration " << i << endl;
+        //cout << "Add configuration " << i << endl;
 
-        convert_text_to_num<double>( q[6], matrix[i][1], std::dec ); // Pelvis
-        convert_text_to_num<double>( q[7], matrix[i][2], std::dec ); // Pelvis
-        convert_text_to_num<double>( q[8], matrix[i][3], std::dec ); // Pelvis
-        convert_text_to_num<double>( q[11], matrix[i][4], std::dec ); // Pelvis
-        convert_text_to_num<double>( q[12], matrix[i][5], std::dec ); // TorsoX
-        convert_text_to_num<double>( q[13], matrix[i][6], std::dec ); // TorsoY
-        convert_text_to_num<double>( q[14], matrix[i][7], std::dec ); // TorsoZ
-
-        convert_text_to_num<double>( q[18], matrix[i][8], std::dec ); // rShoulderX
-        convert_text_to_num<double>( q[19], matrix[i][9], std::dec ); // rShoulderZ
-        convert_text_to_num<double>( q[20], matrix[i][10], std::dec ); // rShoulderY
-        convert_text_to_num<double>( q[21], matrix[i][11], std::dec ); // rArmTrans
-        convert_text_to_num<double>( q[22], matrix[i][12], std::dec ); // rElbowZ
-
+//        print_config_rec( motion[i].second );
         // This is because the data was recorded near limits
         //q->adaptCircularJointsLimits();
 //        q->print();

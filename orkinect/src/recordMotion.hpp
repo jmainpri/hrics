@@ -49,7 +49,8 @@ public:
     void showStoredMotion();
     void showCurrentMotion();
     void showMotion( const motion_t& motion );
-    bool setConfiguration(int ith);
+    bool setRobotToStoredMotionConfig(int motion_id, int config_id);
+    bool setRobotToConfiguration(int ith);
     bool setShowMotion(int ith);
 
     void drawMotion( const motion_t& motion );
@@ -61,6 +62,7 @@ public:
     motion_t extractSubpart(int init, int end, const motion_t& motion);
 
     void incrementMotionId() { m_id_motion++; }
+    void setRobotId(int id) { m_id_human = id; }
 
     const std::vector<motion_t>& getStoredMotions() { return m_stored_motions; }
 
@@ -74,6 +76,7 @@ private:
     double m_time_last_record;
     int m_id_file;
     int m_id_motion;
+    int m_id_human;
     motion_t m_motion;
     std::vector<motion_t> m_stored_motions;
     int m_ith_shown_motion;
