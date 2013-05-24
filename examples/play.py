@@ -17,12 +17,33 @@ import time
 
 orEnv = Environment()
 h = 0
-		
+
+def keyboardControll(prob):
+    while True:
+        #print "Enter new character"
+        c = keystroke.getch(-1)
+        #print c
+        if c == 'q': 
+            sys.exit()    		
+        if c == 'u':
+            prob.SendCommand('ControlTrajectoryPlayback -25')
+        if c == 'i':
+            prob.SendCommand('ControlTrajectoryPlayback -1')
+        if c == 'o':
+            prob.SendCommand('ControlTrajectoryPlayback 1')
+        if c == 'p':
+            prob.SendCommand('ControlTrajectoryPlayback 25')
+        if c == ' ':
+            prob.SendCommand('GetPlaybackFrame')
+    
+def loadFiles(prob):
+    dir = "/home/rafihayne/statFiles/recorded_motion/"
+    files = ["[out]motion_saved_00000_00000.csv"]
+
+    for i in files:
+        cmdout = prob.SendCommand( 'LoadTrajectoryFile '+ dir +i )
 
 def launch():
-
-    
-    
     global orEnv
     global h
     
@@ -46,34 +67,17 @@ def launch():
     loadFiles(prob)
     
     print "trying to play files"
+    cmdout = prob.SendCommand('SetTrajectoryControl 1')
     cmdout = prob.SendCommand('PlayTrajectoryFiles')
 
 
-    time.sleep(5)
+    time.sleep(1)
     print "Enter character"
-    
-    while True:
-    	print "Enter new character"
-    	c = keystroke.getch(-1)
-    	print c
-    	if c == 'q': 
-    		sys.exit()
-	if c == 'i':
-		print "backward"
-	if c == 'o':
-		print "forward"
+    keyboardControll(prob)
     	
     	
     sys.stdin.readline()
 
-    
-def loadFiles(prob):
-	files = ["motion_saved_00000_00000.csv"]
-	dir = "/home/rafihayne/statFiles/recorded_motion/"
-	
-	for i in files:
-		cmdout = prob.SendCommand( 'LoadTrajectoryFile '+ dir +i )
-	
     
 if __name__ == "__main__":
     print "main function"

@@ -10,6 +10,14 @@ PlayMotion::PlayMotion( OpenRAVE::EnvironmentBasePtr env, const std::vector<HRIC
     _motion_recorders = recorders;
 }
 
+
+//void PlayMotion::setDirection(const bool dir) { _play_dir = dir; }
+void PlayMotion::setStep(const int step) { _step_size = step; }
+void PlayMotion::setControlled(const bool controlled) { _play_controlled = controlled; }
+void PlayMotion::setRecentInput(const bool input) { _recent_input = input;}
+int PlayMotion::getCurrentFrame() { return _current_frame; }
+
+
 void PlayMotion::play( const std::vector<std::string>& filepaths )
 {
     if( filepaths.size() > _motion_recorders.size() )
@@ -23,10 +31,12 @@ void PlayMotion::play( const std::vector<std::string>& filepaths )
         _motion_recorders[i]->storeMotion( _motion_recorders[i]->loadFromCSV(filepaths[i]), true );
     }
 
-    run();
+    if (_play_controlled) runControlled();
+    else runRealTime();
+
 }
 
-void PlayMotion::run()
+void PlayMotion::runRealTime()
 {
     if( _motion_recorders.empty() ) {
         return;
@@ -76,4 +86,51 @@ void PlayMotion::run()
     }
 
     cout << "End play motion" << endl;
+    return;
 }
+
+
+void PlayMotion::runControlled()
+{
+    int numFrames = int(_motion_recorders[0]->getStoredMotions()[0].size());
+
+    if( _motion_recorders.empty() )
+    {
+        return;
+    }
+
+    int StopRun = false;
+    _current_frame = 0;
+    _recent_input = false;
+
+    while ( !StopRun )
+    {
+
+        for (int j=0; j<int(_motion_recorders.size()); j++)
+        {
+            _motion_recorders[j]->setRobotToStoredMotionConfig(0,_current_frame);
+        }
+
+        if (_recent_input)
+        {
+            _current_frame+=_step_size;
+        }
+
+        if (_current_frame >= numFrames) _current_frame = numFrames; //Bounds check
+        if (_current_frame < 0) _current_frame = 0; //Bounds check
+
+
+
+        if ( _current_frame >= numFrames)
+        {
+            StopRun = true;
+        }
+
+        _recent_input = false;
+
+    }
+
+    cout << "End play motion" << endl;
+    return;
+}
+

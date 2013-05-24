@@ -14,6 +14,9 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("setbuttonstate",boost::bind(&KinectProblem::SetButtonState, this,_1,_2),"sets the button state");
     RegisterCommand("loadtrajectoryfile",boost::bind(&KinectProblem::LoadTrajectoryFile, this,_1,_2),"Loads the trajectory file from given path");
     RegisterCommand("playtrajectoryfiles",boost::bind(&KinectProblem::PlayTrajectoryFiles, this,_1,_2),"Plays the trajectory files");
+    RegisterCommand("settrajectorycontrol",boost::bind(&KinectProblem::SetTrajectoryControl, this,_1,_2),"Set control of playback flag");
+    RegisterCommand("controltrajectoryplayback",boost::bind(&KinectProblem::ControlTrajectoryPlayback, this,_1,_2),"Control playback of trajectory files");
+    RegisterCommand("getplaybackframe",boost::bind(&KinectProblem::GetPlaybackFrame, this,_1,_2),"return the current playback frame");
 
     _skel_listen = new SkeletonListener(penv);
     RobotBasePtr human1 = penv->GetRobot( "human_model" );
@@ -168,6 +171,35 @@ bool KinectProblem::PlayTrajectoryFiles(ostream& sout, istream& sinput)
 
     return true;
 }
+
+bool KinectProblem::SetTrajectoryControl(ostream& sout, istream& sinput)
+{
+    bool isControlled;
+    sinput >> isControlled;
+    _motion_player->setControlled(isControlled);
+
+    return true;
+}
+
+bool KinectProblem::ControlTrajectoryPlayback(ostream& sout, istream& sinput)
+{
+    int step;
+    sinput >> step;
+    _motion_player->setStep(step);
+    _motion_player->setRecentInput(true);
+
+    return true;
+}
+
+bool KinectProblem::GetPlaybackFrame(ostream& sout, istream& sinput)
+{
+    int frame = _motion_player->getCurrentFrame();
+    cout << "Current Frame: " << frame << endl;
+
+    return true;
+}
+
+
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

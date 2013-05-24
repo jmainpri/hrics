@@ -11,13 +11,25 @@ public:
 
     void play(const std::vector<std::string>& filepaths);
 
+//    void setDirection(const bool dir);
+    void setStep(const int step);
+    void setControlled(const bool controlled);
+    void setRecentInput(const bool input);
+    int getCurrentFrame();
+
 private:
 
-    void run();
+    void runRealTime();
+    void runControlled();
 
     std::vector<HRICS::RecordMotion*> _motion_recorders;
     OpenRAVE::EnvironmentBasePtr env_;
     std::vector<boost::shared_ptr<void> > graphptrs_;
+    int _current_frame;
+//    bool _play_dir; //true = forward, false = backwards
+    int _step_size;
+    bool _play_controlled;
+    bool _recent_input;
 
 };
 #endif //PLAYMOION_HPP
