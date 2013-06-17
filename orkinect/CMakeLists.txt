@@ -66,7 +66,7 @@ endif( NOT OPENRAVE_FOUND )
 link_directories(${OPENRAVE_LINK_DIRS})
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(${PROJECT_NAME} src/kinect-main.cpp src/skeletonListener.cpp src/skeletonDrawing.cpp src/recordMotion.cpp src/playMotion.cpp)
+rosbuild_add_library(${PROJECT_NAME} src/kinect-main.cpp src/skeletonListener.cpp src/skeletonDrawing.cpp src/recordMotion.cpp src/playMotion.cpp src/classifyMotion.cpp )
 target_link_libraries(${PROJECT_NAME} ${OPENRAVE_LIBRARY})
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)

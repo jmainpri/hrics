@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from openravepy import *
 import os
 import sys 
@@ -38,10 +40,12 @@ def keyboardControll(prob):
     
 def loadFiles(prob):
     dir = "/home/rafihayne/statFiles/recorded_motion/"
-    files = ["[out]motion_saved_00000_00000.csv"]
+    files = ["motion_saved_00000_00000.csv",
+             "motion_saved_00001_00000.csv",]   
 
-    for i in files:
-        cmdout = prob.SendCommand( 'LoadTrajectoryFile '+ dir +i )
+
+    for file in files:
+        cmdout = prob.SendCommand( 'LoadTrajectoryFile '+ dir + file )
 
 def launch():
     global orEnv
@@ -53,7 +57,7 @@ def launch():
     orEnv.SetDebugLevel(DebugLevel.Verbose)
     orEnv.Reset()
     orEnv.Load("../ormodels/human_wpi.xml")
-    #orEnv.Load("../ormodels/human_wpi_blue.xml")
+    orEnv.Load("../ormodels/human_wpi_blue.xml")
     
     print "draw frame"
     T = MakeTransform( eye(3), transpose(matrix([0,0,0]))) 
@@ -67,7 +71,7 @@ def launch():
     loadFiles(prob)
     
     print "trying to play files"
-    cmdout = prob.SendCommand('SetTrajectoryControl 1')
+    cmdout = prob.SendCommand('SetTrajectoryControl 1') #1 for controlled, 0 for normal playback
     cmdout = prob.SendCommand('PlayTrajectoryFiles')
 
 

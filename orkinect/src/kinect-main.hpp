@@ -31,10 +31,13 @@ public:
     bool StartRecording(ostream& sout, istream& sinput);
     bool SaveToFile(ostream& sout, istream& sinput);
     bool LoadTrajectoryFile(ostream& sout, istream& sinput);
+    bool ResampleFiles(ostream& sout, istream& sinput);
     bool PlayTrajectoryFiles(ostream& sout, istream& sinput);
     bool SetTrajectoryControl(ostream& sout, istream& sinput);
     bool ControlTrajectoryPlayback(ostream& sout, istream& sinput);
     bool GetPlaybackFrame(ostream& sout, istream& sinput);
+    bool SetNumKinect(ostream& sout, istream& sinput);
+    bool SetCustomTracker(ostream& sout, istream& sinput);
 
 
 private:

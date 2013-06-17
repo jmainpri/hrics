@@ -15,6 +15,7 @@ PlayMotion::PlayMotion( OpenRAVE::EnvironmentBasePtr env, const std::vector<HRIC
 void PlayMotion::setStep(const int step) { _step_size = step; }
 void PlayMotion::setControlled(const bool controlled) { _play_controlled = controlled; }
 void PlayMotion::setRecentInput(const bool input) { _recent_input = input;}
+bool PlayMotion::getRecentInput() { return _recent_input;}
 int PlayMotion::getCurrentFrame() { return _current_frame; }
 
 
@@ -43,7 +44,7 @@ void PlayMotion::runRealTime()
     }
 
     int StopRun = false;
-    int i=0;
+    _current_frame=0;
     double tu_last = 0.0;
     double dt = 0.0;
 
@@ -60,14 +61,14 @@ void PlayMotion::runRealTime()
             for (int j=0; j<int(_motion_recorders.size()); j++)
             {
 //                cout << "configuration " << i << endl;
-                _motion_recorders[j]->setRobotToStoredMotionConfig(0,i);
+                _motion_recorders[j]->setRobotToStoredMotionConfig(0,_current_frame);
             }
 
             dt = 0.0;
-            i++;
+            _current_frame++;
         }
 
-        if ( i >= int(_motion_recorders[0]->getStoredMotions()[0].size())) {
+        if ( _current_frame >= int(_motion_recorders[0]->getStoredMotions()[0].size())) {
             StopRun = true;
         }
 
@@ -89,8 +90,7 @@ void PlayMotion::runRealTime()
     return;
 }
 
-
-void PlayMotion::runControlled()
+void PlayMotion::runControlled() //TODO weird implementation. should be fixed at some point, but definitely working.
 {
     int numFrames = int(_motion_recorders[0]->getStoredMotions()[0].size());
 
@@ -111,15 +111,10 @@ void PlayMotion::runControlled()
             _motion_recorders[j]->setRobotToStoredMotionConfig(0,_current_frame);
         }
 
-        if (_recent_input)
-        {
-            _current_frame+=_step_size;
-        }
+        if (_recent_input) _current_frame+=_step_size; //I don't it working like this.  Shouldn't constantly be updatin to current frame.
 
         if (_current_frame >= numFrames) _current_frame = numFrames; //Bounds check
         if (_current_frame < 0) _current_frame = 0; //Bounds check
-
-
 
         if ( _current_frame >= numFrames)
         {
@@ -133,4 +128,3 @@ void PlayMotion::runControlled()
     cout << "End play motion" << endl;
     return;
 }
-

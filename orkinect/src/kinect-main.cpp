@@ -17,6 +17,9 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("settrajectorycontrol",boost::bind(&KinectProblem::SetTrajectoryControl, this,_1,_2),"Set control of playback flag");
     RegisterCommand("controltrajectoryplayback",boost::bind(&KinectProblem::ControlTrajectoryPlayback, this,_1,_2),"Control playback of trajectory files");
     RegisterCommand("getplaybackframe",boost::bind(&KinectProblem::GetPlaybackFrame, this,_1,_2),"return the current playback frame");
+    RegisterCommand("setnumkinect",boost::bind(&KinectProblem::SetNumKinect, this,_1,_2),"set the number of kinects that are being used");
+    RegisterCommand("setcustomtracker",boost::bind(&KinectProblem::SetCustomTracker, this,_1,_2),"set which openni tracker is being used");
+    RegisterCommand("resamplefiles",boost::bind(&KinectProblem::ResampleFiles, this,_1,_2),"resample all files in _filepaths");
 
     _skel_listen = new SkeletonListener(penv);
     RobotBasePtr human1 = penv->GetRobot( "human_model" );
@@ -94,6 +97,7 @@ int KinectProblem::main(const std::string& cmd)
     char* p = strtok(&mycmd[0], delim);
     if( p != NULL )
         _strRobotName = p;
+    cout << "_strRobotName: " << _strRobotName << endl;
 
     //std::vector<RobotBasePtr> robots;
     //GetEnv()->GetRobots(robots);
@@ -136,6 +140,24 @@ bool KinectProblem::SetKinectFrame(ostream& sout, istream& sinput)
     return true;
 }
 
+bool KinectProblem::SetNumKinect(ostream& sout, istream& sinput)
+{
+    int num_kinect;
+    sinput >> num_kinect;
+    _skel_listen->setNumKinect(num_kinect);
+
+    return true;
+}
+
+bool KinectProblem::SetCustomTracker(ostream& sout, istream& sinput)
+{
+    bool cust_tracker;
+    sinput >> cust_tracker;
+    _skel_listen->setTracker(cust_tracker);
+
+    return true;
+}
+
 bool KinectProblem::SetButtonState(ostream &sout, istream &sinput)
 {
     bool temp;
@@ -149,9 +171,33 @@ bool KinectProblem::SetButtonState(ostream &sout, istream &sinput)
 
 bool KinectProblem::LoadTrajectoryFile(ostream& sout, istream& sinput)
 {
+    cout << "file loaded" << endl;
     string path;
     sinput >> path;
     _filepaths.push_back( path );
+
+    return true;
+}
+
+bool KinectProblem::ResampleFiles(ostream& sout, istream& sinput)
+{
+    int sampleSize;
+    sinput >> sampleSize;
+
+    HRICS::RecordMotion* recorder = _motion_recorders[0];
+
+    for (int f = 0; f < int(_filepaths.size()); f++)
+    {
+        //convert int to string
+        std::ostringstream f_num;
+        f_num << f;
+
+
+        string file = _filepaths[f];
+        motion_t a_motion = recorder->loadFromCSV(file);
+        a_motion = recorder->resample( a_motion, sampleSize);
+        recorder->saveToCSVJoints( "/home/rafihayne/workspace/statFiles/recorded_motion/resampled_"+f_num.str()+".csv" , a_motion);
+    }
 
     return true;
 }
@@ -160,11 +206,6 @@ bool KinectProblem::PlayTrajectoryFiles(ostream& sout, istream& sinput)
 {
     if( _motion_player == NULL )
         cout << "motion player is not initialized" << endl;
-
-//    std::vector<std::string> filepaths;
-
-//    filepaths.push_back( "/home/rafihayne/statFiles/recorded_motion/motion_saved_00000_00000.csv" );
-//  filepaths.push_back( "/home/rafihayne/statFiles/recorded_motion/motion_saved_00001_00000.csv" );
 
     boost::thread( &PlayMotion::play, _motion_player, _filepaths );
 //    _motion_player->play( _filepaths );

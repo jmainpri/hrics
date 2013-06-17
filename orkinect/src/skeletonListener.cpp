@@ -69,6 +69,60 @@ void print_config(const std::vector<double>& q)
     }
 }
 
+void SkeletonListener::init_users()
+{
+//    if (!custom_tracker_)
+//    {
+//        for (int id = 0; id < max_num_skel_; id++)
+//        {
+//            kin_user a_user;
+//            a_user.active = false;
+//            a_user.ident = num_to_string(id);
+
+//            active_users_.push_back(a_user);
+//            cout << "added user: " << a_user.ident << endl;
+//        }
+//    }
+//    else
+//    {
+//        for (int k = 1; k <= num_kinect_; k++)
+//        {
+//            for (int id = 0; id < max_num_skel_; id++)
+//            {
+//                kin_user a_user;
+//                a_user.active = false;
+//                a_user.ident = num_to_string(k) + "_" + num_to_string(id);
+
+//                active_users_.push_back(a_user);
+//                cout << "added user: " << a_user.ident << endl;
+//            }
+//        }
+//    }
+
+    if (!custom_tracker_)
+    {
+        for (int id = 0; id < max_num_skel_; id++)
+        {
+            users_.push_back(num_to_string(id));
+
+            cout << "added user: " << users_[id] << endl;
+        }
+    }
+    else
+    {
+        for (int k = 1; k <= num_kinect_; k++)
+        {
+            for (int id = 0; id < max_num_skel_; id++)
+            {
+                users_.push_back(num_to_string(k) + "_" + num_to_string(id));
+                cout << "Added user: " << num_to_string(k) + "_" + num_to_string(id) << endl;
+            }
+        }
+    }
+
+
+}
+
 Eigen::Affine3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
 {
     OpenRAVE::RaveTransformMatrix<double> t( joint->GetFirstAttached()->GetTransform() );
@@ -163,6 +217,7 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
     button_pressed_ = false;
     print_ = false;
 
+
 }
 
 void SkeletonListener::set_joint_name_map()
@@ -198,100 +253,71 @@ void SkeletonListener::setRecord(bool buttonState){
 
 void SkeletonListener::listen_once()
 {
-//    cout << "listen once " << listen_iter_++ << endl;
     tracked_user_id_.clear();
 
-    for(int i=0;i<10;i++)
-    {
-        user_is_tracked_[i] = false;
 
-        if( !listener_->frameExists("/head_" + num_to_string(i)))
+    for (int id = 0; id < int(users_.size()); id++ )
+    {
+        user_is_tracked_[id] = false;
+
+        if( !listener_->frameExists("/head_"+ users_[id]))
             continue;
 
-        if( print_ )
-            cout << "listening to user " << i << endl;
-
-        ros::Time previous_time = transforms_[i][0].stamp_;
+        ros::Time previous_time = transforms_[id][0].stamp_;
 
         try
         {
-            for(int j=0;j<int(names_.size()); j++)
+            for (int j = 0; j < int(names_.size()); j++)
             {
-                //if( print_ )
-                //    cout << "listent to pair (" << i << " , " << j << ")" << endl;
-
-                listener_->lookupTransform( "/openni_depth_frame", names_[j] + num_to_string(i) , ros::Time(0), transforms_[i][j]);
+                listener_->lookupTransform( "/openni_depth_frame", names_[j] + users_[id] , ros::Time(0), transforms_[id][j]);
             }
 
-            user_is_tracked_[i] = true;
-        }
-        catch (tf::TransformException ex){
-            //ROS_ERROR("%s",ex.what());
+            user_is_tracked_[id] = true;
         }
 
-        if( previous_time == transforms_[i][0].stamp_ )
+        catch(tf::TransformException ex){
+            ROS_ERROR("%s",ex.what());
+        }
+
+        if (previous_time == transforms_[id][0].stamp_){
+            user_is_tracked_[id] = false;
+        }
+
+        if (user_is_tracked_[id] )
         {
-            user_is_tracked_[i] = false;
+            tracked_user_id_.push_back(id);
         }
 
-        if( user_is_tracked_[i] )
-        {
-            tracked_user_id_.push_back( i );
-
-            if( print_ )
-                cout << "tracking id : " << i << endl;
-        }
-
-        //listener_.lookupTransform("/openni_depth_frame", "/turtle1", ros::Time(0), transform);
     }
-
-    //cout << "Camera : " << env_->GetViewer()->GetCameraTransform() << endl;
 
     graphptrs_.clear();
 
-    for(int i=0; i<int(tracked_user_id_.size()); i++)
+    for(int i = 0; i < int(tracked_user_id_.size()); i++) //TODO fix the way this code works.  a human should always get the same user.
     {
-        setEigenPositions( tracked_user_id_[i] );
+        setEigenPositions(tracked_user_id_[i]);
 
-        if( !humans_.empty() )
+        if( !humans_.empty())
         {
             if( i < humans_.size() )
             {
+//                cout << tracked_user_id_[i] << "   " << humans_[i] << "   " << i << endl;
                 setHumanConfiguration( tracked_user_id_[i], humans_[i] );
             }
         }
     }
 
-    if( !_motion_recorders.empty() )
+    if( !_motion_recorders.empty())
     {
-        if( button_pressed_ )
-        {
-            for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
-                _motion_recorders[i]->m_is_recording = true;
-                _motion_recorders[i]->saveCurrentConfig();
-            }
-            //        cout << "Button Pressed!" << endl;
-        }
-        else if (!button_pressed_)
-        {
-            for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
-                if (_motion_recorders[i]->m_is_recording) {
-                    cout << "record " << i << endl;
-                    _motion_recorders[i]->saveCurrentToCSV();
-                    _motion_recorders[i]->clearCurrentMotion();
-                    _motion_recorders[i]->m_is_recording = false;
-                }
-            }
-        }
+        tryToRecord();
     }
 
     draw();
 
-    if( humans_.empty() && !tracked_user_id_.empty() )
+    if ( humans_.empty() && !tracked_user_id_.empty() )
     {
-        for(int i=0; i<int(tracked_user_id_.size()); i++)
+        for(int i = 0; i < int(tracked_user_id_.size()); i++)
         {
-            SkeletonDrawing::drawLineSegmentModel( tracked_user_id_[i], env_, graphptrs_, pos_ );
+            SkeletonDrawing::drawLineSegmentModel(tracked_user_id_[i], env_, graphptrs_, pos_);
         }
     }
 
@@ -299,11 +325,24 @@ void SkeletonListener::listen_once()
     rate_->sleep();
 }
 
+
 void SkeletonListener::listen()
 {
     //global_motionRecorder->setRobot(_strRobotName);
     rate_ = new ros::Rate(40.0);
     listener_ = new tf::TransformListener;
+
+    if(custom_tracker_){ //TODO move this.  I don't like redoing initialization here.  figure out another way.
+        transforms_.resize(max_num_skel_ * num_kinect_);
+        cout << "Transforms resized to: " << max_num_skel_ * num_kinect_ << endl;
+
+        for(int i=0;i<max_num_skel_ * num_kinect_;i++)
+        {
+            transforms_[i].resize(15);
+        }
+    }
+
+    init_users(); //Generates users_ vector.  TODO I don't know where this should go either.
 
     while (node_->ok())
     {
@@ -349,6 +388,30 @@ void SkeletonListener::readConfidence(const openni_tracker::confidence_array& ms
 }
 **/
 
+
+
+void SkeletonListener::tryToRecord()
+{
+    if( button_pressed_ )
+    {
+        for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
+            _motion_recorders[i]->m_is_recording = true;
+            _motion_recorders[i]->saveCurrentConfig();
+        }
+    }
+    else if (!button_pressed_)
+    {
+        for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
+            if (_motion_recorders[i]->m_is_recording) {
+                cout << "record " << i << endl;
+                _motion_recorders[i]->saveCurrentToCSV();
+                _motion_recorders[i]->clearCurrentMotion();
+                _motion_recorders[i]->m_is_recording = false;
+            }
+        }
+    }
+}
+
 void SkeletonListener::printDofNames()
 {
     if( humans_.empty() )
@@ -373,7 +436,8 @@ void SkeletonListener::setEigenPositions(int id)
         pos_[id][i][1] = p[1];
         pos_[id][i][2] = p[2];
 
-        pos_[id][i] = kinect_to_origin_ * pos_[id][i];
+        //TODO fairly certain this is where I would need to check which kinect to use and multiply by proper transform
+        pos_[id][i] = kinect_to_origin_ * pos_[id][i]; //kinect_to_origin is the kinect frame transform
     }
 }
 

@@ -15,6 +15,7 @@ public:
     void setStep(const int step);
     void setControlled(const bool controlled);
     void setRecentInput(const bool input);
+    bool getRecentInput();
     int getCurrentFrame();
 
 private:

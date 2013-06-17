@@ -108,11 +108,16 @@ void RecordMotion::saveCurrentToCSV()
     //string home(getenv("HOME_MOVE3D"));
     string home = "/home/rafihayne";
     ostringstream file_name;
-    file_name << "/statFiles/recorded_motion/motion_saved_";
+    file_name << "/workspace/statFiles/recorded_motion/motion_saved_";
     file_name << std::setw( 5 ) << std::setfill( '0' ) << m_id_human << "_";
     file_name << std::setw( 5 ) << std::setfill( '0' ) << m_id_file++ << ".csv";
     cout << "calling saveToCSVJoins with path: " << home+file_name.str() << endl;
+
+    //Resample all motions to make them matlab compatable.
+//    m_motion = resample(m_motion, 100); //TODO make this more elegant.
+
     saveToCSVJoints( home+file_name.str(), m_motion );
+    m_motion.clear();
     //reset();
 }
 
@@ -861,8 +866,8 @@ void RecordMotion::saveToCSVJoints( const std::string &filename, const motion_t&
 
         for (int j=0; j<int(motion[i].second.size()); j++)
             s << motion[i].second[j] << ",";
-
         s << endl;
+
     }
 
     s << endl;

@@ -51,10 +51,18 @@ public:
 
     void setRecord(bool buttonState);
 
+    void setNumKinect(int num) {num_kinect_ = num;}
+
+    void setTracker(bool cust_tracker) {custom_tracker_ = cust_tracker;}
+
 private:
 
     void drawFrame(const Eigen::Affine3d& t);
     void draw();
+
+    std::vector<bool> check_active_user();
+
+    void tryToRecord();
 
     void setEigenPositions(int id);
     void setHumanConfiguration(int id, OpenRAVE::RobotBasePtr human);
@@ -76,10 +84,16 @@ private:
     std::vector< std::vector<Eigen::Vector3d> > pos_;
     std::vector<bool> user_is_tracked_;
     std::vector<int> tracked_user_id_;
+    std::vector<int> active_kinect_;
     Eigen::Affine3d kinect_to_origin_;
     int max_num_skel_;
 
     bool button_pressed_;
+    bool custom_tracker_;
+    int num_kinect_;
+
+    std::vector<std::string> users_;
+    void init_users();
 
     OpenRAVE::EnvironmentBasePtr env_;
     std::vector<OpenRAVE::RobotBasePtr> humans_;
