@@ -1,0 +1,39 @@
+<!-- Table is 1.83m long, 0.61m wide, .035m thick -->
+<KinBody name="table">
+  <Body name="table" type="dynamic">
+    <Geom type="box">
+       <extents>1.06680 0.53340 0.01</extents>
+       <diffuseColor>0.9 0.9 0.9</diffuseColor>
+    </Geom>
+    <Geom type="cylinder">
+      <translation>0.7 0.25 -0.375</translation>
+      <rotationaxis>1 0 0 -90</rotationaxis>
+      <radius>0.02</radius>
+      <height>0.75</height>
+      <diffuseColor>0.9 0.9 0.9</diffuseColor>
+    </Geom>
+    <Geom type="cylinder">
+      <translation>-0.7 0.25 -0.375</translation>
+      <rotationaxis>1 0 0 -90</rotationaxis>
+      <radius>0.02</radius>
+      <height>0.75</height>
+      <diffuseColor>0.9 0.9 0.9</diffuseColor>
+    </Geom>
+    <Geom type="cylinder">
+      <translation>0.7 -0.25 -0.375</translation>
+      <rotationaxis>1 0 0 -90</rotationaxis>
+      <radius>0.02</radius>
+      <height>0.75</height>
+      <diffuseColor>0.9 0.9 0.9</diffuseColor>
+    </Geom>
+    <Geom type="cylinder">
+      <translation>-0.7 -0.25 -0.375</translation>
+      <rotationaxis>1 0 0 -90</rotationaxis>
+      <radius>0.02</radius>
+      <height>0.75</height>
+      <diffuseColor>0.9 0.9 0.9</diffuseColor>
+    </Geom>
+  </Body>
+</KinBody>
+
+<!-- 7 FEET BY 42 INCHES -->

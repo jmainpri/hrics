@@ -39,9 +39,10 @@ def keyboardControll(prob):
             prob.SendCommand('GetPlaybackFrame')
     
 def loadFiles(prob):
-    dir = "/home/rafihayne/statFiles/recorded_motion/"
+    dir = "/home/rafihayne/workspace/statFiles/recorded_motion/"
     files = ["motion_saved_00000_00000.csv",
-             "motion_saved_00001_00000.csv",]   
+             "motion_saved_00001_00000.csv",
+             ]   
 
 
     for file in files:

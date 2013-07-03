@@ -17,5 +17,5 @@ def segment(splits, filein):
 if __name__ == "__main__":
     print "main function"
     splits = [(1,17)] 
-    filein = '/home/rafihayne/statFiles/recorded_motion/motion_saved_00000_00000.csv'
+    filein = '/home/rafihayne/workspace/statFiles/recorded_motion/motion_saved_00000_00000.csv'
     segment(splits, filein)

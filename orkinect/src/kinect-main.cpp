@@ -23,7 +23,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
 
     _skel_listen = new SkeletonListener(penv);
     RobotBasePtr human1 = penv->GetRobot( "human_model" );
-    RobotBasePtr human2 = penv->GetRobot("human_model_blue");
+    RobotBasePtr human2 = penv->GetRobot( "human_model_blue" );
 
     if (human1 == NULL && human2 == NULL){
 //      _motion_recorders = NULL;
@@ -123,19 +123,21 @@ bool KinectProblem::StartListening(ostream& sout, istream& sinput)
 
 bool KinectProblem::SetKinectFrame(ostream& sout, istream& sinput)
 {
+    int KinID = 0;
     double TX = 0;
     double TY = 0;
     double TZ = 0;
     double RotZ = 0;
     double RotY = 0;
 
+    sinput >> KinID;
     sinput >> TX;
     sinput >> TY;
     sinput >> TZ;
     sinput >> RotZ;
     sinput >> RotY;
 
-    _skel_listen->setKinectFrame(TX,TY,TZ,RotZ,RotY);
+    _skel_listen->setKinectFrame(KinID,TX,TY,TZ,RotZ,RotY);
 
     return true;
 }
@@ -179,7 +181,7 @@ bool KinectProblem::LoadTrajectoryFile(ostream& sout, istream& sinput)
     return true;
 }
 
-bool KinectProblem::ResampleFiles(ostream& sout, istream& sinput)
+bool KinectProblem::ResampleFiles(ostream& sout, istream& sinput) //TODO fix output name with proper regular expressions.
 {
     int sampleSize;
     sinput >> sampleSize;
@@ -192,9 +194,7 @@ bool KinectProblem::ResampleFiles(ostream& sout, istream& sinput)
         std::ostringstream f_num;
         f_num << f;
 
-
-        string file = _filepaths[f];
-        motion_t a_motion = recorder->loadFromCSV(file);
+        motion_t a_motion = recorder->loadFromCSV(_filepaths[f]);
         a_motion = recorder->resample( a_motion, sampleSize);
         recorder->saveToCSVJoints( "/home/rafihayne/workspace/statFiles/recorded_motion/resampled_"+f_num.str()+".csv" , a_motion);
     }

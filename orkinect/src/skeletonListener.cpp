@@ -69,81 +69,6 @@ void print_config(const std::vector<double>& q)
     }
 }
 
-void SkeletonListener::init_users()
-{
-//    if (!custom_tracker_)
-//    {
-//        for (int id = 0; id < max_num_skel_; id++)
-//        {
-//            kin_user a_user;
-//            a_user.active = false;
-//            a_user.ident = num_to_string(id);
-
-//            active_users_.push_back(a_user);
-//            cout << "added user: " << a_user.ident << endl;
-//        }
-//    }
-//    else
-//    {
-//        for (int k = 1; k <= num_kinect_; k++)
-//        {
-//            for (int id = 0; id < max_num_skel_; id++)
-//            {
-//                kin_user a_user;
-//                a_user.active = false;
-//                a_user.ident = num_to_string(k) + "_" + num_to_string(id);
-
-//                active_users_.push_back(a_user);
-//                cout << "added user: " << a_user.ident << endl;
-//            }
-//        }
-//    }
-
-    if (!custom_tracker_)
-    {
-        for (int id = 0; id < max_num_skel_; id++)
-        {
-            users_.push_back(num_to_string(id));
-
-            cout << "added user: " << users_[id] << endl;
-        }
-    }
-    else
-    {
-        for (int k = 1; k <= num_kinect_; k++)
-        {
-            for (int id = 0; id < max_num_skel_; id++)
-            {
-                users_.push_back(num_to_string(k) + "_" + num_to_string(id));
-                cout << "Added user: " << num_to_string(k) + "_" + num_to_string(id) << endl;
-            }
-        }
-    }
-
-
-}
-
-Eigen::Affine3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
-{
-    OpenRAVE::RaveTransformMatrix<double> t( joint->GetFirstAttached()->GetTransform() );
-    OpenRAVE::Vector right,up,dir,pos;
-    t.Extract( right, up, dir, pos);
-    Eigen::Matrix3d rot;
-    rot(0,0) = right.x; rot(0,1) = up.x; rot(0,2) = dir.x;
-    rot(1,0) = right.y; rot(1,1) = up.y; rot(1,2) = dir.y;
-    rot(2,0) = right.z; rot(2,1) = up.z; rot(2,2) = dir.z;
-
-    Eigen::Affine3d T;
-    T.linear() = rot;
-    T.translation() = or_vector_to_eigen( joint->GetAnchor() );
-
-
-
-    //cout << "T : " << endl << T.matrix() << endl;
-
-    return T;
-}
-
 SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
 {
     cout << "Enter constructer" << endl;
@@ -171,7 +96,7 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
     {
         user_is_tracked_[i] = false;
         transforms_[i].resize(15);
-        confidences_[i] = Eigen::VectorXd::Zero(15);    
+        confidences_[i] = Eigen::VectorXd::Zero(15);
     }
 
 
@@ -220,6 +145,97 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
 
 }
 
+void SkeletonListener::init_users()
+{
+//    if (!custom_tracker_)
+//    {
+//        for (int id = 0; id < max_num_skel_; id++)
+//        {
+//            kin_user a_user;
+//            a_user.active = false;
+//            a_user.ident = num_to_string(id);
+
+//            active_users_.push_back(a_user);
+//            cout << "added user: " << a_user.ident << endl;
+//        }
+//    }
+//    else
+//    {
+//        for (int k = 1; k <= num_kinect_; k++)
+//        {
+//            for (int id = 0; id < max_num_skel_; id++)
+//            {
+//                kin_user a_user;
+//                a_user.active = false;
+//                a_user.ident = num_to_string(k) + "_" + num_to_string(id);
+
+//                active_users_.push_back(a_user);
+//                cout << "added user: " << a_user.ident << endl;
+//            }
+//        }
+//    }
+
+    if (!custom_tracker_)
+    {
+        for (int id = 0; id < max_num_skel_; id++)
+        {
+            users_id_to_kinect_.push_back(0);
+            users_.push_back(num_to_string(id));
+            cout << "added user: " << users_[id] << endl;
+        }
+    }
+    else
+    {
+        for (int k = 1; k <= num_kinect_; k++)
+        {
+            for (int id = 0; id < max_num_skel_; id++)
+            {
+                users_id_to_kinect_.push_back(k-1);
+                users_.push_back(num_to_string(k) + "_" + num_to_string(id));
+                cout << "Added user: " << num_to_string(k) + "_" + num_to_string(id) << endl;
+            }
+        }
+    }
+}
+
+Eigen::Affine3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
+{
+    OpenRAVE::RaveTransformMatrix<double> t( joint->GetFirstAttached()->GetTransform() );
+    OpenRAVE::Vector right,up,dir,pos;
+    t.Extract( right, up, dir, pos);
+    Eigen::Matrix3d rot;
+    rot(0,0) = right.x; rot(0,1) = up.x; rot(0,2) = dir.x;
+    rot(1,0) = right.y; rot(1,1) = up.y; rot(1,2) = dir.y;
+    rot(2,0) = right.z; rot(2,1) = up.z; rot(2,2) = dir.z;
+
+    Eigen::Affine3d T;
+    T.linear() = rot;
+    T.translation() = or_vector_to_eigen( joint->GetAnchor() );
+
+    //cout << "T : " << endl << T.matrix() << endl;
+    return T;
+}
+
+void SkeletonListener::setNumKinect(int num)
+{
+    num_kinect_ = num;
+
+    if(custom_tracker_){ //TODO move this.  I don't like redoing initialization here.  figure out another way.
+        transforms_.resize( max_num_skel_ * num_kinect_);
+        pos_.resize( max_num_skel_ * num_kinect_);
+        user_is_tracked_.resize(max_num_skel_ * num_kinect_);
+
+        for(int i=0;i<max_num_skel_ * num_kinect_;i++)
+        {
+            transforms_[i].resize(15);
+        }
+    }
+
+    kinect_to_origin_.resize(num_kinect_);
+
+    init_users(); //Generates users_ vector.  TODO I don't know where this should go either.
+}
+
 void SkeletonListener::set_joint_name_map()
 {
     cout << "set names" << endl;
@@ -247,7 +263,8 @@ void SkeletonListener::set_joint_name_map()
     names_.push_back("right_foot_");
 }
 
-void SkeletonListener::setRecord(bool buttonState){
+void SkeletonListener::setRecord(bool buttonState)
+{
     button_pressed_ = buttonState;
 }
 
@@ -285,6 +302,7 @@ void SkeletonListener::listen_once()
 
         if (user_is_tracked_[id] )
         {
+            //cout << "user_is_tracked_ : " << user_is_tracked_[id] << endl;
             tracked_user_id_.push_back(id);
         }
 
@@ -292,16 +310,18 @@ void SkeletonListener::listen_once()
 
     graphptrs_.clear();
 
-    for(int i = 0; i < int(tracked_user_id_.size()); i++) //TODO fix the way this code works.  a human should always get the same user.
+    for(int i = 0; i < int(tracked_user_id_.size()); i++)
     {
+        //cout << "set egien positions" << endl;
         setEigenPositions(tracked_user_id_[i]);
 
+        //cout << "set configuration" << endl;
         if( !humans_.empty())
         {
             if( i < humans_.size() )
             {
-//                cout << tracked_user_id_[i] << "   " << humans_[i] << "   " << i << endl;
-                setHumanConfiguration( tracked_user_id_[i], humans_[i] );
+                //cout << tracked_user_id_[i] << "   " << humans_[i] << "   " << i << endl;
+                setHumanConfiguration( tracked_user_id_[i], humans_[users_id_to_kinect_[tracked_user_id_[i]]] );
             }
         }
     }
@@ -331,18 +351,6 @@ void SkeletonListener::listen()
     //global_motionRecorder->setRobot(_strRobotName);
     rate_ = new ros::Rate(40.0);
     listener_ = new tf::TransformListener;
-
-    if(custom_tracker_){ //TODO move this.  I don't like redoing initialization here.  figure out another way.
-        transforms_.resize(max_num_skel_ * num_kinect_);
-        cout << "Transforms resized to: " << max_num_skel_ * num_kinect_ << endl;
-
-        for(int i=0;i<max_num_skel_ * num_kinect_;i++)
-        {
-            transforms_[i].resize(15);
-        }
-    }
-
-    init_users(); //Generates users_ vector.  TODO I don't know where this should go either.
 
     while (node_->ok())
     {
@@ -403,7 +411,6 @@ void SkeletonListener::tryToRecord()
     {
         for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
             if (_motion_recorders[i]->m_is_recording) {
-                cout << "record " << i << endl;
                 _motion_recorders[i]->saveCurrentToCSV();
                 _motion_recorders[i]->clearCurrentMotion();
                 _motion_recorders[i]->m_is_recording = false;
@@ -427,8 +434,22 @@ void SkeletonListener::printDofNames()
 
 void SkeletonListener::setEigenPositions(int id)
 {
+    //cout << "clear pos at id : " << id << endl;
     pos_[id].clear();
     pos_[id].resize(15);
+    Eigen::Affine3d tempTransform;
+
+    //TODO replace with somehing more clever!!!
+    for (int k = 0; k < num_kinect_; k++)
+    {
+        if (id < (k+1)*max_num_skel_)
+        {
+//            cout << "Using transform k: " << k << " on ID: " << id << endl;
+            tempTransform = kinect_to_origin_[k];
+            break;
+        }
+    }
+
     for(int i=0;i<15;i++)
     {
         tf::Vector3 p = transforms_[id][i].getOrigin();
@@ -436,8 +457,8 @@ void SkeletonListener::setEigenPositions(int id)
         pos_[id][i][1] = p[1];
         pos_[id][i][2] = p[2];
 
-        //TODO fairly certain this is where I would need to check which kinect to use and multiply by proper transform
-        pos_[id][i] = kinect_to_origin_ * pos_[id][i]; //kinect_to_origin is the kinect frame transform
+        pos_[id][i] = tempTransform * pos_[id][i]; //kinect_to_origin is the kinect frame transfor
+
     }
 }
 
@@ -489,6 +510,9 @@ void SkeletonListener::draw()
             // float y = transforms_[ tracked_user_id_[i] ][j].getOrigin().getY();
             // float z = transforms_[ tracked_user_id_[i] ][j].getOrigin().getZ();
 
+//            if( j == 3 || j == 4 || j == 5 )
+//                continue;
+
             float x = pos_[tracked_user_id_[i]][j][0];
             float y = pos_[tracked_user_id_[i]][j][1];
             float z = pos_[tracked_user_id_[i]][j][2];
@@ -508,8 +532,10 @@ void SkeletonListener::draw()
     graphptrs_.push_back( figure );
 }
 
-void SkeletonListener::setKinectFrame( double TX, double TY, double TZ, double RotZ, double RotY )
+void SkeletonListener::setKinectFrame( int KinID, double TX, double TY, double TZ, double RotZ, double RotY )
 {
+    Eigen::Affine3d tempTranslation;
+
     RotZ = M_PI * RotZ / 180;
     RotY = M_PI * RotY / 180;
 
@@ -521,24 +547,29 @@ void SkeletonListener::setKinectFrame( double TX, double TY, double TZ, double R
     // Kinect  |/ ____ Z  ,   World  |/_____X
 
     kin_cam(0,0) = 1.0;  kin_cam(0,1) =  0.0;  kin_cam(0,2) = 0.0;
-    kin_cam(1,0) = 0.0;  kin_cam(1,1) = -1.0;  kin_cam(1,2) = 0.0;
+    kin_cam(1,0) = 0.0;  kin_cam(1,1) =  1.0;  kin_cam(1,2) = 0.0;
     kin_cam(2,0) = 0.0;  kin_cam(2,1) =  0.0;  kin_cam(2,2) = 1.0;
 
-    kinect_to_origin_.linear() = kin_cam;
-    kinect_to_origin_.translation() = Eigen::Vector3d::Zero();
+//    kinect_to_origin_.linear() = kin_cam;
+//    kinect_to_origin_.translation() = Eigen::Vector3d::Zero();
+    tempTranslation.linear() = kin_cam;
+    tempTranslation.translation() = Eigen::Vector3d::Zero();
 
     T_Tra.linear() = Eigen::Matrix3d::Identity();
     T_Tra.translation() << TX , TY , TZ ;
 
     T_Pan.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( RotZ, Eigen::Vector3d::UnitZ() ));
     T_Pan.translation() = Eigen::Vector3d::Zero();
-    cout << "T_Pan : " << endl << T_Pan.matrix() << endl;
+//    cout << "T_Pan : " << endl << T_Pan.matrix() << endl;
 
     T_Til.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( RotY, Eigen::Vector3d::UnitY() ));
     T_Til.translation() = Eigen::Vector3d::Zero();
-    cout << "T_Til : " << endl << T_Til.matrix() << endl;
+//    cout << "T_Til : " << endl << T_Til.matrix() << endl;
 
-    kinect_to_origin_ =  T_Tra * T_Pan * T_Til * kinect_to_origin_;
+//    kinect_to_origin_ =  T_Tra * T_Pan * T_Til * kinect_to_origin_;
+    kinect_to_origin_[KinID] = T_Tra * T_Pan * T_Til * tempTranslation;
+    cout << "Set kinect frame : " << KinID << endl;
+    //kinect_to_origin_.push_back();  //TODO fix this so it uses kinect id.
 }
 
 void SkeletonListener::setMotionRecorder(std::vector<HRICS::RecordMotion*> motion_recorder)

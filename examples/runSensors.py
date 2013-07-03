@@ -89,14 +89,16 @@ def launch():
     print "try to create problem"
     prob = RaveCreateProblem(orEnv,'Kinect')
 
-    cmdout = prob.SendCommand('SetNumKinect 2')
     cmdout = prob.SendCommand('SetCustomTracker 1')
-    cmdout = prob.SendCommand('SetKinectFrame 0.0 0.0 0.0 0.0 0.0')
+    cmdout = prob.SendCommand('SetNumKinect 2') #still need to call as one if using default tracker.
+    print "Trying to set kinect frame"
+    cmdout = prob.SendCommand('SetKinectFrame 0 0.0 0.0 1.6 0.0 0.0')
+    cmdout = prob.SendCommand('SetKinectFrame 1 0.0 0.0 1.6 0.0 0.0')
     cmdout = prob.SendCommand('StartListening')
     
-    print "try to create wiimote sub"
-    wii_sub = wiimote_subsciber(prob)
-    wii_sub.run()
+    #print "try to create wiimote sub"
+    #wii_sub = wiimote_subsciber(prob)
+    #wii_sub.run()
     
     
 

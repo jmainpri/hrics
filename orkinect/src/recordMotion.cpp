@@ -104,7 +104,7 @@ void RecordMotion::saveCurrentToFile()
 
 void RecordMotion::saveCurrentToCSV()
 {
-    cout << "saving curent file" << endl;
+//    cout << "saving curent file" << endl;
     //string home(getenv("HOME_MOVE3D"));
     string home = "/home/rafihayne";
     ostringstream file_name;
@@ -136,7 +136,7 @@ void RecordMotion::saveCurrentConfig()
     m_robot->GetDOFValues( q );
     m_motion.push_back( std::make_pair(dt,q) );
 
-    cout << "Record config for " << m_robot->GetName() << " , dt = " << dt << " sec" << endl;
+//    cout << "Record config for " << m_robot->GetName() << " , dt = " << dt << " sec" << endl;
 
 //    if( int(m_motion.size()) >= 100 )
 //    {
@@ -857,8 +857,8 @@ void RecordMotion::saveToCSVJoints( const std::string &filename, const motion_t&
     std::ostringstream oss; //Added to make file compile.  Not sure if oss should be defined this way.
     std::ofstream s;
     s.open( filename.c_str() );
-    cout << "Opening save file : " << oss.str() << endl;
-
+//    cout << "Opening save file : " << oss.str() << endl;
+    cout << "Opening save file: " << filename.c_str() << endl;
 
     for (int i=0; i<int(motion.size()); i++)
     {
@@ -1038,6 +1038,7 @@ bool  RecordMotion::loadRegressedFromCSV()
 motion_t RecordMotion::loadFromCSV( const std::string& filename )
 {
     cout << "Loading from CSV" << endl;
+    cout << "file: " << filename.c_str() << endl;
 
     std::ifstream       file( filename.c_str() );
     std::vector< std::vector<std::string> >   matrix;

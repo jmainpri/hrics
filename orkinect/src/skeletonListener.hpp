@@ -12,7 +12,7 @@
 
 #include <Eigen/Dense>
 
-
+/*
 enum kinect_frames
 {
   HEAD = 0,
@@ -35,6 +35,30 @@ enum kinect_frames
   KNEE_RIGHT = 13,
   FOOT_RIGHT = 14
 };
+*/
+
+enum kinect_frames
+{
+  HEAD = 0,
+  NECK = 1,
+  TORSO = 2,
+
+  SHOULDER_LEFT = 6,
+  ELBOW_LEFT = 7,
+  HAND_LEFT = 8,
+
+  SHOULDER_RIGHT = 3,
+  ELBOW_RIGHT = 4,
+  HAND_RIGHT = 5,
+
+  HIP_LEFT = 12,
+  KNEE_LEFT = 13,
+  FOOT_LEFT = 14,
+
+  HIP_RIGHT = 9,
+  KNEE_RIGHT = 10,
+  FOOT_RIGHT = 11
+};
 
 class SkeletonListener
 {
@@ -45,13 +69,13 @@ public:
 
     void listen();
 
-    void setKinectFrame(double TX = 0, double TY = 0, double TZ = 0, double RotZ = 0, double RotY = 0);
+    void setKinectFrame(int KinID, double TX = 0, double TY = 0, double TZ = 0, double RotZ = 0, double RotY = 0);
 
     void setMotionRecorder(std::vector<HRICS::RecordMotion*> motion_recorder);
 
     void setRecord(bool buttonState);
 
-    void setNumKinect(int num) {num_kinect_ = num;}
+    void setNumKinect(int num);
 
     void setTracker(bool cust_tracker) {custom_tracker_ = cust_tracker;}
 
@@ -85,7 +109,8 @@ private:
     std::vector<bool> user_is_tracked_;
     std::vector<int> tracked_user_id_;
     std::vector<int> active_kinect_;
-    Eigen::Affine3d kinect_to_origin_;
+    std::vector<int> users_id_to_kinect_;
+    std::vector<Eigen::Affine3d> kinect_to_origin_; //Changed to a vector to support multiple kinects.
     int max_num_skel_;
 
     bool button_pressed_;
