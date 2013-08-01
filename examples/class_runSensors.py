@@ -50,7 +50,7 @@ import subprocess
 #print "OPENRAVE_PLUGINS : " + os.environ['OPENRAVE_PLUGINS']
 
 #in order to use the wiimote, create a wiimote subscriber object and call run.
-class wiimote_subsciber():
+class wiimote_subscriber():
 	def __init__(self, a_prob):
 		self.record_state = False
 		self.is_pressed = False
@@ -82,7 +82,7 @@ class kinect_subscriber():
         self.orEnv.SetDebugLevel(DebugLevel.Verbose)
         self.orEnv.Reset()
         self.orEnv.Load("../ormodels/human_wpi.xml")
-        self.orEnv.Load("../ormodels/human_wpi_blue.xml")
+        #self.orEnv.Load("../ormodels/human_wpi_blue.xml")
         self.orEnv.Load("../ormodels/env.xml")
         
 #       self.orEnv.Load("../ormodels/table.xml")
@@ -100,14 +100,16 @@ class kinect_subscriber():
         self.prob = RaveCreateProblem(self.orEnv,'Kinect')
 
     def listen(self):
+        print "Trying to listen"
         self.prob.SendCommand('SetCustomTracker 1')
-        self.prob.SendCommand('SetNumKinect 2') #still need to call as 1 if using default tracker.
+        self.prob.SendCommand('SetNumKinect 1') #still need to call as 1 if using default tracker.
+        self.prob.SendCommand('EnableCamera 1')
         print "Trying to set kinect frame"
         #self.prob.SendCommand('SetKinectFrame 0 0.0 -0.2 1.6 -30.0 0.0')
         #self.prob.SendCommand('SetKinectFrame 1 0.0 0.2 1.6 30.0 0.0')
 
         self.prob.SendCommand('SetKinectFrame 0 0.0 0.13 1.37 35.0 0.0')
-        self.prob.SendCommand('SetKinectFrame 1 0.0 -0.13 1.37 -35.0 0.0')        
+        #self.prob.SendCommand('SetKinectFrame 1 0.0 -0.13 1.37 -35.0 0.0')        
 
         
         self.prob.SendCommand('StartListening')
@@ -116,9 +118,11 @@ class kinect_subscriber():
         print "loading files"
         dir = "/home/rafihayne/workspace/statFiles/recorded_motion/"
         files = ["motion_saved_00000_00000.csv",
-                 "motion_saved_00001_00000.csv",
+                 
                  ]   
         self.loadFiles(dir, files)
+
+        self.prob.SendCommand('EnableCamera 1')
 
         if controlled:
             self.prob.SendCommand('SetTrajectoryControl 1')
@@ -170,15 +174,18 @@ class kinect_subscriber():
         if state:
             print "Recording Motion"
             self.prob.SendCommand('SetButtonState 1')
-            self.proc = subprocess.Popen("rosbag record -O kindata /tf", stdin=subprocess.PIPE, shell=True, cwd="/home/rafihayne/workspace/statFiles/bagfiles")
+            #self.proc = subprocess.Popen("rosbag record -O kindata /tf", stdin=subprocess.PIPE, shell=True, cwd="/home/rafihayne/workspace/statFiles/bagfiles")
 
         else:
             self.prob.SendCommand('SetButtonState 0')
-            terminate_process_and_children(self.proc)
+            #terminate_process_and_children(self.proc)
             
 
 if __name__ == "__main__":
     print "main function"
-    recorder = kinect_subscriber()
-    recorder.listen()
+    k = kinect_subscriber()
+    k.listen()
+
+    w = wiimote_subscriber(k.prob)
+    w.run()
 

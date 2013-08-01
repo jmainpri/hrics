@@ -405,6 +405,7 @@ void SkeletonListener::tryToRecord()
         for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
             _motion_recorders[i]->m_is_recording = true;
             _motion_recorders[i]->saveCurrentConfig();
+            //TODO this is actually where we should poll the cameras. just use i lol.
         }
     }
     else if (!button_pressed_)
@@ -576,7 +577,6 @@ void SkeletonListener::setMotionRecorder(std::vector<HRICS::RecordMotion*> motio
 {
     _motion_recorders = motion_recorder;
 }
-
 
 
 //! @ingroup KINECT

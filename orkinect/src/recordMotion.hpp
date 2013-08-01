@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include <openrave/openrave.h>
+#include "cameraListener.hpp"
 
 //#include "API/ConfigSpace/configuration.hpp"
 
@@ -67,6 +68,9 @@ public:
     const std::vector<motion_t>& getStoredMotions() { return m_stored_motions; }
 
     bool m_is_recording;
+    HRICS::CameraListener* _camera;
+    bool use_camera_;
+    std::vector<timeval> m_times; //Parallel array to m_motion to save timestamps.  kinda messy
 
 private:
     OpenRAVE::RobotBasePtr m_robot;
@@ -78,6 +82,7 @@ private:
     int m_id_motion;
     int m_id_human;
     motion_t m_motion;
+
     std::vector<motion_t> m_stored_motions;
     int m_ith_shown_motion;
 };

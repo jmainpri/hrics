@@ -2,6 +2,7 @@
 #define KINECTMAIN_HPP
 
 #include "recordMotion.hpp"
+#include "cameraListener.hpp"
 #include "playMotion.hpp"
 
 #include <openrave/openrave.h>
@@ -38,6 +39,7 @@ public:
     bool GetPlaybackFrame(ostream& sout, istream& sinput);
     bool SetNumKinect(ostream& sout, istream& sinput);
     bool SetCustomTracker(ostream& sout, istream& sinput);
+    bool EnableCamera(ostream& sout, istream& sinput);
 
 
 private:
@@ -45,6 +47,7 @@ private:
     RobotBasePtr robot;
     SkeletonListener* _skel_listen;
     std::vector<HRICS::RecordMotion*> _motion_recorders;
+//    std::vector<HRICS::CameraListener*> _camera_listeners;
     PlayMotion* _motion_player;
     std::vector<std::string> _filepaths;
 };

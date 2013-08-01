@@ -20,6 +20,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("setnumkinect",boost::bind(&KinectProblem::SetNumKinect, this,_1,_2),"set the number of kinects that are being used");
     RegisterCommand("setcustomtracker",boost::bind(&KinectProblem::SetCustomTracker, this,_1,_2),"set which openni tracker is being used");
     RegisterCommand("resamplefiles",boost::bind(&KinectProblem::ResampleFiles, this,_1,_2),"resample all files in _filepaths");
+    RegisterCommand("enablecamera",boost::bind(&KinectProblem::EnableCamera, this,_1,_2),"Enable the camera to take live snapshots");
 
     _skel_listen = new SkeletonListener(penv);
     RobotBasePtr human1 = penv->GetRobot( "human_model" );
@@ -31,12 +32,18 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     }
     if(human1 != NULL){
         HRICS::RecordMotion* temp = new HRICS::RecordMotion(human1);
+        HRICS::CameraListener* tempCam = new HRICS::CameraListener(0);
         temp->setRobotId(0);
+        temp->_camera = tempCam;
+
         _motion_recorders.push_back( temp );
     }
     if(human2 != NULL){
         HRICS::RecordMotion* temp = new HRICS::RecordMotion(human2);
+        HRICS::CameraListener* tempCam = new HRICS::CameraListener(1);
         temp->setRobotId(1);
+        temp->_camera = tempCam;
+
         _motion_recorders.push_back( temp );
     }
 
@@ -197,6 +204,20 @@ bool KinectProblem::ResampleFiles(ostream& sout, istream& sinput) //TODO fix out
         motion_t a_motion = recorder->loadFromCSV(_filepaths[f]);
         a_motion = recorder->resample( a_motion, sampleSize);
         recorder->saveToCSVJoints( "/home/rafihayne/workspace/statFiles/recorded_motion/resampled_"+f_num.str()+".csv" , a_motion);
+    }
+
+    return true;
+}
+
+bool KinectProblem::EnableCamera(ostream& sout, istream& sinput)
+{
+
+    bool useCamera;
+    sinput >> useCamera;
+
+    for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
+        cout << "Setting use_camera_ to: " << useCamera << endl;
+        _motion_recorders[i]->use_camera_ = useCamera;
     }
 
     return true;

@@ -61,6 +61,7 @@ std::vector< std::vector<double> > convert_text_matrix_to_double(const std::vect
 
 RecordMotion::RecordMotion()
 {
+    use_camera_ = false;
     m_is_recording = false;
     m_id_motion = 0;
 //    m_robot = NULL;
@@ -70,6 +71,7 @@ RecordMotion::RecordMotion()
 
 RecordMotion::RecordMotion( OpenRAVE::RobotBasePtr robot )
 {
+    use_camera_ = false;
     m_is_recording = false;
     m_id_motion = 0;
     m_robot = robot;
@@ -118,6 +120,7 @@ void RecordMotion::saveCurrentToCSV()
 
     saveToCSVJoints( home+file_name.str(), m_motion );
     m_motion.clear();
+    m_times.clear();
     //reset();
 }
 
@@ -134,7 +137,15 @@ void RecordMotion::saveCurrentConfig()
 
     confPtr_t q; // = m_robot->getCurrentPos();
     m_robot->GetDOFValues( q );
+
+    if(use_camera_)
+    {
+        _camera->takeSnapshot(tim);
+    }
+
     m_motion.push_back( std::make_pair(dt,q) );
+    m_times.push_back( tim );
+
 
 //    cout << "Record config for " << m_robot->GetName() << " , dt = " << dt << " sec" << endl;
 
@@ -150,6 +161,7 @@ void RecordMotion::reset()
     m_id_file = 0;
     m_time_last_saved = 0.0;
     m_motion.clear();
+    m_times.clear();
     m_stored_motions.clear();
     m_ith_shown_motion = -1;
 }
@@ -415,6 +427,12 @@ bool RecordMotion::setRobotToStoredMotionConfig(int motion_id, int config_id)
 //    }
 //    cout << endl;
     m_robot->SetJointValues( m_stored_motions[motion_id][config_id].second );
+
+    if(use_camera_)
+    {
+        _camera->pubImage(m_times[config_id]);
+    }
+
     return true;
 }
 
@@ -866,6 +884,9 @@ void RecordMotion::saveToCSVJoints( const std::string &filename, const motion_t&
 
         for (int j=0; j<int(motion[i].second.size()); j++)
             s << motion[i].second[j] << ",";
+
+        //TODO here, we'll look in a parallel array. each time a motion is added, also add the time to the parallel array.
+        s << m_times[i].tv_sec << "," << m_times[i].tv_usec << ",";
         s << endl;
 
     }
@@ -1045,6 +1066,7 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
     std::vector< std::string >   row;
     std::string                line;
     std::string                cell;
+    timeval time;
 
     while( file )
     {
@@ -1084,10 +1106,13 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
         confPtr_t q;
         m_robot->GetDOFValues( q );
 
-        for(int j=0; j<int(matrix[i].size()); j++)
+        for(int j=0; j < ( int(matrix[i].size()) - 2 ); j++) //Last two fields in the csv are time values.
         {
             convert_text_to_num<double>( q[j], matrix[i][j], std::dec );
         }
+
+        convert_text_to_num<time_t>( time.tv_sec, matrix[i][int(matrix[i].size()) - 2], std::dec );
+        convert_text_to_num<time_t>( time.tv_usec, matrix[i][int(matrix[i].size()) - 1], std::dec );
 
 //        convert_text_to_num<double>( q[6], matrix[i][1], std::dec ); // Pelvis
 //        convert_text_to_num<double>( q[7], matrix[i][2], std::dec ); // Pelvis
@@ -1104,6 +1129,7 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
 //        convert_text_to_num<double>( q[22], matrix[i][12], std::dec ); // rElbowZ
 
         motion.push_back( make_pair(0.02,q) );
+        m_times.push_back(time);
         //cout << "Add configuration " << i << endl;
 
 //        print_config_rec( motion[i].second );

@@ -79,6 +79,8 @@ public:
 
     void setTracker(bool cust_tracker) {custom_tracker_ = cust_tracker;}
 
+
+
 private:
 
     void drawFrame(const Eigen::Affine3d& t);
