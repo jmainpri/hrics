@@ -41,9 +41,8 @@ from sensor_msgs.msg import *
 from wiimote.msg import*
 import keystroke
 from time import sleep
+import segment_file
 
-#Tesing
-import subprocess
 
 #print "HOME : " + os.environ['HOME']
 #print "PYTHONPATH : " + os.environ['PYTHONPATH']
@@ -78,19 +77,18 @@ class kinect_subscriber():
         self.h = None
         self.orEnv.SetViewer('qtcoin')
 
+        self.dir = "/home/rafihayne/workspace/statFiles/recorded_motion/"
+        self.files = ["motion_saved_00000_00000.csv",
+                 
+                     ]
+        self.split = [0,0]
+
         print "start"
         self.orEnv.SetDebugLevel(DebugLevel.Verbose)
         self.orEnv.Reset()
         self.orEnv.Load("../ormodels/human_wpi.xml")
         #self.orEnv.Load("../ormodels/human_wpi_blue.xml")
         self.orEnv.Load("../ormodels/env.xml")
-        
-#       self.orEnv.Load("../ormodels/table.xml")
-
-        #for robot in self.orEnv.GetRobots():
-        #    print robot.GetName()
-        #table = self.orEnv.GetKinBody('table')
-        #table.SetTransform([0,0,0,1,1.72,0,0.73])
 
         print "draw frame"
         T = MakeTransform( eye(3), transpose(matrix([0,0,0]))) 
@@ -105,22 +103,16 @@ class kinect_subscriber():
         self.prob.SendCommand('SetNumKinect 1') #still need to call as 1 if using default tracker.
         self.prob.SendCommand('EnableCamera 1')
         print "Trying to set kinect frame"
-        #self.prob.SendCommand('SetKinectFrame 0 0.0 -0.2 1.6 -30.0 0.0')
-        #self.prob.SendCommand('SetKinectFrame 1 0.0 0.2 1.6 30.0 0.0')
 
         self.prob.SendCommand('SetKinectFrame 0 0.0 0.13 1.37 35.0 0.0')
-        #self.prob.SendCommand('SetKinectFrame 1 0.0 -0.13 1.37 -35.0 0.0')        
+        self.prob.SendCommand('SetKinectFrame 1 0.0 -0.13 1.37 -35.0 0.0')        
 
-        
         self.prob.SendCommand('StartListening')
 
     def play(self, controlled):
         print "loading files"
-        dir = "/home/rafihayne/workspace/statFiles/recorded_motion/"
-        files = ["motion_saved_00000_00000.csv",
-                 
-                 ]   
-        self.loadFiles(dir, files)
+   
+        self.loadFiles(self.dir, self.files)
 
         self.prob.SendCommand('EnableCamera 1')
 
@@ -134,12 +126,13 @@ class kinect_subscriber():
         if controlled:
             sleep(1)
             print "\n \n"
-            print "Controlls:     u   i    o   p      q         space"
-            print "              <<<  <<  >>  >>>    exit    current frame" 
+            print "Controlls:     u   i    o   p      q         space            1            2          s"
+            print "              <<<  <<  >>  >>>    exit    current frame  split start  split end    segment" 
             print "Enter character:"
             self.keyboardControll()
 
     def keyboardControll(self):
+        currentFrame = 0
         while True:
             #print "Enter new character"
             c = keystroke.getch(-1)
@@ -155,30 +148,32 @@ class kinect_subscriber():
             if c == 'p':
                 self.prob.SendCommand('ControlTrajectoryPlayback 25')
             if c == ' ':
-                self.prob.SendCommand('GetPlaybackFrame')
+                currentFrame = int(self.prob.SendCommand('GetPlaybackFrame'))
+                print "Current Frame: " + str(currentFrame)
+            if c == '1':
+                currentFrame = int(self.prob.SendCommand('GetPlaybackFrame'))
+                self.split[0] = currentFrame
+                print "Set split beginning to: " + str(self.split[0])
+            if c == '2':
+                currentFrame = int(self.prob.SendCommand('GetPlaybackFrame'))
+                self.split[1] = currentFrame
+                print "Set split ending to: " + str(self.split[1])
+            if c == 's':
+                for file in self.files:
+                    print "Segmenting file: " + file + " from: " + str(self.split[0]) + " to: " + str(self.split[1])
+                    segment_file.segment([(self.split[0], self.split[1])], self.dir+file)
         
     def loadFiles(self, dir, files):
         for file in files:
             self.prob.SendCommand( 'LoadTrajectoryFile '+ dir + file )
 
     def rec(self, state):
-        def terminate_process_and_children(p): #Found on ros answers.
-            ps_command = subprocess.Popen("ps -o pid --ppid %d --noheaders" % p.pid, shell=True, stdout=subprocess.PIPE)
-            ps_output = ps_command.stdout.read()
-            retcode = ps_command.wait()
-            assert retcode == 0, "ps command returned %d" % retcode
-            for pid_str in ps_output.split("\n")[:-1]:
-                os.kill(int(pid_str), subprocess.signal.SIGINT)
-            p.terminate()
-
         if state:
             print "Recording Motion"
             self.prob.SendCommand('SetButtonState 1')
-            #self.proc = subprocess.Popen("rosbag record -O kindata /tf", stdin=subprocess.PIPE, shell=True, cwd="/home/rafihayne/workspace/statFiles/bagfiles")
 
         else:
             self.prob.SendCommand('SetButtonState 0')
-            #terminate_process_and_children(self.proc)
             
 
 if __name__ == "__main__":

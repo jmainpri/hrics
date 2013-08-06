@@ -256,7 +256,7 @@ bool KinectProblem::ControlTrajectoryPlayback(ostream& sout, istream& sinput)
 bool KinectProblem::GetPlaybackFrame(ostream& sout, istream& sinput)
 {
     int frame = _motion_player->getCurrentFrame();
-    cout << "Current Frame: " << frame << endl;
+    sout << frame;
 
     return true;
 }

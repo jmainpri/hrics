@@ -6,12 +6,15 @@ def segment(splits, filein):
 
     with open(filein, 'rb') as csvIn:
         for split in splits:
-            fileout = path+ '/' + '['+ str( split[0] ) + ' - ' + str( split[1] ) + '] ' + filename
-            with open(fileout, 'wb') as csvOut:
-                writer = csv.writer(csvOut)
-                reader = csv.reader(csvIn)
-                for row in list(reader)[split[0]:split[1]]:
-                        writer.writerow(row)
+            if (split[0] < split[1]):
+                fileout = path+ '/' + '['+ str( split[0] ) + ' - ' + str( split[1] ) + '] ' + filename
+                with open(fileout, 'wb') as csvOut:
+                    writer = csv.writer(csvOut)
+                    reader = csv.reader(csvIn)
+                    for row in list(reader)[split[0]:split[1]]:
+                            writer.writerow(row)
+            else:
+                print str(split[0]) + " isn't < " + str(split[1]) + " no split possible."
 
     
 if __name__ == "__main__":
