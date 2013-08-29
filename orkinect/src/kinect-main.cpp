@@ -40,7 +40,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     }
     if(human2 != NULL){
         HRICS::RecordMotion* temp = new HRICS::RecordMotion(human2);
-        HRICS::CameraListener* tempCam = new HRICS::CameraListener(1);
+        HRICS::CameraListener* tempCam = new HRICS::CameraListener(1); //TODO if not custom tracker but human2 is used, set robotid to 0
         temp->setRobotId(1);
         temp->_camera = tempCam;
 
@@ -216,8 +216,13 @@ bool KinectProblem::EnableCamera(ostream& sout, istream& sinput)
     sinput >> useCamera;
 
     for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
-        cout << "Setting use_camera_ to: " << useCamera << endl;
         _motion_recorders[i]->use_camera_ = useCamera;
+
+        if(_skel_listen->getTracker() == false && i >= 1) //If we're not using the custom tracker (only 1 kinect used), but have multiple humans in the scene, we only need 1 camera feed.
+        {
+            cout << "More humans than kinects.  Disabling camera for human: " << i << endl;
+            _motion_recorders[i]->use_camera_ = false;
+        }
     }
 
     return true;

@@ -60,6 +60,16 @@ enum kinect_frames
   FOOT_RIGHT = 11
 };
 
+struct TrackedHuman
+{
+    int id_kinect_;
+    int id_user_;
+    bool is_tracked_;
+    OpenRAVE::RobotBasePtr robot_;
+    std::string user_name_;
+
+};
+
 class SkeletonListener
 {
 public:
@@ -78,6 +88,8 @@ public:
     void setNumKinect(int num);
 
     void setTracker(bool cust_tracker) {custom_tracker_ = cust_tracker;}
+
+    bool getTracker() {return custom_tracker_;}
 
 
 
@@ -108,6 +120,10 @@ private:
     std::vector< std::vector<tf::StampedTransform> > transforms_;
     std::vector<Eigen::VectorXd> confidences_;
     std::vector< std::vector<Eigen::Vector3d> > pos_;
+
+    std::vector<int> user_tracking_counter_;
+    std::vector<bool> user_tracking_stopped_;
+
     std::vector<bool> user_is_tracked_;
     std::vector<int> tracked_user_id_;
     std::vector<int> active_kinect_;
@@ -123,12 +139,12 @@ private:
     void init_users();
 
     OpenRAVE::EnvironmentBasePtr env_;
-    std::vector<OpenRAVE::RobotBasePtr> humans_;
     std::vector<boost::shared_ptr<void> > graphptrs_;
+    std::vector<TrackedHuman> humans_;
 
     bool print_;
 
-    std::vector<std::string> names_;
+    std::vector<std::string> body_names_;
     std::vector<HRICS::RecordMotion*> _motion_recorders;
 };
 

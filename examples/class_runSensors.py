@@ -79,15 +79,18 @@ class kinect_subscriber():
 
         self.dir = "/home/rafihayne/workspace/statFiles/recorded_motion/"
         self.files = ["motion_saved_00000_00000.csv",
-                 
-                     ]
+                      "motion_saved_00001_00000.csv",
+                     ] #One file for each human in the scene
+
         self.split = [0,0]
 
         print "start"
         self.orEnv.SetDebugLevel(DebugLevel.Verbose)
         self.orEnv.Reset()
+
         self.orEnv.Load("../ormodels/human_wpi.xml")
-        #self.orEnv.Load("../ormodels/human_wpi_blue.xml")
+        self.orEnv.Load("../ormodels/human_wpi_blue.xml")
+
         self.orEnv.Load("../ormodels/env.xml")
 
         print "draw frame"
@@ -100,12 +103,23 @@ class kinect_subscriber():
     def listen(self):
         print "Trying to listen"
         self.prob.SendCommand('SetCustomTracker 1')
-        self.prob.SendCommand('SetNumKinect 1') #still need to call as 1 if using default tracker.
+        self.prob.SendCommand('SetNumKinect 2') #still need to call as 1 if using default tracker.
         self.prob.SendCommand('EnableCamera 1')
         print "Trying to set kinect frame"
 
-        self.prob.SendCommand('SetKinectFrame 0 0.0 0.13 1.37 35.0 0.0')
-        self.prob.SendCommand('SetKinectFrame 1 0.0 -0.13 1.37 -35.0 0.0')        
+        #Dual Kinect Across Setup.
+        #self.prob.SendCommand('SetKinectFrame 1 0.0 0.13 1.37 35.0 0.0')
+        #self.prob.SendCommand('SetKinectFrame 0 0.0 -0.13 1.37 -35.0 0.0')  
+
+
+        #Dual Kinect Side by Side
+        #self.prob.SendCommand('SetKinectFrame 1 0.0 0.13 1.37 35.0 0.0')
+        #self.prob.SendCommand('SetKinectFrame 0 0.0 -0.13 1.37 -35.0 0.0') 
+        self.prob.SendCommand('SetKinectFrame 0 1.2 -1 1.37 90.0 10.0')
+        self.prob.SendCommand('SetKinectFrame 1 2.0 0.0 1.37 180.0 10.0')         
+
+        #Side by Side transorm one kinect
+        #self.prob.SendCommand('SetKinectFrame 0 1.00 -1.1 1.37 90.0 10.0')     
 
         self.prob.SendCommand('StartListening')
 

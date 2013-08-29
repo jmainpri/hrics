@@ -17,11 +17,11 @@ CameraListener::CameraListener()
     _file = 0;
 
 
-    cout << "start suscriber" << endl;
+    cout << "start subscriber" << endl;
     _sub = it.subscribe("camera/rgb/image_raw", 1, &CameraListener::imageConverter, this);
 
     cout << "start publisher" << endl;
-    _pub = it.advertise("orkinect/image", 1);
+    _pub = it.advertise("orkinect/kinect", 1);
 
 }
 
@@ -39,7 +39,7 @@ CameraListener::CameraListener(const int id)
     _file = 0;
 
 
-    cout << "start suscriber" << endl;
+    cout << "start subscriber" << endl;
     std::stringstream s;
     s << "camera" << _id << "/rgb/image_raw";
     _sub = it.subscribe(s.str().c_str(), 1, &CameraListener::imageConverter, this);
@@ -48,7 +48,7 @@ CameraListener::CameraListener(const int id)
     s.str( "" );
     s.clear();
 
-    s << "orkinect/kinect" << _id;
+    s << "orkinect/kinect" << _id << "/";
     _pub = it.advertise(s.str().c_str(), 1);
 
 }

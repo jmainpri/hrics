@@ -106,13 +106,23 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
     OpenRAVE::RobotBasePtr human2 = env_->GetRobot( "human_model_blue" );
 
     if( human1 != NULL ) {
+        TrackedHuman h;
+        h.user_name_ = "";
+        h.robot_ = human1;
+        h.id_kinect_ = 0;
+        h.is_tracked_ = false;
         cout << "Add Human Robot : " << human1->GetName() << endl;
-        humans_.push_back( human1 );
+        humans_.push_back( h );
     }
 
     if( human2 != NULL ) {
+        TrackedHuman h;
+        h.user_name_ = "";
+        h.robot_ = human2;
+        h.id_kinect_ = 1;
+        h.is_tracked_ = false;
         cout << "Add Human Robot : " << human2->GetName() << endl;
-        humans_.push_back( human2 );
+        humans_.push_back( h );
     }
 
     OpenRAVE::RaveTransform<float> Tcam;
@@ -138,7 +148,7 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
 
     set_joint_name_map();
 
-//    listen_iter_= 0;
+    //    listen_iter_= 0;
     button_pressed_ = false;
     print_ = false;
 
@@ -147,33 +157,33 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
 
 void SkeletonListener::init_users()
 {
-//    if (!custom_tracker_)
-//    {
-//        for (int id = 0; id < max_num_skel_; id++)
-//        {
-//            kin_user a_user;
-//            a_user.active = false;
-//            a_user.ident = num_to_string(id);
+    //    if (!custom_tracker_)
+    //    {
+    //        for (int id = 0; id < max_num_skel_; id++)
+    //        {
+    //            kin_user a_user;
+    //            a_user.active = false;
+    //            a_user.ident = num_to_string(id);
 
-//            active_users_.push_back(a_user);
-//            cout << "added user: " << a_user.ident << endl;
-//        }
-//    }
-//    else
-//    {
-//        for (int k = 1; k <= num_kinect_; k++)
-//        {
-//            for (int id = 0; id < max_num_skel_; id++)
-//            {
-//                kin_user a_user;
-//                a_user.active = false;
-//                a_user.ident = num_to_string(k) + "_" + num_to_string(id);
+    //            active_users_.push_back(a_user);
+    //            cout << "added user: " << a_user.ident << endl;
+    //        }
+    //    }
+    //    else
+    //    {
+    //        for (int k = 1; k <= num_kinect_; k++)
+    //        {
+    //            for (int id = 0; id < max_num_skel_; id++)
+    //            {
+    //                kin_user a_user;
+    //                a_user.active = false;
+    //                a_user.ident = num_to_string(k) + "_" + num_to_string(id);
 
-//                active_users_.push_back(a_user);
-//                cout << "added user: " << a_user.ident << endl;
-//            }
-//        }
-//    }
+    //                active_users_.push_back(a_user);
+    //                cout << "added user: " << a_user.ident << endl;
+    //            }
+    //        }
+    //    }
 
     if (!custom_tracker_)
     {
@@ -224,6 +234,8 @@ void SkeletonListener::setNumKinect(int num)
         transforms_.resize( max_num_skel_ * num_kinect_);
         pos_.resize( max_num_skel_ * num_kinect_);
         user_is_tracked_.resize(max_num_skel_ * num_kinect_);
+        user_tracking_stopped_.resize(max_num_skel_ * num_kinect_, false);
+        user_tracking_counter_.resize(max_num_skel_ * num_kinect_, 0);
 
         for(int i=0;i<max_num_skel_ * num_kinect_;i++)
         {
@@ -240,27 +252,27 @@ void SkeletonListener::set_joint_name_map()
 {
     cout << "set names" << endl;
 
-    names_.clear();
+    body_names_.clear();
 
-    names_.push_back("head_");
-    names_.push_back("neck_");
-    names_.push_back("torso_");
+    body_names_.push_back("head_");
+    body_names_.push_back("neck_");
+    body_names_.push_back("torso_");
 
-    names_.push_back("left_shoulder_");
-    names_.push_back("left_elbow_");
-    names_.push_back("left_hand_");
+    body_names_.push_back("left_shoulder_");
+    body_names_.push_back("left_elbow_");
+    body_names_.push_back("left_hand_");
 
-    names_.push_back("right_shoulder_");
-    names_.push_back("right_elbow_" );
-    names_.push_back("right_hand_" );
+    body_names_.push_back("right_shoulder_");
+    body_names_.push_back("right_elbow_" );
+    body_names_.push_back("right_hand_" );
 
-    names_.push_back("left_hip_");
-    names_.push_back("left_knee_");
-    names_.push_back("left_foot_");
+    body_names_.push_back("left_hip_");
+    body_names_.push_back("left_knee_");
+    body_names_.push_back("left_foot_");
 
-    names_.push_back("right_hip_");
-    names_.push_back("right_knee_");
-    names_.push_back("right_foot_");
+    body_names_.push_back("right_hip_");
+    body_names_.push_back("right_knee_");
+    body_names_.push_back("right_foot_");
 }
 
 void SkeletonListener::setRecord(bool buttonState)
@@ -272,21 +284,24 @@ void SkeletonListener::listen_once()
 {
     tracked_user_id_.clear();
 
-
-    for (int id = 0; id < int(users_.size()); id++ )
+    // For all users possibly published by tracker
+    for (int id=0; id<int(users_.size()); id++ )
     {
         user_is_tracked_[id] = false;
 
         if( !listener_->frameExists("/head_"+ users_[id]))
+        {
+            //cout << "/head_"+ users_[id] + " does not exist" << endl;
             continue;
+        }
 
         ros::Time previous_time = transforms_[id][0].stamp_;
 
         try
         {
-            for (int j = 0; j < int(names_.size()); j++)
+            for (int j = 0; j < int(body_names_.size()); j++)
             {
-                listener_->lookupTransform( "/openni_depth_frame", names_[j] + users_[id] , ros::Time(0), transforms_[id][j]);
+                listener_->lookupTransform( "/openni_depth_frame", body_names_[j] + users_[id] , ros::Time(0), transforms_[id][j]);
             }
 
             user_is_tracked_[id] = true;
@@ -296,20 +311,90 @@ void SkeletonListener::listen_once()
             ROS_ERROR("%s",ex.what());
         }
 
-        if (previous_time == transforms_[id][0].stamp_){
-            user_is_tracked_[id] = false;
+        // Check stamp to see if we are sill tracking
+        if( previous_time == transforms_[id][0].stamp_ )
+        {
+            if( !user_tracking_stopped_[id] )
+            {
+                user_tracking_counter_[id]++;
+            }
+            if( user_tracking_counter_[id] > 100 )
+            {
+                user_tracking_stopped_[id] = true;
+            }
+            if( user_tracking_stopped_[id] )
+            {
+                user_is_tracked_[id] = false;
+            }
+        }
+        else {
+            user_tracking_stopped_[id] = false;
+            user_tracking_counter_[id] = 0;
         }
 
         if (user_is_tracked_[id] )
         {
-            //cout << "user_is_tracked_ : " << user_is_tracked_[id] << endl;
+            //cout << "user_is_tracked_ : " << id << endl;
             tracked_user_id_.push_back(id);
         }
+    }
 
+    for(int i=0; i<int(humans_.size()); i++)
+    {
+        //cout << user_is_tracked_[ humans_[i].id_user_ ] << endl;
+
+        //Check that the human is still tracked
+        if( humans_[i].is_tracked_ && (!user_is_tracked_[ humans_[i].id_user_ ]) )
+        {
+            humans_[i].is_tracked_ = false;
+            cout << "human " << humans_[i].id_user_ << " is not tracked!!!!" << endl;
+        }
+    }
+
+    for(int i=0; i < int(tracked_user_id_.size()); i++)
+    {
+        if(users_id_to_kinect_[tracked_user_id_[i]] == 0)
+        {
+            if( !humans_[0].is_tracked_ )
+            {
+                //cout << "0 is tracked" << endl;
+                humans_[0].is_tracked_ = true;
+                humans_[0].id_user_ = tracked_user_id_[i];
+                humans_[0].user_name_ = users_[humans_[0].id_user_];
+            }
+
+            // sets the pos vector (red spheres)
+            setEigenPositions(tracked_user_id_[i]);
+
+            if( humans_[0].is_tracked_ && (humans_[0].id_user_ == tracked_user_id_[i]))
+            {
+                setHumanConfiguration( humans_[0].id_user_, humans_[0].robot_ );
+            }
+        }
+        if(users_id_to_kinect_[tracked_user_id_[i]] == 1)
+        {
+
+            if( !humans_[1].is_tracked_ )
+            {
+                //cout << "1 is tracked" << endl;
+                humans_[1].is_tracked_ = true;
+                humans_[1].id_user_ = tracked_user_id_[i];
+                humans_[1].user_name_ = users_[humans_[1].id_user_];
+            }
+
+            // sets the pos vector (red spheres)
+            setEigenPositions(tracked_user_id_[i]);
+
+            if( humans_[1].is_tracked_ && (humans_[1].id_user_ == tracked_user_id_[i]))
+            {
+                setHumanConfiguration( humans_[1].id_user_, humans_[1].robot_ );
+            }
+        }
     }
 
     graphptrs_.clear();
 
+    /*
     for(int i = 0; i < int(tracked_user_id_.size()); i++)
     {
         //cout << "set egien positions" << endl;
@@ -320,11 +405,19 @@ void SkeletonListener::listen_once()
         {
             if( i < humans_.size() )
             {
-                //cout << tracked_user_id_[i] << "   " << humans_[i] << "   " << i << endl;
-                setHumanConfiguration( tracked_user_id_[i], humans_[users_id_to_kinect_[tracked_user_id_[i]]] );
+
+                if(!custom_tracker_) {
+                    setHumanConfiguration( tracked_user_id_[i], humans_[i].robot_ );
+                }
+                else {
+                    //cout << tracked_user_id_[i] << "   " << humans_[users_id_to_kinect_[tracked_user_id_[i]]].robot_ << "   " << i << endl;
+                    setHumanConfiguration( tracked_user_id_[i], humans_[users_id_to_kinect_[tracked_user_id_[i]]].robot_ );
+                }
+
             }
         }
     }
+    */
 
     if( !_motion_recorders.empty())
     {
@@ -364,12 +457,12 @@ void SkeletonListener::setConfidence( std::string name, double conf )
 {
     //cout << "set : " << name << endl;
 
-    for(int i=0;i<int(names_.size());i++)
+    for(int i=0;i<int(body_names_.size());i++)
     {
-        if( name.find( names_[i] ) != std::string::npos )
+        if( name.find( body_names_[i] ) != std::string::npos )
         {
-            std::string skel_id = name.substr(names_[i].size());
-            //cout << "--" << name.substr(names_[i].size()) << "--" << endl;
+            std::string skel_id = name.substr(body_names_[i].size());
+            //cout << "--" << name.substr(body_names_[i].size()) << "--" << endl;
             int id;
 
             if( string_to_num<int>( id, skel_id, std::dec) )
@@ -405,7 +498,6 @@ void SkeletonListener::tryToRecord()
         for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
             _motion_recorders[i]->m_is_recording = true;
             _motion_recorders[i]->saveCurrentConfig();
-            //TODO this is actually where we should poll the cameras. just use i lol.
         }
     }
     else if (!button_pressed_)
@@ -425,7 +517,7 @@ void SkeletonListener::printDofNames()
     if( humans_.empty() )
         return;
 
-    const std::vector<OpenRAVE::KinBody::JointPtr> joints = humans_[0]->GetJoints();
+    const std::vector<OpenRAVE::KinBody::JointPtr> joints = humans_[0].robot_->GetJoints();
 
     for( int i=0;i<int(joints.size());i++)
     {
@@ -445,7 +537,7 @@ void SkeletonListener::setEigenPositions(int id)
     {
         if (id < (k+1)*max_num_skel_)
         {
-//            cout << "Using transform k: " << k << " on ID: " << id << endl;
+            //            cout << "Using transform k: " << k << " on ID: " << id << endl;
             tempTransform = kinect_to_origin_[k];
             break;
         }
@@ -511,8 +603,8 @@ void SkeletonListener::draw()
             // float y = transforms_[ tracked_user_id_[i] ][j].getOrigin().getY();
             // float z = transforms_[ tracked_user_id_[i] ][j].getOrigin().getZ();
 
-//            if( j == 3 || j == 4 || j == 5 )
-//                continue;
+            //            if( j == 3 || j == 4 || j == 5 )
+            //                continue;
 
             float x = pos_[tracked_user_id_[i]][j][0];
             float y = pos_[tracked_user_id_[i]][j][1];
@@ -551,8 +643,8 @@ void SkeletonListener::setKinectFrame( int KinID, double TX, double TY, double T
     kin_cam(1,0) = 0.0;  kin_cam(1,1) =  1.0;  kin_cam(1,2) = 0.0;
     kin_cam(2,0) = 0.0;  kin_cam(2,1) =  0.0;  kin_cam(2,2) = 1.0;
 
-//    kinect_to_origin_.linear() = kin_cam;
-//    kinect_to_origin_.translation() = Eigen::Vector3d::Zero();
+    //    kinect_to_origin_.linear() = kin_cam;
+    //    kinect_to_origin_.translation() = Eigen::Vector3d::Zero();
     tempTranslation.linear() = kin_cam;
     tempTranslation.translation() = Eigen::Vector3d::Zero();
 
@@ -561,13 +653,13 @@ void SkeletonListener::setKinectFrame( int KinID, double TX, double TY, double T
 
     T_Pan.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( RotZ, Eigen::Vector3d::UnitZ() ));
     T_Pan.translation() = Eigen::Vector3d::Zero();
-//    cout << "T_Pan : " << endl << T_Pan.matrix() << endl;
+    //    cout << "T_Pan : " << endl << T_Pan.matrix() << endl;
 
     T_Til.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( RotY, Eigen::Vector3d::UnitY() ));
     T_Til.translation() = Eigen::Vector3d::Zero();
-//    cout << "T_Til : " << endl << T_Til.matrix() << endl;
+    //    cout << "T_Til : " << endl << T_Til.matrix() << endl;
 
-//    kinect_to_origin_ =  T_Tra * T_Pan * T_Til * kinect_to_origin_;
+    //    kinect_to_origin_ =  T_Tra * T_Pan * T_Til * kinect_to_origin_;
     kinect_to_origin_[KinID] = T_Tra * T_Pan * T_Til * tempTranslation;
     cout << "Set kinect frame : " << KinID << endl;
     //kinect_to_origin_.push_back();  //TODO fix this so it uses kinect id.
@@ -619,8 +711,8 @@ void SkeletonListener::setHumanConfiguration(int id, OpenRAVE::RobotBasePtr huma
     q[index_dof+5] -= M_PI/2; // Hack +  Pi / 2
     q[index_dof+5] = angle_limit_PI( q[index_dof+5] );
 
-//    cout << "HIP_LEFT : " << pos_[id][HIP_LEFT] << endl;
-//    cout << "HIP_RIGHT : " << pos_[id][HIP_RIGHT] << endl;
+    //    cout << "HIP_LEFT : " << pos_[id][HIP_LEFT] << endl;
+    //    cout << "HIP_RIGHT : " << pos_[id][HIP_RIGHT] << endl;
 
     //    cout << " q[0] : " << q[0] << endl;
     //    cout << " q[1] : " << q[1] << endl;
