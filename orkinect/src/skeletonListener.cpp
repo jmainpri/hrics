@@ -230,7 +230,8 @@ void SkeletonListener::setNumKinect(int num)
 {
     num_kinect_ = num;
 
-    if(custom_tracker_){ //TODO move this.  I don't like redoing initialization here.  figure out another way.
+    //if(custom_tracker_) //TODO move this.  I don't like redoing initialization here.  figure out another way.
+    {
         transforms_.resize( max_num_skel_ * num_kinect_);
         pos_.resize( max_num_skel_ * num_kinect_);
         user_is_tracked_.resize(max_num_skel_ * num_kinect_);
@@ -353,41 +354,82 @@ void SkeletonListener::listen_once()
 
     for(int i=0; i < int(tracked_user_id_.size()); i++)
     {
-        if(users_id_to_kinect_[tracked_user_id_[i]] == 0)
+        if(custom_tracker_)
         {
-            if( !humans_[0].is_tracked_ )
+            if(users_id_to_kinect_[tracked_user_id_[i]] == 0)
             {
-                //cout << "0 is tracked" << endl;
-                humans_[0].is_tracked_ = true;
-                humans_[0].id_user_ = tracked_user_id_[i];
-                humans_[0].user_name_ = users_[humans_[0].id_user_];
+                if( !humans_[0].is_tracked_ )
+                {
+                    //cout << "0 is tracked" << endl;
+                    humans_[0].is_tracked_ = true;
+                    humans_[0].id_user_ = tracked_user_id_[i];
+                    humans_[0].user_name_ = users_[humans_[0].id_user_];
+                }
+
+                // sets the pos vector (red spheres)
+                setEigenPositions(tracked_user_id_[i]);
+
+                if( humans_[0].is_tracked_ && (humans_[0].id_user_ == tracked_user_id_[i]))
+                {
+                    setHumanConfiguration( humans_[0].id_user_, humans_[0].robot_ );
+                }
             }
-
-            // sets the pos vector (red spheres)
-            setEigenPositions(tracked_user_id_[i]);
-
-            if( humans_[0].is_tracked_ && (humans_[0].id_user_ == tracked_user_id_[i]))
+            if(users_id_to_kinect_[tracked_user_id_[i]] == 1)
             {
-                setHumanConfiguration( humans_[0].id_user_, humans_[0].robot_ );
+
+                if( !humans_[1].is_tracked_ )
+                {
+                    //cout << "1 is tracked" << endl;
+                    humans_[1].is_tracked_ = true;
+                    humans_[1].id_user_ = tracked_user_id_[i];
+                    humans_[1].user_name_ = users_[humans_[1].id_user_];
+                }
+
+                // sets the pos vector (red spheres)
+                setEigenPositions(tracked_user_id_[i]);
+
+                if( humans_[1].is_tracked_ && (humans_[1].id_user_ == tracked_user_id_[i]))
+                {
+                    setHumanConfiguration( humans_[1].id_user_, humans_[1].robot_ );
+                }
             }
         }
-        if(users_id_to_kinect_[tracked_user_id_[i]] == 1)
+        else
         {
 
-            if( !humans_[1].is_tracked_ )
+            if( !(humans_[1].is_tracked_ && tracked_user_id_[i] == humans_[1].id_user_) )
             {
-                //cout << "1 is tracked" << endl;
-                humans_[1].is_tracked_ = true;
-                humans_[1].id_user_ = tracked_user_id_[i];
-                humans_[1].user_name_ = users_[humans_[1].id_user_];
+                if( !humans_[0].is_tracked_ )
+                {
+                    humans_[0].is_tracked_ = true;
+                    humans_[0].id_user_ = tracked_user_id_[i];
+                    humans_[0].user_name_ = users_[humans_[0].id_user_];
+                }
+
+                setEigenPositions(humans_[0].id_user_);
+
+                if( humans_[0].is_tracked_ && (humans_[0].id_user_ == tracked_user_id_[i]))
+                {
+                    setHumanConfiguration( humans_[0].id_user_, humans_[0].robot_ );
+                }
             }
 
-            // sets the pos vector (red spheres)
-            setEigenPositions(tracked_user_id_[i]);
-
-            if( humans_[1].is_tracked_ && (humans_[1].id_user_ == tracked_user_id_[i]))
+            if( !(humans_[0].is_tracked_ && tracked_user_id_[i] == humans_[0].id_user_) )
             {
-                setHumanConfiguration( humans_[1].id_user_, humans_[1].robot_ );
+
+                if( !humans_[1].is_tracked_ )
+                {
+                    humans_[1].is_tracked_ = true;
+                    humans_[1].id_user_ = tracked_user_id_[i];
+                    humans_[1].user_name_ = users_[humans_[1].id_user_];
+                }
+
+                setEigenPositions(humans_[1].id_user_);
+
+                if( humans_[1].is_tracked_ && (humans_[1].id_user_ == tracked_user_id_[i]))
+                {
+                    setHumanConfiguration( humans_[1].id_user_, humans_[1].robot_ );
+                }
             }
         }
     }

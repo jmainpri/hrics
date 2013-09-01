@@ -4,6 +4,7 @@
 #include <vector>
 #include <string.h>
 #include <iostream>
+#include <sys/time.h>
 
 #include <openrave/openrave.h>
 #include "cameraListener.hpp"
@@ -67,6 +68,8 @@ public:
 
     const std::vector<motion_t>& getStoredMotions() { return m_stored_motions; }
 
+    void saveImageToFile(timeval time);
+
     bool m_is_recording;
     HRICS::CameraListener* _camera;
     bool use_camera_;
@@ -85,6 +88,8 @@ private:
 
     std::vector<motion_t> m_stored_motions;
     int m_ith_shown_motion;
+
+    bool m_save_image;
 };
 }
 

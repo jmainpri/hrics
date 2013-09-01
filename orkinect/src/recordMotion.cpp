@@ -124,6 +124,12 @@ void RecordMotion::saveCurrentToCSV()
     //reset();
 }
 
+void RecordMotion::saveImageToFile(timeval time)
+{
+    _camera->takeSnapshot(time);
+    m_save_image = false;
+}
+
 void RecordMotion::saveCurrentConfig()
 {
     timeval tim;
@@ -138,9 +144,10 @@ void RecordMotion::saveCurrentConfig()
     confPtr_t q; // = m_robot->getCurrentPos();
     m_robot->GetDOFValues( q );
 
-    if(use_camera_)
+    if( use_camera_ && !m_save_image )
     {
-        _camera->takeSnapshot(tim);
+        m_save_image = true;
+        boost::thread( &RecordMotion::saveImageToFile, this, tim );
     }
 
     m_motion.push_back( std::make_pair(dt,q) );

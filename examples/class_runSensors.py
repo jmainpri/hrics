@@ -102,8 +102,8 @@ class kinect_subscriber():
 
     def listen(self):
         print "Trying to listen"
-        self.prob.SendCommand('SetCustomTracker 1')
-        self.prob.SendCommand('SetNumKinect 2') #still need to call as 1 if using default tracker.
+        self.prob.SendCommand('SetCustomTracker 0')
+        self.prob.SendCommand('SetNumKinect 1') #still need to call as 1 if using default tracker.
         self.prob.SendCommand('EnableCamera 1')
         print "Trying to set kinect frame"
 
@@ -115,8 +115,12 @@ class kinect_subscriber():
         #Dual Kinect Side by Side
         #self.prob.SendCommand('SetKinectFrame 1 0.0 0.13 1.37 35.0 0.0')
         #self.prob.SendCommand('SetKinectFrame 0 0.0 -0.13 1.37 -35.0 0.0') 
-        self.prob.SendCommand('SetKinectFrame 0 1.2 -1 1.37 90.0 10.0')
-        self.prob.SendCommand('SetKinectFrame 1 2.0 0.0 1.37 180.0 10.0')         
+
+        self.prob.SendCommand('SetKinectFrame 0 1.1 -1.2 1.32 90.0 7.0')
+
+        #self.prob.SendCommand('SetKinectFrame 1 2 0.0 1.37 180.0 15.0') 
+       
+        #self.prob.SendCommand('SetKinectFrame 1 1.8 0.0 1.37 180.0 20.0')        
 
         #Side by Side transorm one kinect
         #self.prob.SendCommand('SetKinectFrame 0 1.00 -1.1 1.37 90.0 10.0')     
@@ -128,6 +132,7 @@ class kinect_subscriber():
    
         self.loadFiles(self.dir, self.files)
 
+        self.prob.SendCommand('SetCustomTracker 1') #FIX THIS ASAP.  MESSY kin prob enable camera
         self.prob.SendCommand('EnableCamera 1')
 
         if controlled:
