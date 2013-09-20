@@ -70,7 +70,9 @@ link_directories(${OPENRAVE_LINK_DIRS})
 
 #common commands for building c++ executables and libraries
 rosbuild_add_library(${PROJECT_NAME} src/kinect-main.cpp src/skeletonListener.cpp src/skeletonDrawing.cpp src/recordMotion.cpp src/playMotion.cpp src/classifyMotion.cpp src/cameraListener.cpp)
+
 target_link_libraries(${PROJECT_NAME} ${OPENRAVE_LIBRARY} ${OpenCV_LIBARIES})
+
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 #rosbuild_add_executable(example examples/example.cpp)

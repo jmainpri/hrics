@@ -2,6 +2,7 @@
 #include "skeletonDrawing.hpp"
 
 #include <Eigen/Geometry>
+#include <sensor_msgs/JointState.h>
 
 template <typename T>
 std::string num_to_string ( T Number )
@@ -993,4 +994,24 @@ void SkeletonListener::setHumanConfiguration(int id, OpenRAVE::RobotBasePtr huma
     //    }
 
     human->SetJointValues(q);
+
+    // Let's assume q holds all the joint values
+    std::cout << "Vector q has " << q.size() << " elements" << std::endl;
+    std::cout << "Elements of q:" << std::endl;
+    std::ostringstream strm;
+    if (q.size() > 0)
+    {
+        strm << q[0];
+        for (unsigned int i = 1; i < q.size(); i++)
+        {
+            strm << ", " << q[i];
+        }
+    }
+    std::cout << strm.str() << std::endl;
+    sensor_msgs::JointState human_state;
+    // Populate joint state
+    human_state.name.resize(q.size());
+    human_state.position.resize(q.size());
+    human_state.name[0] = "PelvisTransX";
+    human_state.position[0] = q[0];
 }

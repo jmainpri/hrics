@@ -107,9 +107,15 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
+<<<<<<< Updated upstream
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/rafihayne/workspace/hrics-or-plugins/orkinect/CMakeFiles /home/rafihayne/workspace/hrics-or-plugins/orkinect/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/rafihayne/workspace/hrics-or-plugins/orkinect/CMakeFiles 0
+=======
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/rafi/workspace/hrics-or-plugins/orkinect/CMakeFiles /home/rafi/workspace/hrics-or-plugins/orkinect/CMakeFiles/progress.marks
+	$(MAKE) -f CMakeFiles/Makefile2 all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/rafi/workspace/hrics-or-plugins/orkinect/CMakeFiles 0
+>>>>>>> Stashed changes
 .PHONY : all
 
 # The main clean target
