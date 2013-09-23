@@ -70,7 +70,7 @@ void print_config(const std::vector<double>& q)
     }
 }
 
-SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
+SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv, ros::NodeHandle nh) : nh_(nh)
 {
     cout << "Enter constructer" << endl;
 
@@ -78,8 +78,8 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
 
     int argc = 0;
     char** argv;
-    ros::init( argc, argv, "orkinect" );
-    node_ = new ros::NodeHandle;
+    //ros::init( argc, argv, "orkinect" );
+    //node_ = new ros::NodeHandle;
     //sub_ = node_->subscribe( "openni_tracker/openni_confidences", 1, &SkeletonListener::readConfidence, this );
 
     cout << "start suscriber" << endl;
@@ -153,7 +153,7 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv)
     button_pressed_ = false;
     print_ = false;
 
-
+    state_pub_ = nh_.advertise<sensor_msgs::JointState>("/human_state", 1);
 }
 
 void SkeletonListener::init_users()
@@ -488,7 +488,7 @@ void SkeletonListener::listen()
     rate_ = new ros::Rate(40.0);
     listener_ = new tf::TransformListener;
 
-    while (node_->ok())
+    while (nh_.ok())
     {
         listen_once();
     }
@@ -996,6 +996,7 @@ void SkeletonListener::setHumanConfiguration(int id, OpenRAVE::RobotBasePtr huma
     human->SetJointValues(q);
 
     // Let's assume q holds all the joint values
+    std::cout << "Human id# " << id << std::endl;
     std::cout << "Vector q has " << q.size() << " elements" << std::endl;
     std::cout << "Elements of q:" << std::endl;
     std::ostringstream strm;
@@ -1014,4 +1015,88 @@ void SkeletonListener::setHumanConfiguration(int id, OpenRAVE::RobotBasePtr huma
     human_state.position.resize(q.size());
     human_state.name[0] = "PelvisTransX";
     human_state.position[0] = q[0];
+    human_state.name[1] = "PelvisTransY";
+    human_state.position[1] = q[1];
+    human_state.name[2] = "PelvisTransZ";
+    human_state.position[2] = q[2];
+    human_state.name[3] = "PelvisRotX";
+    human_state.position[3] = q[3];
+    human_state.name[4] = "PelvisRotY";
+    human_state.position[4] = q[4];
+    human_state.name[5] = "PelvisRotZ";
+    human_state.position[5] = q[5];
+    human_state.name[6] = "TorsoX";
+    human_state.position[6] = q[6];
+    human_state.name[7] = "TorsoY";
+    human_state.position[7] = q[7];
+    human_state.name[8] = "TorsoZ";
+    human_state.position[8] = q[8];
+    human_state.name[9] = "HeadZ";
+    human_state.position[9] = q[9];
+    human_state.name[10] = "HeadY";
+    human_state.position[10] = q[10];
+    human_state.name[11] = "HeadX";
+    human_state.position[11] = q[11];
+    human_state.name[12] = "rShoulderX";
+    human_state.position[12] = q[12];
+    human_state.name[13] = "rShoulderZ";
+    human_state.position[13] = q[13];
+    human_state.name[14] = "rShoulderY";
+    human_state.position[14] = q[14];
+    human_state.name[15] = "rArmTrans";
+    human_state.position[15] = q[15];
+    human_state.name[16] = "rElbowZ";
+    human_state.position[16] = q[16];
+    human_state.name[17] = "rWristX";
+    human_state.position[17] = q[17];
+    human_state.name[18] = "rWristY";
+    human_state.position[18] = q[18];
+    human_state.name[19] = "rWristZ";
+    human_state.position[19] = q[19];
+    human_state.name[20] = "lShoulderX";
+    human_state.position[20] = q[20];
+    human_state.name[21] = "lShoulderZ";
+    human_state.position[21] = q[21];
+    human_state.name[22] = "lShoulderY";
+    human_state.position[22] = q[22];
+    human_state.name[23] = "lArmTrans";
+    human_state.position[23] = q[23];
+    human_state.name[24] = "lElbowZ";
+    human_state.position[24] = q[24];
+    human_state.name[25] = "lWristX";
+    human_state.position[25] = q[25];
+    human_state.name[26] = "lWristY";
+    human_state.position[26] = q[26];
+    human_state.name[27] = "lWristZ";
+    human_state.position[27] = q[27];
+    human_state.name[28] = "rHipX";
+    human_state.position[28] = q[28];
+    human_state.name[29] = "rHipY";
+    human_state.position[29] = q[29];
+    human_state.name[30] = "rHipZ";
+    human_state.position[30] = q[30];
+    human_state.name[31] = "rKnee";
+    human_state.position[31] = q[31];
+    human_state.name[32] = "rAnkleX";
+    human_state.position[32] = q[32];
+    human_state.name[33] = "rAnkleY";
+    human_state.position[33] = q[33];
+    human_state.name[34] = "rAnkleZ";
+    human_state.position[34] = q[34];
+    human_state.name[35] = "lHipX";
+    human_state.position[35] = q[35];
+    human_state.name[36] = "lHipY";
+    human_state.position[36] = q[36];
+    human_state.name[37] = "lHipZ";
+    human_state.position[37] = q[37];
+    human_state.name[38] = "lKnee";
+    human_state.position[38] = q[38];
+    human_state.name[39] = "lAnkleX";
+    human_state.position[39] = q[39];
+    human_state.name[40] = "lAnkleY";
+    human_state.position[40] = q[40];
+    human_state.name[41] = "lAnkleZ";
+    human_state.position[41] = q[41];
+    std::cout << "JointState update: " << human_state << std::endl;
+    state_pub_.publish(human_state);
 }

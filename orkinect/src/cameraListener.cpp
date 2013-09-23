@@ -4,14 +4,10 @@
 using namespace std;
 using namespace HRICS;
 
-CameraListener::CameraListener()
+CameraListener::CameraListener(ros::NodeHandle nh) : nh_(nh)
 {
     cout << "Enter constructer for camera" << endl;
     setId(0);
-    int argc = 0;
-    char** argv;
-    ros::init(argc, argv, "image_saver");
-    ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);
     _is_recording = false;
     _file = 0;
@@ -25,16 +21,12 @@ CameraListener::CameraListener()
 
 }
 
-CameraListener::CameraListener(const int id)
+CameraListener::CameraListener(const int id, ros::NodeHandle nh) : nh_(nh)
 {
     cout << "Enter constructer for camera" << endl;
     setId(id);
     _is_recording = false;
 
-    int argc = 0;
-    char** argv;
-    ros::init(argc, argv, "image_saver");
-    ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);
     _file = 0;
 

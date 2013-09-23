@@ -22,7 +22,11 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("resamplefiles",boost::bind(&KinectProblem::ResampleFiles, this,_1,_2),"resample all files in _filepaths");
     RegisterCommand("enablecamera",boost::bind(&KinectProblem::EnableCamera, this,_1,_2),"Enable the camera to take live snapshots");
 
-    _skel_listen = new SkeletonListener(penv);
+    int argc = 0;
+    char** argv;
+    ros::init(argc, argv, "orkinect", ros::init_options::NoSigintHandler);
+    ros::NodeHandle nh;
+    _skel_listen = new SkeletonListener(penv, nh);
     RobotBasePtr human1 = penv->GetRobot( "human_model" );
     RobotBasePtr human2 = penv->GetRobot( "human_model_blue" );
 
@@ -32,7 +36,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     }
     if(human1 != NULL){
         HRICS::RecordMotion* temp = new HRICS::RecordMotion(human1);
-        HRICS::CameraListener* tempCam = new HRICS::CameraListener(0);
+        HRICS::CameraListener* tempCam = new HRICS::CameraListener(0, nh);
         temp->setRobotId(0);
         temp->_camera = tempCam;
 
@@ -40,7 +44,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     }
     if(human2 != NULL){
         HRICS::RecordMotion* temp = new HRICS::RecordMotion(human2);
-        HRICS::CameraListener* tempCam = new HRICS::CameraListener(1); //TODO if not custom tracker but human2 is used, set robotid to 0
+        HRICS::CameraListener* tempCam = new HRICS::CameraListener(1, nh); //TODO if not custom tracker but human2 is used, set robotid to 0
         temp->setRobotId(1);
         temp->_camera = tempCam;
 

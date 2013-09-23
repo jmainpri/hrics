@@ -73,7 +73,11 @@ struct TrackedHuman
 class SkeletonListener
 {
 public:
-    SkeletonListener(OpenRAVE::EnvironmentBasePtr penv);
+
+    ros::NodeHandle nh_;
+    ros::Publisher state_pub_;
+
+    SkeletonListener(OpenRAVE::EnvironmentBasePtr penv, ros::NodeHandle nh);
 
     void listen_once();
 
@@ -110,7 +114,7 @@ private:
     //void readConfidence(const openni_tracker::confidence_array& msg );
     void set_joint_name_map();
 
-    ros::NodeHandle* node_;
+    //ros::NodeHandle* node_;
     ros::Subscriber sub_;
     ros::Rate* rate_;
     tf::TransformListener* listener_;

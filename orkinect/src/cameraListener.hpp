@@ -19,8 +19,8 @@ namespace HRICS
     class CameraListener
     {
         public:
-            CameraListener();
-            CameraListener(const int id);
+            CameraListener(ros::NodeHandle nh);
+            CameraListener(const int id, ros::NodeHandle nh);
             image_transport::Subscriber _sub;
             image_transport::Publisher _pub;
             int _file;
@@ -29,8 +29,7 @@ namespace HRICS
             cv_bridge::CvImagePtr _current_img;
             void takeSnapshot(timeval time);
             void pubImage(timeval time);
-
-
+            ros::NodeHandle nh_;
             bool _is_recording;
 
 

@@ -89,7 +89,7 @@ class kinect_subscriber():
         self.orEnv.Reset()
 
         self.orEnv.Load("../ormodels/human_wpi.xml")
-        self.orEnv.Load("../ormodels/human_wpi_blue.xml")
+        #self.orEnv.Load("../ormodels/human_wpi_blue.xml")
 
         self.orEnv.Load("../ormodels/env.xml")
 
@@ -102,20 +102,21 @@ class kinect_subscriber():
 
     def listen(self):
         print "Trying to listen"
-        self.prob.SendCommand('SetCustomTracker 1')
-        self.prob.SendCommand('SetNumKinect 2') #still need to call as 1 if using default tracker.
-        self.prob.SendCommand('EnableCamera 1')
-        print "Trying to set kinect frame"
+        self.prob.SendCommand('SetCustomTracker 0')
+        self.prob.SendCommand('SetNumKinect 1') #still need to call as 1 if using default tracker.
+        self.prob.SendCommand('EnableCamera 0')
 
+        print "Trying to set kinect frame"
         #Dual Kinect Across Setup.
         self.prob.SendCommand('SetKinectFrame 0 -0.3556 -0.8636 1.3208 62.0 7.0')
-        self.prob.SendCommand('SetKinectFrame 1 1.1938 0.7493 1.2446 -125 0.0') 
+        #self.prob.SendCommand('SetKinectFrame 1 1.1938 0.7493 1.2446 -125 0.0') 
 
 
 
         #Single Kinect
         #self.prob.SendCommand('SetKinectFrame 0 0.49 -1.02 1.32 90.0 7.0') 
 
+        print "Python: starting listener!"
         self.prob.SendCommand('StartListening')
 
     def play(self, controlled):
@@ -123,8 +124,8 @@ class kinect_subscriber():
    
         self.loadFiles(self.dir, self.files)
 
-        self.prob.SendCommand('SetCustomTracker 1') #FIX THIS ASAP.  MESSY kin prob enable camera
-        self.prob.SendCommand('EnableCamera 1')
+        self.prob.SendCommand('SetCustomTracker 0') #FIX THIS ASAP.  MESSY kin prob enable camera
+        self.prob.SendCommand('EnableCamera 0')
 
         if controlled:
             self.prob.SendCommand('SetTrajectoryControl 1')
