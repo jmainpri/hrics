@@ -1,4 +1,4 @@
-#include "HRICS_ClassifyMotion.hpp"
+#include "classifyMotion.hpp"
 
 #include <iomanip>
 #include <sstream>
