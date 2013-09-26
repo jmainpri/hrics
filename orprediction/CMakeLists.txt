@@ -66,7 +66,7 @@ endif( NOT OPENRAVE_FOUND )
 link_directories(${OPENRAVE_LINK_DIRS})
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(${PROJECT_NAME} src/prediction-main.cpp src/classifyMotion.cpp )
+rosbuild_add_library(${PROJECT_NAME} src/prediction-main.cpp src/classifyMotion.cpp src/jointListener.cpp src/recordMotion.cpp )
 
 target_link_libraries(${PROJECT_NAME} ${OPENRAVE_LIBRARY})
 
@@ -80,4 +80,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
                         COMPILE_FLAGS ${OPENRAVE_CXXFLAGS})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${PLUGIN_INSTALL_DIR} )
+
+
 

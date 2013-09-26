@@ -113,6 +113,7 @@ private:
     //void setConfidence( std::string name, double conf );
     //void readConfidence(const openni_tracker::confidence_array& msg );
     void set_joint_name_map();
+    void publishJointState(std::vector<double> q);
 
     //ros::NodeHandle* node_;
     ros::Subscriber sub_;
@@ -150,6 +151,7 @@ private:
 
     std::vector<std::string> body_names_;
     std::vector<HRICS::RecordMotion*> _motion_recorders;
+
 };
 
 #endif // SKELETONLISTENER_HPP

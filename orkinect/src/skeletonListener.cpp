@@ -3,72 +3,11 @@
 
 #include <Eigen/Geometry>
 #include <sensor_msgs/JointState.h>
+#include "../../orcommon/include/orcommon.hpp"
 
-template <typename T>
-std::string num_to_string ( T Number )
-{
-    std::ostringstream ss;
-    ss << Number;
-    return ss.str();
-}
-
-template <class T>
-bool string_to_num(T& t,
-                   const std::string& s,
-                   std::ios_base& (*f)(std::ios_base&))
-{
-    std::istringstream iss(s);
-    return !(iss >> f >> t).fail();
-}
-
+using namespace HRICS;
 using std::cout;
 using std::endl;
-
-Eigen::Vector3d or_vector_to_eigen(const OpenRAVE::Vector& pos)
-{
-    Eigen::Vector3d p;
-    p[0] = pos.x;
-    p[1] = pos.y;
-    p[2] = pos.z;
-    return p;
-}
-
-Eigen::Vector3d or_vector_to_eigen(const std::vector<double>& pos)
-{
-    Eigen::Vector3d p;
-    p[0] = pos[0];
-    p[1] = pos[1];
-    p[2] = pos[2];
-    return p;
-}
-
-std::vector<double> eigen_vector_to_or(const Eigen::Vector3d& pos)
-{
-    std::vector<double> p( 3 );
-    p[0] = pos[0];
-    p[1] = pos[1];
-    p[2] = pos[2];
-    return p;
-}
-
-double angle_limit_PI(double angle){
-
-    while (angle < -M_PI){
-        angle += 2*M_PI;
-    }
-    while (angle > M_PI){
-        angle -= 2*M_PI;
-    }
-    return angle;
-}
-
-void print_config(const std::vector<double>& q)
-{
-    for( int i=0;i<int(q.size());i++)
-    {
-        cout << "q[" << i << "] = " << q[i] << endl;
-    }
-}
 
 SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv, ros::NodeHandle nh) : nh_(nh)
 {
@@ -140,7 +79,8 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv, ros::NodeH
     // T.m[4] = -0.310475; T.m[5] =-0.944433; T.m[6] = -0.10794;   T.trans.y = 0.112955;
     // T.m[8] = -0.637921; T.m[9] = 0.122822; T.m[10] =  0.760244; T.trans.z = -0.589495;
 
-    env_->GetViewer()->SetCamera( Tcam );
+    if (env_->GetViewer() != 0)
+        env_->GetViewer()->SetCamera( Tcam );
     //env_->GetViewer()->setCamera( 0.262839, -0.733602, -0.623389, 0.0642694, 2.99336, -0.755646, 2.81558 );
 
     //setKinectFrame();
@@ -207,24 +147,6 @@ void SkeletonListener::init_users()
             }
         }
     }
-}
-
-Eigen::Affine3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
-{
-    OpenRAVE::RaveTransformMatrix<double> t( joint->GetFirstAttached()->GetTransform() );
-    OpenRAVE::Vector right,up,dir,pos;
-    t.Extract( right, up, dir, pos);
-    Eigen::Matrix3d rot;
-    rot(0,0) = right.x; rot(0,1) = up.x; rot(0,2) = dir.x;
-    rot(1,0) = right.y; rot(1,1) = up.y; rot(1,2) = dir.y;
-    rot(2,0) = right.z; rot(2,1) = up.z; rot(2,2) = dir.z;
-
-    Eigen::Affine3d T;
-    T.linear() = rot;
-    T.translation() = or_vector_to_eigen( joint->GetAnchor() );
-
-    //cout << "T : " << endl << T.matrix() << endl;
-    return T;
 }
 
 void SkeletonListener::setNumKinect(int num)
@@ -995,20 +917,36 @@ void SkeletonListener::setHumanConfiguration(int id, OpenRAVE::RobotBasePtr huma
 
     human->SetJointValues(q);
 
-    // Let's assume q holds all the joint values
-    std::cout << "Human id# " << id << std::endl;
-    std::cout << "Vector q has " << q.size() << " elements" << std::endl;
-    std::cout << "Elements of q:" << std::endl;
-    std::ostringstream strm;
-    if (q.size() > 0)
-    {
-        strm << q[0];
-        for (unsigned int i = 1; i < q.size(); i++)
-        {
-            strm << ", " << q[i];
-        }
-    }
-    std::cout << strm.str() << std::endl;
+//    ///RAFI TESTING
+//    cout << "POSITIONS: " << endl;
+//    cout << "rWrist:" << endl;
+//    OpenRAVE::Vector v = human->GetJoint("rWristX")->GetAnchor();
+//    cout << "X: " << v.x << " Y: " << v.y << " Z: " << v.z << endl << endl;
+
+//    cout << "Pelvis:" << endl;
+//    v = human->GetJoint("PelvisRotX")->GetAnchor();
+//    cout << "X: " << v.x << " Y: " << v.y << " Z: " << v.z << endl;
+
+
+    publishJointState(q);
+}
+
+void SkeletonListener::publishJointState(std::vector<double> q)
+{
+//    // Let's assume q holds all the joint values
+//    std::cout << "Human id# " << id << std::endl;
+//    std::cout << "Vector q has " << q.size() << " elements" << std::endl;
+//    std::cout << "Elements of q:" << std::endl;
+//    std::ostringstream strm;
+//    if (q.size() > 0)
+//    {
+//        strm << q[0];
+//        for (unsigned int i = 1; i < q.size(); i++)
+//        {
+//            strm << ", " << q[i];
+//        }
+//    }
+//    std::cout << strm.str() << std::endl;
     sensor_msgs::JointState human_state;
     // Populate joint state
     human_state.name.resize(q.size());
@@ -1097,6 +1035,5 @@ void SkeletonListener::setHumanConfiguration(int id, OpenRAVE::RobotBasePtr huma
     human_state.position[40] = q[40];
     human_state.name[41] = "lAnkleZ";
     human_state.position[41] = q[41];
-    std::cout << "JointState update: " << human_state << std::endl;
     state_pub_.publish(human_state);
 }

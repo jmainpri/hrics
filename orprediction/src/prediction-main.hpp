@@ -6,12 +6,15 @@
 #include <boost/bind.hpp>
 #include <iostream>
 
-using namespace OpenRAVE;
+namespace HRICS
+{
 
-class PredictionProblem : public ModuleBase
+class JointListener;
+
+class PredictionProblem : public OpenRAVE::ModuleBase
 {
 public:
-    PredictionProblem(EnvironmentBasePtr penv);
+    PredictionProblem(OpenRAVE::EnvironmentBasePtr penv);
     virtual ~PredictionProblem();
     void Destroy();
 
@@ -21,9 +24,13 @@ public:
 private:
 
     bool NumBodies(std::ostream& sout, std::istream& sinput);
+    bool StartListening(std::ostream& sout, std::istream& sinput);
 
     std::string _strRobotName; ///< name of the active robot
-    RobotBasePtr robot;
+    OpenRAVE::RobotBasePtr robot;
+    JointListener* _joint_listen;
 };
+
+}
 
 #endif // PREDICTIONMAIN_HPP

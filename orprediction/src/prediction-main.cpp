@@ -1,9 +1,11 @@
 #include "prediction-main.hpp"
-
+#include "jointListener.hpp"
 #include <boost/thread.hpp>
 #include <ros/ros.h>
 
 using namespace std;
+using namespace OpenRAVE;
+using namespace HRICS;
 
 #define FORIT(it, v) for(it = (v).begin(); it != (v).end(); (it)++)
 
@@ -12,19 +14,21 @@ PredictionProblem::PredictionProblem(EnvironmentBasePtr penv) : ProblemInstance(
     __description = "A very simple plugin.";
     cout << __description << endl;
     RegisterCommand("numbodies",boost::bind(&PredictionProblem::NumBodies,this,_1,_2),"returns bodies");
+    RegisterCommand("startlistening",boost::bind(&PredictionProblem::StartListening, this,_1,_2),"starts listening to the tf frames");
 
     int argc = 0;
     char** argv;
     ros::init(argc, argv, "orprediction", ros::init_options::NoSigintHandler);
     ros::NodeHandle nh;
+    _joint_listen = new JointListener(penv, nh);
 
     RobotBasePtr human1 = penv->GetRobot( "human_model" );
-    RobotBasePtr human2 = penv->GetRobot( "human_model_blue" );
 
-    if (human1 == NULL && human2 == NULL){
-//      _motion_recorders = NULL;
-      cout << "No Human in Scene" << endl;
-    }
+
+//    if (human1 == NULL && human2 == NULL){
+////      _motion_recorders = NULL;
+//      cout << "No Human in Scene" << endl;
+//    }
 //    if(human1 != NULL){
 //        HRICS::RecordMotion* temp = new HRICS::RecordMotion(human1);
 //        HRICS::CameraListener* tempCam = new HRICS::CameraListener(0, nh);
@@ -105,6 +109,13 @@ int PredictionProblem::main(const std::string& cmd)
     //GetEnv()->GetRobots(robots);
     //SetActiveRobots(robots);
     return 0;
+}
+
+bool PredictionProblem::StartListening(ostream& sout, istream& sinput)
+{
+    //_joint_listen->listen();
+    boost::thread( &JointListener::listen, _joint_listen );
+    return true;
 }
 
 bool PredictionProblem::NumBodies(ostream& sout, istream& sinput)
