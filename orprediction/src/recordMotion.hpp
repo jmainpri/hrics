@@ -24,6 +24,9 @@ public:
 
     void setRobot(const std::string& robotname);
     void saveCurrentConfig();
+    void bufferCurrentConfig(double curOffset);
+    motion_t fixPelvisFrame();
+    motion_t fixPelvisFrame(motion_t motion);
     void reset();
     void clearCurrentMotion() { m_motion.clear(); }
     void saveCurrentToFile();
@@ -64,10 +67,13 @@ public:
 
     void incrementMotionId() { m_id_motion++; }
     void setRobotId(int id) { m_id_human = id; }
+    void setBuffSize(int size) { buff_max_conf = size; }
+    void setNumKeep(int num) { buff_num_keep = num; }
 
     const std::vector<motion_t>& getStoredMotions() { return m_stored_motions; }
+    const motion_t& getCurrentMotion() { return m_motion; }
 
-
+    void findTrueStart();
     bool m_is_recording;
     std::vector<timeval> m_times; //Parallel array to m_motion to save timestamps.  kinda messy
 
@@ -81,6 +87,8 @@ private:
     int m_id_motion;
     int m_id_human;
     motion_t m_motion;
+    int buff_max_conf; // max # of configurations to keep in the buffer at a given time
+    int buff_num_keep; //# of configurations to be kept when buffer is resized
 
     std::vector<motion_t> m_stored_motions;
     int m_ith_shown_motion;

@@ -17,10 +17,20 @@ JointListener::JointListener(OpenRAVE::EnvironmentBasePtr penv, ros::NodeHandle 
     cout << "start suscriber" << endl;
     sub_ = nh_.subscribe("/human_state", 10, &JointListener::listen_cb, this );
 
+    rest_state_ = 0;
     human_ = env_->GetRobot( "human_model" );
     motion_recorder_ = new HRICS::RecordMotion(human_);
     motion_recorder_->setRobotId(0);
-    rec_state_ = 0;
+    motion_recorder_->setBuffSize(200);
+    motion_recorder_->setNumKeep(100);
+    m_classifier_ = new HRICS::ClassifyMotion();
+    motion_started_ = false;
+
+    if (m_classifier_->load_model())
+        cout << "Successfully loaded classifier" <<endl;
+    else
+        cout << "Couldn't initialize classifier" << endl;
+
 
 //    OpenRAVE::RaveTransform<float> Tcam;
 //    Tcam.rot.x = 0.420745;
@@ -43,104 +53,202 @@ JointListener::JointListener(OpenRAVE::EnvironmentBasePtr penv, ros::NodeHandle 
 
 }
 
-
-//Eigen::Affine3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
-//{
-//    OpenRAVE::RaveTransformMatrix<double> t( joint->GetFirstAttached()->GetTransform() );
-//    OpenRAVE::Vector right,up,dir,pos;
-//    t.Extract( right, up, dir, pos);
-//    Eigen::Matrix3d rot;
-//    rot(0,0) = right.x; rot(0,1) = up.x; rot(0,2) = dir.x;
-//    rot(1,0) = right.y; rot(1,1) = up.y; rot(1,2) = dir.y;
-//    rot(2,0) = right.z; rot(2,1) = up.z; rot(2,2) = dir.z;
-
-//    Eigen::Affine3d T;
-//    T.linear() = rot;
-//    T.translation() = or_vector_to_eigen( joint->GetAnchor() );
-
-//    //cout << "T : " << endl << T.matrix() << endl;
-//    return T;
-//}
-
-
 void JointListener::listen_cb(const sensor_msgs::JointState::ConstPtr& msg)
 {
-
-    const std::vector<OpenRAVE::KinBody::JointPtr> joints = human_->GetJoints();
-
-    if (msg->position.size() != joints.size())
+    if (msg->position.size() != human_->GetJoints().size())
     {
-        cout << "Can't update robot! msg size: " << msg->position.size() << " robot joint size: " << joints.size() << endl;
+        cout << "Can't update robot! msg size: " << msg->position.size() << " robot joint size: " << human_->GetJoints().size() << endl;
     }
 
     else
     {
 
-        human_->SetDOFValues(msg->position);
-        checkStartingPos();
+        human_->SetDOFValues(msg->position); //Update human from JointState
+        double curOffset = getRestingOffset();
+        motion_recorder_->bufferCurrentConfig( curOffset ); //Buffer the new config
 
-//        for( int i=0;i<int(joints.size());i++)
-//        {
-//            cout << "ORName[i]: " << joints[i]->GetName() << " ORDOFIndex[i]: " << joints[i]->GetDOFIndex() << "msg.name[i]: " << msg->name[i] << endl;
-//        }
+        bool resting = checkRestingPos( curOffset );
 
+        if(!resting && !motion_started_) //We're not resting, and we haven't found the true start of the motion yet
+        {
+            cout << "We're not resting anymore" << endl;
+            motion_recorder_->findTrueStart();
+            motion_started_ = true;
+        }
+        else if(resting)
+        {
+            cout << "We're resting" << endl;
+            motion_started_ = false;
+        }
 
-//        for( int i=0;i<int(joints.size());i++)
-//        {
-//            joints[i].SetDOFValue(msg->position[0])
-//            //cout << "Trying to set: " << joints[i]->GetName() << " : " << joints[i]->GetDOFIndex() << " to: " << msg->position[i] << endl;
-//        }
+        if (motion_started_ && motion_recorder_->getCurrentMotion().size() > 20)
+        {
+            cout << "We got a motion!" << endl;
+            //motion_recorder_->saveCurrentToCSV();
+
+            int m_class = classifyMotion( motion_recorder_->getCurrentMotion() );
+            cout << "Class: " << m_class << endl;
+        }
     }
-}
 
+}
 
 void JointListener::listen()
 {
     rate_ = new ros::Rate(40.0);
 
-    while (nh_.ok())
-    {
-        rate_->sleep();
-        ros::spinOnce();
-    }
+    motion_t m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00000.csv");
+    m = motion_recorder_->fixPelvisFrame(m);
+    int m_class = classifyMotion( m );
+    cout << "True Class: 0 Predicted Class: " << m_class << endl;
+
+    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00001.csv");
+    m = motion_recorder_->fixPelvisFrame(m);
+    m_class = classifyMotion( m );
+    cout << "True Class: 1 Predicted Class: " << m_class << endl;
+
+    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00002.csv");
+    m = motion_recorder_->fixPelvisFrame(m);
+    m_class = classifyMotion( m );
+    cout << "True Class: 2 Predicted Class: " << m_class << endl;
+
+    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00003.csv");
+    m = motion_recorder_->fixPelvisFrame(m);
+    m_class = classifyMotion( m );
+    cout << "True Class: 3 Predicted Class: " << m_class << endl;
+
+    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00004.csv");
+    m = motion_recorder_->fixPelvisFrame(m);
+    m_class = classifyMotion( m );
+    cout << "True Class: 4 Predicted Class: " << m_class << endl;
+
+    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00005.csv");
+    m = motion_recorder_->fixPelvisFrame(m);
+    m_class = classifyMotion( m );
+    cout << "True Class: 5 Predicted Class: " << m_class << endl;
+
+    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00006.csv");
+    m = motion_recorder_->fixPelvisFrame(m);
+    m_class = classifyMotion( m );
+    cout << "True Class: 6 Predicted Class: " << m_class << endl;
+
+    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00007.csv");
+    m = motion_recorder_->fixPelvisFrame(m);
+    m_class = classifyMotion( m );
+    cout << "True Class: 7 Predicted Class: " << m_class << endl;
+
+//    while (nh_.ok())
+//    {
+//        rate_->sleep();
+//        ros::spinOnce();
+//    }
 }
 
-
-void JointListener::checkStartingPos()
+bool JointListener::checkRestingPos(double offset)
 {
-
-    Eigen::Vector3d p = or_vector_to_eigen( human_->GetJoint("rWristX")->GetAnchor() );
-    Eigen::Affine3d myT = get_joint_transform( human_->GetJoint("PelvisRotX") );
-    p = myT.inverse()*p;
-
-    Eigen::Vector3d pInitial( -0.20, 0.10, -0.05 );
-    double offset = (p-pInitial).norm();
-
-    if (offset > .22)
+    if (offset > .15)
     {
-        rec_state_ = 1;
+        return false;
     }
     else
-        rec_state_ = 0;
-
-    tryToRecord();
+        return true;
 
 }
 
+double JointListener::getRestingOffset()
+{
+    Eigen::Vector3d p = or_vector_to_eigen( human_->GetJoint("rWristX")->GetAnchor() );
+    Eigen::Affine3d T = get_joint_transform( human_->GetJoint("PelvisRotX") );
+    p = T.inverse()*p;
+
+    Eigen::Vector3d pInitial( -0.20, 0.10, -0.05 );  //TODO recalculate ideal initial resting offset
+    double offset = (p-pInitial).norm();
+
+    return offset;
+}
+
+int JointListener::classifyMotion( const motion_t& motion )
+{
+    std::vector<double> likelihood;
+
+    Eigen::MatrixXd matrix( 13, motion.size()-1 );
+
+    for (int jn=0; jn<(motion.size()-1); jn++)
+    {
+        setMatrixCol( matrix, jn, motion[jn].second );
+    }
+
+    likelihood = m_classifier_->classify_motion( matrix );
+
+
+
+//    // for all collumns (a configuration per collumn)
+//    for (int j=1; j<int(motion.size()); j++)
+//    {
+//        Eigen::MatrixXd matrix( 13, j );
+
+//        for (int jn=0; jn<j; jn++)
+//        {
+//            setMatrixCol( matrix, jn, motion[jn].second );
+//        }
+
+//        likelihood = m_classifier_->classify_motion( matrix );
+//        for (int i = 0; i < int(likelihood.size()); i++){
+//            cout << likelihood[i] << ", ";
+//        }
+//        cout << endl;
+//        cout << std::max_element(likelihood.begin(),likelihood.end()) - likelihood.begin() << " ";
+//    }
+
+    return std::max_element(likelihood.begin(),likelihood.end()) - likelihood.begin();
+}
+
+void JointListener::setMatrixCol(Eigen::MatrixXd& matrix, int j, confPtr_t q)
+{
+//    matrix(0,j) = j;        // Index
+//    matrix(1,j) = (*q)[0];  // PelvisTransX
+//    matrix(2,j) = (*q)[1];  // PelvisTransY
+//    matrix(3,j) = (*q)[2];  // PelvisTransZ
+//    matrix(4,j) = (*q)[5];  // PelvisRotZ
+//    matrix(5,j) = (*q)[6];  // TorsoX
+//    matrix(6,j) = (*q)[7];  // TorsoY
+//    matrix(7,j) = (*q)[8];  // TorsoZ
+
+//    matrix(8,j) =  (*q)[12];  // rShoulderX
+//    matrix(9,j) =  (*q)[13];  // rShoulderZ
+//    matrix(10,j) = (*q)[14];  // rShoulderY
+//    matrix(11,j) = (*q)[15];  // rArmTrans
+//    matrix(12,j) = (*q)[16];  // rElbowZ
+
+    matrix(0,j) = j;        // Index
+    matrix(1,j) = q[0];  // PelvisTransX
+    matrix(2,j) = q[1];  // PelvisTransY
+    matrix(3,j) = q[2];  // PelvisTransZ
+    matrix(4,j) = q[5];  // PelvisRotZ
+    matrix(5,j) = q[6];  // TorsoX
+    matrix(6,j) = q[7];  // TorsoY
+    matrix(7,j) = q[8];  // TorsoZ
+
+    matrix(8,j) =  q[12];  // rShoulderX
+    matrix(9,j) =  q[13];  // rShoulderZ
+    matrix(10,j) = q[14];  // rShoulderY
+    matrix(11,j) = q[15];  // rArmTrans
+    matrix(12,j) = q[16];  // rElbowZ
+}
 
 void JointListener::tryToRecord()
 {
-    if( rec_state_ )
+    if( !rest_state_ ) //We have left the rest pose.  Start recording.
     {
         motion_recorder_->m_is_recording = true;
         motion_recorder_->saveCurrentConfig();
     }
-    else if ( !rec_state_ )
+    else if ( rest_state_ )
     {
 
-        if (motion_recorder_->m_is_recording)
+        if (motion_recorder_->m_is_recording) //If we're in the rest state and we're currently recording, stop recording
         {
-            motion_recorder_->saveCurrentToCSV();
+            //motion_recorder_->saveCurrentToCSV();
             motion_recorder_->clearCurrentMotion();
             motion_recorder_->m_is_recording = false;
         }
@@ -186,7 +294,6 @@ void JointListener::readConfidence(const openni_tracker::confidence_array& msg )
     }
 }
 **/
-
 
 
 /*

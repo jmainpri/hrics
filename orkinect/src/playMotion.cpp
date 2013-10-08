@@ -29,6 +29,7 @@ void PlayMotion::play( const std::vector<std::string>& filepaths )
 
     for (int i=0; i<int(filepaths.size()); i++)
     {
+        //TODO This is supposed to queue motions, but it wont' work that way.  Probably need to use a modulo to select correct human/file
         _motion_recorders[i]->storeMotion( _motion_recorders[i]->loadFromCSV(filepaths[i]), true );
     }
 

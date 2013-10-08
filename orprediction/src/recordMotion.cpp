@@ -116,7 +116,7 @@ void RecordMotion::saveCurrentToCSV()
 //    m_motion = resample(m_motion, 100); //TODO make this more elegant.
 
     saveToCSVJoints( home+file_name.str(), m_motion );
-    m_motion.clear();
+    //m_motion.clear();
     m_times.clear();
     //reset();
 }
@@ -147,6 +147,84 @@ void RecordMotion::saveCurrentConfig()
 //        saveCurrentToFile();
 //    }
 }
+
+void RecordMotion::bufferCurrentConfig(double curOffset)
+{
+    confPtr_t q; // = m_robot->getCurrentPos();
+    m_robot->GetDOFValues( q );
+
+    if (m_motion.size() > buff_max_conf) //We don't need to buffer too many configs
+    {
+        cout << "We overgrew our max buffer size.  Segmenting it." << endl;
+        m_motion = extractSubpart( buff_num_keep, m_motion.size()-1 );
+    }
+    m_motion.push_back( std::make_pair(curOffset,q) );
+
+
+//    cout << "Record config for " << m_robot->GetName() << " , dt = " << dt << " sec" << endl;
+
+//    if( int(m_motion.size()) >= 100 )
+//    {
+//        saveCurrentToFile();
+//    }
+}
+
+//TODO
+//Currently takes a motion_t but first is an offset, not a dt.
+//We should define a new type for this.
+void RecordMotion::findTrueStart()
+{
+    bool foundStart = false;
+    int guess = m_motion.size()-1;
+    int prev = m_motion.size()-1;
+
+    while (!foundStart)
+    {
+        if (guess == 0) //Make sure we don't go out of bounds
+            guess = m_motion.size()-1; //We've already found the beginning of the motion.  Force exit
+        else
+            guess--;
+
+        cout << "Guess offset: " << m_motion[guess].first << " prev offset: " << m_motion[prev].first << endl;
+        if( m_motion[guess].first <= m_motion[prev].first)
+         {
+            prev = guess; //Our guess was better than our last
+        }
+        else
+        {
+            cout << "Original start was: " << m_motion.size()-1 << endl;
+            cout << "New start: " << prev << endl;
+            m_motion = extractSubpart(prev, m_motion.size()-1); //We don't need the rest of the buffer.  Throw it out.
+            foundStart = true; //Exit the loop.  We found the true start.
+        }
+    }
+
+}
+
+motion_t RecordMotion::fixPelvisFrame()
+{
+    return fixPelvisFrame(getCurrentMotion());
+
+}
+
+motion_t RecordMotion::fixPelvisFrame(motion_t motion)
+{
+    motion_t new_motion = motion;
+    double x0, y0, z0;
+    x0 = new_motion[0].second[0];
+    y0 = new_motion[0].second[1];
+    z0 = new_motion[0].second[2];
+
+    for( int i=1; i<int(new_motion.size()); i++ )
+    {
+        new_motion[i].second[0] -= x0; //PelvisX
+        new_motion[i].second[1] -= y0; //PelvisY
+        new_motion[i].second[2] -= z0; //PelvisZ
+    }
+
+    return new_motion;
+}
+
 
 void RecordMotion::reset()
 {
@@ -397,7 +475,6 @@ void RecordMotion::storeMotion( const motion_t& motion, bool new_motion )
         }
     }
 }
-
 
 bool RecordMotion::setRobotToStoredMotionConfig(int motion_id, int config_id)
 {
@@ -875,8 +952,6 @@ void RecordMotion::saveToCSVJoints( const std::string &filename, const motion_t&
         for (int j=0; j<int(motion[i].second.size()); j++)
             s << motion[i].second[j] << ",";
 
-        //TODO here, we'll look in a parallel array. each time a motion is added, also add the time to the parallel array.
-        s << m_times[i].tv_sec << "," << m_times[i].tv_usec << ",";
         s << endl;
 
     }

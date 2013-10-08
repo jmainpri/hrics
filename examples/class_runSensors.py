@@ -77,9 +77,8 @@ class kinect_subscriber():
         self.h = None
         self.orEnv.SetViewer('qtcoin')
 
-        self.dir = "/home/rafihayne/workspace/statFiles/recorded_motion/"
+        self.dir = "/home/rafi/workspace/statFiles/recorded_motion/"
         self.files = ["motion_saved_00000_00000.csv",
-                      "motion_saved_00001_00000.csv",
                      ] #One file for each human in the scene
 
         self.split = [0,0]
@@ -91,7 +90,7 @@ class kinect_subscriber():
         self.orEnv.Load("../ormodels/human_wpi.xml")
         #self.orEnv.Load("../ormodels/human_wpi_blue.xml")
 
-        self.orEnv.Load("../ormodels/env.xml")
+        #self.orEnv.Load("../ormodels/env.xml")
 
         print "draw frame"
         T = MakeTransform( eye(3), transpose(matrix([0,0,0]))) 

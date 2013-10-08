@@ -28,7 +28,6 @@ Eigen::VectorXd ClassifyMotion::gauss_pdf(const Eigen::MatrixXd& motion, int id_
 //    [nbVar,nbData] = size(Data);
     int nbVar = motion.rows();
     int nbData = motion.cols();
-
     Eigen::MatrixXd Data = motion.transpose() - m_mu[id_class].col(id_state).transpose().replicate(nbData,1);
     Eigen::MatrixXd& Sigma = m_sigma[id_class][id_state];
     Eigen::VectorXd prob;
@@ -54,7 +53,6 @@ std::vector<double> ClassifyMotion::classify_motion(const Eigen::MatrixXd &motio
             //Compute the new probability p(x|i)
             Pxi[i].col(j) = gauss_pdf( motion, i, j );
         }
-
         // Compute the log likelihood of the class
         Eigen::VectorXd F = Pxi[i]*m_priors[i];
 
@@ -132,8 +130,8 @@ Eigen::MatrixXd ClassifyMotion::load_from_csv( const std::string& filename )
 
 bool ClassifyMotion::load_model()
 {
-    std::string folder("/home/jmainpri/Dropbox/workspace/gesture-recognition/gmm/gmm-gmr-gesture-recognition/gmm_data/");
-
+//    std::string folder("/home/rafi/workspace/gmm-gmr-gesture-recognition/gmm_data/");
+    std::string folder("/home/rafi/workspace/gmm_test/gmm_data/");
     m_nb_classes = 8;
 
     //------------------------------------------------------

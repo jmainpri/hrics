@@ -927,7 +927,7 @@ void SkeletonListener::setHumanConfiguration(int id, OpenRAVE::RobotBasePtr huma
 //    v = human->GetJoint("PelvisRotX")->GetAnchor();
 //    cout << "X: " << v.x << " Y: " << v.y << " Z: " << v.z << endl;
 
-
+    //TODO ADD A SETTING FOR THIS
     publishJointState(q);
 }
 

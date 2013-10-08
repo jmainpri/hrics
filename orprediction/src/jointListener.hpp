@@ -8,7 +8,7 @@
 #include <openrave/openrave.h>
 
 #include <Eigen/Dense>
-
+#include "classifyMotion.hpp"
 #include "recordMotion.hpp"
 
 namespace HRICS
@@ -57,11 +57,16 @@ private:
     void drawFrame(const Eigen::Affine3d& t);
     void draw();
     void tryToRecord();
-    void checkStartingPos();
+    bool checkRestingPos(double offset);
+    double getRestingOffset();
+    int classifyMotion( const motion_t& motion );
+    void setMatrixCol(Eigen::MatrixXd& matrix, int j, confPtr_t q);
     void setEigenPositions(int id);
     void setHumanConfiguration(int id, OpenRAVE::RobotBasePtr human);
 
-    bool rec_state_;
+    bool rest_state_;
+    bool motion_started_;
+
 
     //void setConfidence( std::string name, double conf );
     //void readConfidence(const openni_tracker::confidence_array& msg );
@@ -71,6 +76,7 @@ private:
     OpenRAVE::RobotBasePtr human_;
     OpenRAVE::EnvironmentBasePtr env_;
     HRICS::RecordMotion* motion_recorder_;
+    HRICS::ClassifyMotion* m_classifier_;
 };
 }
 
