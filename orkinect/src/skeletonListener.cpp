@@ -1,9 +1,9 @@
 #include "skeletonListener.hpp"
 #include "skeletonDrawing.hpp"
-
 #include <Eigen/Geometry>
 #include <sensor_msgs/JointState.h>
 #include "../../orcommon/include/orcommon.hpp"
+#include "tf_conversions/tf_eigen.h"
 
 using namespace HRICS;
 using std::cout;
@@ -24,6 +24,7 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv, ros::NodeH
     cout << "start suscriber" << endl;
 
     max_num_skel_ = 10;
+    use_pr2_ = 0;
 
     cout << "resize vectors" << endl;
 
@@ -207,6 +208,12 @@ void SkeletonListener::setRecord(bool buttonState)
 void SkeletonListener::listen_once()
 {
     tracked_user_id_.clear();
+
+    if (use_pr2_)
+    {
+        cout << "trying to apply pr2 frame" << endl;
+        applyPR2Frame();
+    }
 
     // For all users possibly published by tracker
     for (int id=0; id<int(users_.size()); id++ )
@@ -454,7 +461,19 @@ void SkeletonListener::readConfidence(const openni_tracker::confidence_array& ms
 }
 **/
 
+//Gets a transform from the PR2 and applies it to each motion recorder
+void SkeletonListener::applyPR2Frame()
+{
+    tf::StampedTransform transform;
+    listener_->lookupTransform("/base_footprint", "/head_mount_kinect_ir_link", ros::Time(0), transform);
+    Eigen::Affine3d frame_offset;
+    tf::transformTFToEigen(transform, frame_offset);
+    for (int i = 0; i < int(_motion_recorders.size()); i++ )
+    {
+        setKinectFrame(i, frame_offset);
+    }
 
+}
 
 void SkeletonListener::tryToRecord()
 {
@@ -588,6 +607,44 @@ void SkeletonListener::draw()
 
     figure = env_->plot3( &vpoints[0].x, vpoints.size(), sizeof(vpoints[0]), 0.05, &vcolors[0], 1 );
     graphptrs_.push_back( figure );
+}
+
+void SkeletonListener::setKinectFrame( int KinID, Eigen::Affine3d frame_offset)
+{
+    Eigen::Affine3d tempTranslation;
+
+    Eigen::Affine3d T_Tra,T_Pan,T_Til;
+    Eigen::Matrix3d kin_cam;
+
+    //         Y  X                  Z  Y
+    //         | /                   | /
+    // Kinect  |/ ____ Z  ,   World  |/_____X
+
+    kin_cam(0,0) = 1.0;  kin_cam(0,1) =  0.0;  kin_cam(0,2) = 0.0;
+    kin_cam(1,0) = 0.0;  kin_cam(1,1) =  1.0;  kin_cam(1,2) = 0.0;
+    kin_cam(2,0) = 0.0;  kin_cam(2,1) =  0.0;  kin_cam(2,2) = 1.0;
+
+    //    kinect_to_origin_.linear() = kin_cam;
+    //    kinect_to_origin_.translation() = Eigen::Vector3d::Zero();
+    tempTranslation.linear() = kin_cam;
+    tempTranslation.translation() = Eigen::Vector3d::Zero();
+
+    //T_Tra.linear() = Eigen::Matrix3d::Identity();
+    //T_Tra.translation() << TX , TY , TZ ;
+
+    //T_Pan.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( RotZ, Eigen::Vector3d::UnitZ() ));
+    //T_Pan.translation() = Eigen::Vector3d::Zero();
+    //    cout << "T_Pan : " << endl << T_Pan.matrix() << endl;
+
+    //T_Til.linear() = Eigen::Matrix3d( Eigen::AngleAxisd( RotY, Eigen::Vector3d::UnitY() ));
+    //T_Til.translation() = Eigen::Vector3d::Zero();
+    //    cout << "T_Til : " << endl << T_Til.matrix() << endl;
+
+    //    kinect_to_origin_ =  T_Tra * T_Pan * T_Til * kinect_to_origin_;
+    //kinect_to_origin_[KinID] = T_Tra * T_Pan * T_Til * tempTranslation;
+    kinect_to_origin_[KinID] = frame_offset * tempTranslation;
+    cout << "Set kinect frame : " << KinID << endl;
+    //kinect_to_origin_.push_back();  //TODO fix this so it uses kinect id.
 }
 
 void SkeletonListener::setKinectFrame( int KinID, double TX, double TY, double TZ, double RotZ, double RotY )

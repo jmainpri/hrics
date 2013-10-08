@@ -21,6 +21,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("setcustomtracker",boost::bind(&KinectProblem::SetCustomTracker, this,_1,_2),"set which openni tracker is being used");
     RegisterCommand("resamplefiles",boost::bind(&KinectProblem::ResampleFiles, this,_1,_2),"resample all files in _filepaths");
     RegisterCommand("enablecamera",boost::bind(&KinectProblem::EnableCamera, this,_1,_2),"Enable the camera to take live snapshots");
+    RegisterCommand("usepr2frame",boost::bind(&KinectProblem::UsePR2Frame, this,_1,_2),"Enable use of the pr2 headframe as a transform");
 
     int argc = 0;
     char** argv;
@@ -231,6 +232,17 @@ bool KinectProblem::EnableCamera(ostream& sout, istream& sinput)
 
     return true;
 }
+
+bool KinectProblem::UsePR2Frame(ostream& sout, istream& sinput)
+{
+
+    bool usePR2;
+    sinput >> usePR2;
+    _skel_listen->setPR2(usePR2);
+
+    return true;
+}
+
 
 bool KinectProblem::PlayTrajectoryFiles(ostream& sout, istream& sinput)
 {

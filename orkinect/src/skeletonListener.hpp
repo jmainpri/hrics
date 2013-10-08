@@ -92,6 +92,7 @@ public:
     void setNumKinect(int num);
 
     void setTracker(bool cust_tracker) {custom_tracker_ = cust_tracker;}
+    void setPR2(bool pr2) {use_pr2_ = pr2;}
 
     bool getTracker() {return custom_tracker_;}
 
@@ -105,6 +106,9 @@ private:
     std::vector<bool> check_active_user();
 
     void tryToRecord();
+    void applyPR2Frame();
+
+    void setKinectFrame(int KinID, Eigen::Affine3d frame_offset);
 
     void setEigenPositions(int id);
     void setHumanConfiguration(int id, OpenRAVE::RobotBasePtr human);
@@ -136,6 +140,7 @@ private:
     std::vector<Eigen::Affine3d> kinect_to_origin_; //Changed to a vector to support multiple kinects.
     int max_num_skel_;
 
+    bool use_pr2_;
     bool button_pressed_;
     bool custom_tracker_;
     int num_kinect_;

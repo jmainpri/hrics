@@ -40,6 +40,7 @@ public:
     bool SetNumKinect(ostream& sout, istream& sinput);
     bool SetCustomTracker(ostream& sout, istream& sinput);
     bool EnableCamera(ostream& sout, istream& sinput);
+    bool UsePR2Frame(ostream& sout, istream& sinput);
 
 
 private:

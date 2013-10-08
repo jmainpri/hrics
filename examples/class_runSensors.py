@@ -107,8 +107,9 @@ class kinect_subscriber():
 
         print "Trying to set kinect frame"
         #Dual Kinect Across Setup.
-        self.prob.SendCommand('SetKinectFrame 0 -0.3556 -0.8636 1.3208 62.0 7.0')
+        #self.prob.SendCommand('SetKinectFrame 0 -0.3556 -0.8636 1.3208 62.0 7.0')
         #self.prob.SendCommand('SetKinectFrame 1 1.1938 0.7493 1.2446 -125 0.0') 
+        self.prob.SendCommand('UsePR2Frame 1')
 
 
 
