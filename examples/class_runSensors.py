@@ -122,7 +122,7 @@ class kinect_subscriber():
     def play(self, controlled):
         print "loading files"
    
-        self.loadFiles(self.dir, self.files)
+        #self.loadFiles(self.dir, self.files)
 
         self.prob.SendCommand('SetCustomTracker 0') #FIX THIS ASAP.  MESSY kin prob enable camera
         self.prob.SendCommand('EnableCamera 0')
@@ -132,7 +132,8 @@ class kinect_subscriber():
         else:
             self.prob.SendCommand('SetTrajectoryControl 0')
 
-        self.prob.SendCommand('PlayTrajectoryFiles')
+        #self.prob.SendCommand('PlayTrajectoryFiles')
+        self.prob.SendCommand('PlayTrajectoryFolder /home/rafi/Desktop/Library/')
 
         if controlled:
             sleep(1)

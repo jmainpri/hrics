@@ -97,51 +97,116 @@ void JointListener::listen()
 {
     rate_ = new ros::Rate(40.0);
 
-    motion_t m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00000.csv");
-    m = motion_recorder_->fixPelvisFrame(m);
-    int m_class = classifyMotion( m );
-    cout << "True Class: 0 Predicted Class: " << m_class << endl;
+    sleep(5);
+    classifyLibrary();
 
-    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00001.csv");
-    m = motion_recorder_->fixPelvisFrame(m);
-    m_class = classifyMotion( m );
-    cout << "True Class: 1 Predicted Class: " << m_class << endl;
+//    motion_t m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00000.csv");
+//    m = motion_recorder_->fixPelvisFrame(m);
+//    int m_class = classifyMotion( m );
+//    cout << "True Class: 0 Predicted Class: " << m_class << endl;
 
-    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00002.csv");
-    m = motion_recorder_->fixPelvisFrame(m);
-    m_class = classifyMotion( m );
-    cout << "True Class: 2 Predicted Class: " << m_class << endl;
+//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00001.csv");
+//    m = motion_recorder_->fixPelvisFrame(m);
+//    m_class = classifyMotion( m );
+//    cout << "True Class: 1 Predicted Class: " << m_class << endl;
 
-    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00003.csv");
-    m = motion_recorder_->fixPelvisFrame(m);
-    m_class = classifyMotion( m );
-    cout << "True Class: 3 Predicted Class: " << m_class << endl;
+//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00002.csv");
+//    m = motion_recorder_->fixPelvisFrame(m);
+//    m_class = classifyMotion( m );
+//    cout << "True Class: 2 Predicted Class: " << m_class << endl;
 
-    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00004.csv");
-    m = motion_recorder_->fixPelvisFrame(m);
-    m_class = classifyMotion( m );
-    cout << "True Class: 4 Predicted Class: " << m_class << endl;
+//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00003.csv");
+//    m = motion_recorder_->fixPelvisFrame(m);
+//    m_class = classifyMotion( m );
+//    cout << "True Class: 3 Predicted Class: " << m_class << endl;
 
-    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00005.csv");
-    m = motion_recorder_->fixPelvisFrame(m);
-    m_class = classifyMotion( m );
-    cout << "True Class: 5 Predicted Class: " << m_class << endl;
+//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00004.csv");
+//    m = motion_recorder_->fixPelvisFrame(m);
+//    m_class = classifyMotion( m );
+//    cout << "True Class: 4 Predicted Class: " << m_class << endl;
 
-    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00006.csv");
-    m = motion_recorder_->fixPelvisFrame(m);
-    m_class = classifyMotion( m );
-    cout << "True Class: 6 Predicted Class: " << m_class << endl;
+//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00005.csv");
+//    m = motion_recorder_->fixPelvisFrame(m);
+//    m_class = classifyMotion( m );
+//    cout << "True Class: 5 Predicted Class: " << m_class << endl;
 
-    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00007.csv");
-    m = motion_recorder_->fixPelvisFrame(m);
-    m_class = classifyMotion( m );
-    cout << "True Class: 7 Predicted Class: " << m_class << endl;
+//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00006.csv");
+//    m = motion_recorder_->fixPelvisFrame(m);
+//    m_class = classifyMotion( m );
+//    cout << "True Class: 6 Predicted Class: " << m_class << endl;
+
+//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00007.csv");
+//    m = motion_recorder_->fixPelvisFrame(m);
+//    m_class = classifyMotion( m );
+//    cout << "True Class: 7 Predicted Class: " << m_class << endl;
+
+//    std::ofstream s;
+//    s.open( "/home/rafi/Desktop/Library/classification.csv" );
+
+//    for (int i = 0; i < 8; i++)
+//    {
+//        s << i << ",";
+//        for (int j = 0; j < 25; j++)
+//        {
+
+//            std::ostringstream filename;
+//            filename << "/home/rafi/Desktop/Library/motion_saved_00000_";
+
+//            filename << std::setfill('0') << std::setw(5) << (j*8)+i << ".csv";
+
+//            motion_t m = motion_recorder_->loadFromCSV(filename.str());
+//            m = motion_recorder_->fixPelvisFrame(m);
+//            int m_class = classifyMotion( m );
+
+//            s << m_class << ",";
+//        }
+//        s << endl;
+//    }
+
+//    s.close();
 
 //    while (nh_.ok())
 //    {
 //        rate_->sleep();
 //        ros::spinOnce();
 //    }
+}
+
+void JointListener::classifyLibrary()
+{
+    std::ofstream s;
+    s.open( "/home/rafi/Desktop/Library/classification.csv" );
+
+    for (int i = 0; i < 8; i++)
+    {
+        s << i << ",";
+        for (int j = 0; j < 25; j++)
+        {
+
+//            if (m_classifier_->load_model(1))
+//                cout << "Successfully loaded classifier" <<endl;
+//            else
+//            {
+//                cout << "Couldn't initialize classifier" << endl;
+//                return;
+//            }
+
+            std::ostringstream filename;
+            filename << "/home/rafi/Desktop/Library/motion_saved_00000_";
+
+            filename << std::setfill('0') << std::setw(5) << (j*8)+i << ".csv";
+
+            motion_t m = motion_recorder_->loadFromCSV(filename.str());
+            m = motion_recorder_->fixPelvisFrame(m);
+            int m_class = classifyMotion( m );
+
+            s << m_class << ",";
+        }
+        s << endl;
+    }
+
+    s.close();
+
 }
 
 bool JointListener::checkRestingPos(double offset)

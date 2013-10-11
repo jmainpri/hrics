@@ -38,7 +38,7 @@ public:
     void translateStoredMotions();
     motion_t invertTranslation( const motion_t& motion );
     motion_t loadFromCSV( const std::string& filename );
-    void loadFolder();
+    void loadFolder(std::string& folder);
 
     void storeMotion( const motion_t& motion, bool new_motion = true);
     void addToCurrentMotion( const motion_t& motion );

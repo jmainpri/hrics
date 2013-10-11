@@ -52,6 +52,8 @@ public:
 
     void setKinectFrame(int KinID, double TX = 0, double TY = 0, double TZ = 0, double RotZ = 0, double RotY = 0);
 
+    void classifyLibrary();
+
 private:
 
     void drawFrame(const Eigen::Affine3d& t);

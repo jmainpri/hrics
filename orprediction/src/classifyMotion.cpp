@@ -131,7 +131,10 @@ Eigen::MatrixXd ClassifyMotion::load_from_csv( const std::string& filename )
 bool ClassifyMotion::load_model()
 {
 //    std::string folder("/home/rafi/workspace/gmm-gmr-gesture-recognition/gmm_data/");
-    std::string folder("/home/rafi/workspace/gmm_test/gmm_data/");
+//    std::string folder("/home/rafi/workspace/gmm_test/gmm_data/");
+    std::string folder("/home/rafi/workspace/gmm-gmr-true/gmm_data/");
+//    std::string folder("/home/rafi/workspace/gmm_untouched_lib_pelv_offset/gmm_data");
+
     m_nb_classes = 8;
 
     //------------------------------------------------------
@@ -177,6 +180,70 @@ bool ClassifyMotion::load_model()
         {
             ostringstream filename;
             filename << "Sigma_1_" << j+1 << "_"<< i+1   << ".csv";
+            m_sigma[i][j] = load_from_csv( folder + filename.str() );
+            if( m_sigma[i][j].size() == 0 )
+                return false;
+        }
+    }
+
+    return true;
+}
+
+bool ClassifyMotion::load_model(int id)
+{
+//    std::string folder("/home/rafi/workspace/gmm-gmr-gesture-recognition/gmm_data/");
+//    std::string folder("/home/rafi/workspace/gmm_test/gmm_data/");
+//    std::string folder("/home/rafi/workspace/gmm-gmr-level-lib/gmm_data/");
+    std::string folder("/home/rafi/workspace/gmm-gmr-true/gmm_data/");
+
+    m_nb_classes = 8;
+    m_priors.clear();
+    m_mu.clear();
+    m_sigma.clear();
+
+    //------------------------------------------------------
+    cout << "Load Priors" << endl;
+    m_priors.resize( m_nb_classes );
+
+    for( int i=0; i<int(m_priors.size()); i++)
+    {
+        ostringstream filename;
+        filename << "Prior_" << id << "_" << i+1 << ".csv";
+        cout << folder + filename.str() << endl;
+        Eigen::MatrixXd mat = load_from_csv( folder + filename.str() );
+        if(  mat.size() == 0 )
+            return false;
+
+        m_priors[i] = mat.transpose();
+    }
+
+    //------------------------------------------------------
+    cout << "Load Mu" << endl;
+    m_mu.resize( m_nb_classes );
+
+    for( int i=0; i<int(m_mu.size()); i++)
+    {
+        ostringstream filename;
+        filename << "Mu_" << id << "_" << i+1 << ".csv";
+        cout << folder + filename.str() << endl;
+         m_mu[i] = load_from_csv( folder + filename.str() );
+        if(  m_mu[i].size() == 0 )
+            return false;
+    }
+
+    //------------------------------------------------------
+    cout << "Load Sigma" << endl;
+    m_sigma.resize( m_nb_classes );
+    m_nb_states = m_priors[0].size();
+
+    for( int i=0; i<int(m_sigma.size()); i++)
+    {
+        m_sigma[i].resize( m_nb_states );
+
+        for( int j=0; j<int(m_sigma[i].size()); j++)
+        {
+            ostringstream filename;
+            filename << "Sigma_" << id << "_" << j+1 << "_"<< i+1   << ".csv";
             m_sigma[i][j] = load_from_csv( folder + filename.str() );
             if( m_sigma[i][j].size() == 0 )
                 return false;

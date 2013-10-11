@@ -38,6 +38,12 @@ void PlayMotion::play( const std::vector<std::string>& filepaths )
 
 }
 
+void PlayMotion::play_folder( std::string &folder )
+{
+    _motion_recorders[0]->loadFolder(folder);
+    runControlled_folder();
+}
+
 void PlayMotion::runRealTime()
 {
     if( _motion_recorders.empty() ) {
@@ -127,5 +133,49 @@ void PlayMotion::runControlled() //TODO weird implementation. should be fixed at
     }
 
     cout << "End play motion" << endl;
+    return;
+}
+
+void PlayMotion::runControlled_folder() //TODO weird implementation. should be fixed at some point, but definitely working.
+{
+    std::vector<motion_t> motion_cache = _motion_recorders[0]->getStoredMotions();
+
+    for (int i = 0; i < int(motion_cache.size()); i++)
+    {
+        int numFrames = int(motion_cache[i].size());
+
+        if( _motion_recorders.empty() )
+        {
+            return;
+        }
+
+        int StopRun = false;
+        _current_frame = 0;
+        _recent_input = false;
+
+        while ( !StopRun )
+        {
+
+            for (int j=0; j<int(_motion_recorders.size()); j++)
+            {
+                _motion_recorders[j]->setRobotToStoredMotionConfig(i,_current_frame);
+            }
+
+            if (_recent_input) _current_frame+=_step_size; //I don't it working like this.  Shouldn't constantly be updatin to current frame.
+
+            if (_current_frame >= numFrames) _current_frame = numFrames; //Bounds check
+            if (_current_frame < 0) _current_frame = 0; //Bounds check
+
+            if ( _current_frame >= numFrames)
+            {
+                StopRun = true;
+            }
+
+            _recent_input = false;
+
+        }
+
+        cout << "End of motion:" << i << endl;
+    }
     return;
 }

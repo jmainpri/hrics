@@ -17,6 +17,7 @@ namespace HRICS
         ~ClassifyMotion();
 
         bool load_model();
+        bool load_model(int id);
         std::vector<double> classify_motion( const Eigen::MatrixXd& motion );
 
     private:

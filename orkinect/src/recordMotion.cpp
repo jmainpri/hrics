@@ -319,9 +319,9 @@ motion_t RecordMotion::loadFromXml(const string& filename)
     return vectConfs;
 }
 
-void RecordMotion::loadFolder()
+void RecordMotion::loadFolder(std::string &folder)
 {
-    std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/recorded_motion/";
+    std::string foldername = folder;
     cout << "Load Folder : " << foldername << endl;
 
     std::string command = "ls " + foldername;
@@ -351,14 +351,14 @@ void RecordMotion::loadFolder()
             std::ostringstream filename;
             filename << foldername << "motion_saved_";
             filename << std::setw( 5 ) << std::setfill( '0' ) << i << "_";
-            filename << std::setw( 5 ) << std::setfill( '0' ) << j << ".xml";
+            filename << std::setw( 5 ) << std::setfill( '0' ) << j << ".csv";
 
             std::ifstream file_exists( filename.str().c_str() );
 
             if( file_exists )
             {
                 cout << "Load File : " << filename.str() << endl;
-                motion_t partial_motion = loadFromXml( filename.str() );
+                motion_t partial_motion = loadFromCSV( filename.str() );
                 storeMotion( partial_motion, j == 0 );
 
                 if( j == 0 ) {

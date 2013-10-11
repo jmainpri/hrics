@@ -18,10 +18,14 @@ public:
     bool getRecentInput();
     int getCurrentFrame();
 
+    void play_folder( std::string &folder );
+
 private:
 
     void runRealTime();
     void runControlled();
+    void runControlled_folder();
+
 
     std::vector<HRICS::RecordMotion*> _motion_recorders;
     OpenRAVE::EnvironmentBasePtr env_;

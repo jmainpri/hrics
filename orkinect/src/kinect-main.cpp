@@ -14,6 +14,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("setbuttonstate",boost::bind(&KinectProblem::SetButtonState, this,_1,_2),"sets the button state");
     RegisterCommand("loadtrajectoryfile",boost::bind(&KinectProblem::LoadTrajectoryFile, this,_1,_2),"Loads the trajectory file from given path");
     RegisterCommand("playtrajectoryfiles",boost::bind(&KinectProblem::PlayTrajectoryFiles, this,_1,_2),"Plays the trajectory files");
+    RegisterCommand("playtrajectoryfolder",boost::bind(&KinectProblem::PlayTrajectoryFolder, this,_1,_2),"Plays the trajectory folder");
     RegisterCommand("settrajectorycontrol",boost::bind(&KinectProblem::SetTrajectoryControl, this,_1,_2),"Set control of playback flag");
     RegisterCommand("controltrajectoryplayback",boost::bind(&KinectProblem::ControlTrajectoryPlayback, this,_1,_2),"Control playback of trajectory files");
     RegisterCommand("getplaybackframe",boost::bind(&KinectProblem::GetPlaybackFrame, this,_1,_2),"return the current playback frame");
@@ -208,7 +209,7 @@ bool KinectProblem::ResampleFiles(ostream& sout, istream& sinput) //TODO fix out
 
         motion_t a_motion = recorder->loadFromCSV(_filepaths[f]);
         a_motion = recorder->resample( a_motion, sampleSize);
-        recorder->saveToCSVJoints( "/home/rafihayne/workspace/statFiles/recorded_motion/resampled_"+f_num.str()+".csv" , a_motion);
+        recorder->saveToCSVJoints( "/home/rafi/Desktop/Level_Lib/resampled_"+f_num.str()+".csv" , a_motion);
     }
 
     return true;
@@ -251,6 +252,16 @@ bool KinectProblem::PlayTrajectoryFiles(ostream& sout, istream& sinput)
 
     boost::thread( &PlayMotion::play, _motion_player, _filepaths );
 //    _motion_player->play( _filepaths );
+
+    return true;
+}
+
+bool KinectProblem::PlayTrajectoryFolder(ostream& sout, istream& sinput)
+{
+    std::string folder;
+    sinput >> folder;
+
+    boost::thread( &PlayMotion::play_folder, _motion_player, folder );
 
     return true;
 }

@@ -465,7 +465,17 @@ void SkeletonListener::readConfidence(const openni_tracker::confidence_array& ms
 void SkeletonListener::applyPR2Frame()
 {
     tf::StampedTransform transform;
-    listener_->lookupTransform("/base_footprint", "/head_mount_kinect_ir_link", ros::Time(0), transform);
+
+    try
+    {
+        listener_->lookupTransform("head_mount_kinect_ir_link", "base_footprint", ros::Time(0), transform);
+    }
+
+    catch(tf::TransformException ex){
+        //ROS_ERROR("%s",ex.what());
+        return;
+    }
+
     Eigen::Affine3d frame_offset;
     tf::transformTFToEigen(transform, frame_offset);
     for (int i = 0; i < int(_motion_recorders.size()); i++ )

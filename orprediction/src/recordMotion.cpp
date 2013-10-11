@@ -215,7 +215,7 @@ motion_t RecordMotion::fixPelvisFrame(motion_t motion)
     y0 = new_motion[0].second[1];
     z0 = new_motion[0].second[2];
 
-    for( int i=1; i<int(new_motion.size()); i++ )
+    for( int i=0; i<int(new_motion.size()); i++ )
     {
         new_motion[i].second[0] -= x0; //PelvisX
         new_motion[i].second[1] -= y0; //PelvisY
