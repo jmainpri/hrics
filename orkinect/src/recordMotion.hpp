@@ -32,6 +32,8 @@ public:
     void saveToXml( const std::string& filename );
     void saveToXml( const std::string& filename, const motion_t& motion );
 
+    void decrement_file();
+
     motion_t loadFromXml( const std::string &filename );
     void loadMotionFromMultipleFiles( const std::string& baseFilename, int number_of_files );
     bool loadRegressedFromCSV();

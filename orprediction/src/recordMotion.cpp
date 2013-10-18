@@ -181,7 +181,7 @@ void RecordMotion::findTrueStart()
     while (!foundStart)
     {
         if (guess == 0) //Make sure we don't go out of bounds
-            guess = m_motion.size()-1; //We've already found the beginning of the motion.  Force exit
+            foundStart = true; //We've already found the beginning of the motion.  Force exit
         else
             guess--;
 
@@ -384,6 +384,7 @@ motion_t RecordMotion::loadFromXml(const string& filename)
     return vectConfs;
 }
 */
+
 
 void RecordMotion::loadFolder()
 {

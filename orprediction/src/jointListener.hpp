@@ -4,12 +4,15 @@
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 #include <tf/transform_listener.h>
-
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <openrave/openrave.h>
 
 #include <Eigen/Dense>
 #include "classifyMotion.hpp"
 #include "recordMotion.hpp"
+
+#include <math.h>
 
 namespace HRICS
 {
@@ -41,6 +44,8 @@ class JointListener
 {
 public:
 
+    double likelihood_to_range(double x);
+
     ros::NodeHandle nh_;
     //ros::Publisher state_pub_;
 
@@ -61,10 +66,14 @@ private:
     void tryToRecord();
     bool checkRestingPos(double offset);
     double getRestingOffset();
-    int classifyMotion( const motion_t& motion );
+    std::vector<double> classifyMotion( const motion_t& motion );
     void setMatrixCol(Eigen::MatrixXd& matrix, int j, confPtr_t q);
     void setEigenPositions(int id);
     void setHumanConfiguration(int id, OpenRAVE::RobotBasePtr human);
+    void getRestingRot();
+    void draw_classes(std::vector<double> likelihood);
+    void load_classes();
+    std::vector<Eigen::Affine3d> update_classes();
 
     bool rest_state_;
     bool motion_started_;
@@ -73,12 +82,17 @@ private:
     //void setConfidence( std::string name, double conf );
     //void readConfidence(const openni_tracker::confidence_array& msg );
 
+    ros::Publisher marker_pub_;
     ros::Subscriber sub_;
     ros::Rate* rate_;
     OpenRAVE::RobotBasePtr human_;
     OpenRAVE::EnvironmentBasePtr env_;
     HRICS::RecordMotion* motion_recorder_;
     HRICS::ClassifyMotion* m_classifier_;
+    std::vector<Eigen::Affine3d> class_offsets_; //Right wrist offsets from pelvis for motion classes
+    std::vector<boost::shared_ptr<void> > graphptrs_; //Pointers to class spheres
+    Eigen::Affine3d rest_rot_;
+    std::vector<Eigen::Affine3d> updated_offsets_;
 };
 }
 

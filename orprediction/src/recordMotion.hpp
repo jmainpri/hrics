@@ -74,6 +74,7 @@ public:
     const motion_t& getCurrentMotion() { return m_motion; }
 
     void findTrueStart();
+    void load_classes();
     bool m_is_recording;
     std::vector<timeval> m_times; //Parallel array to m_motion to save timestamps.  kinda messy
 
@@ -91,6 +92,7 @@ private:
     int buff_num_keep; //# of configurations to be kept when buffer is resized
 
     std::vector<motion_t> m_stored_motions;
+    std::vector<motion_t> m_classes_;
     int m_ith_shown_motion;
 
 };

@@ -4,6 +4,11 @@
 #include <openrave/openrave.h>
 #include <Eigen/Dense>
 
+
+typedef std::vector< double > confPtr_t;
+typedef std::vector< std::pair<double,confPtr_t> > motion_t;
+
+
 namespace HRICS {
 
     template <typename T>
@@ -21,6 +26,27 @@ bool string_to_num(T& t,
 {
     std::istringstream iss(s);
     return !(iss >> f >> t).fail();
+}
+
+Eigen::MatrixXd motiont_to_eigen(const motion_t motion)
+{
+    Eigen::MatrixXd result;
+    if (motion.empty())
+        return result;
+
+    result.setZero(motion.size(), motion[0].second.size()+1);
+
+    for (int i=0; i < motion.size(); i++)
+    {
+        result(i, 0) = i; //Make sure there is an index
+        for(int j=1; j < motion[i].second.size(); j++)
+        {
+            result(i,j) = motion[i].second[j];
+        }
+
+    }
+
+    return result;
 }
 
 Eigen::Vector3d or_vector_to_eigen(const OpenRAVE::Vector& pos)

@@ -15,7 +15,8 @@ JointListener::JointListener(OpenRAVE::EnvironmentBasePtr penv, ros::NodeHandle 
     env_ = penv;
 
     cout << "start suscriber" << endl;
-    sub_ = nh_.subscribe("/human_state", 10, &JointListener::listen_cb, this );
+    sub_ = nh_.subscribe("human_state", 10, &JointListener::listen_cb, this );
+    marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("class_markers", 1);
 
     rest_state_ = 0;
     human_ = env_->GetRobot( "human_model" );
@@ -26,7 +27,7 @@ JointListener::JointListener(OpenRAVE::EnvironmentBasePtr penv, ros::NodeHandle 
     m_classifier_ = new HRICS::ClassifyMotion();
     motion_started_ = false;
 
-    if (m_classifier_->load_model())
+    if (m_classifier_->load_model(6))
         cout << "Successfully loaded classifier" <<endl;
     else
         cout << "Couldn't initialize classifier" << endl;
@@ -55,6 +56,8 @@ JointListener::JointListener(OpenRAVE::EnvironmentBasePtr penv, ros::NodeHandle 
 
 void JointListener::listen_cb(const sensor_msgs::JointState::ConstPtr& msg)
 {
+    std::vector<double> likelihood;
+
     if (msg->position.size() != human_->GetJoints().size())
     {
         cout << "Can't update robot! msg size: " << msg->position.size() << " robot joint size: " << human_->GetJoints().size() << endl;
@@ -77,19 +80,23 @@ void JointListener::listen_cb(const sensor_msgs::JointState::ConstPtr& msg)
         }
         else if(resting)
         {
-            cout << "We're resting" << endl;
+            //cout << "We're resting" << endl;
             motion_started_ = false;
+            getRestingRot();
         }
 
-        if (motion_started_ && motion_recorder_->getCurrentMotion().size() > 20)
+        if (motion_started_)
         {
-            cout << "We got a motion!" << endl;
+            //cout << "We got a motion!" << endl;
             //motion_recorder_->saveCurrentToCSV();
-
-            int m_class = classifyMotion( motion_recorder_->getCurrentMotion() );
-            cout << "Class: " << m_class << endl;
+            motion_t m = motion_recorder_->getCurrentMotion();
+            m = motion_recorder_->fixPelvisFrame(m);
+            likelihood = classifyMotion( m );
         }
     }
+
+    //graphptrs_.clear();
+    draw_classes(likelihood);
 
 }
 
@@ -97,121 +104,98 @@ void JointListener::listen()
 {
     rate_ = new ros::Rate(40.0);
 
-    sleep(5);
-    classifyLibrary();
+    cout << "loading classes" << endl;
+    load_classes();
 
-//    motion_t m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00000.csv");
-//    m = motion_recorder_->fixPelvisFrame(m);
+    while (nh_.ok())
+    {
+        rate_->sleep();
+        ros::spinOnce();
+    }
+
+//    motion_t m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/classes/class_1.csv");
+//    //m = motion_recorder_->fixPelvisFrame(m);
 //    int m_class = classifyMotion( m );
-//    cout << "True Class: 0 Predicted Class: " << m_class << endl;
+//    cout << "class: " << m_class << endl;
 
-//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00001.csv");
-//    m = motion_recorder_->fixPelvisFrame(m);
+//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/classes/class_2.csv");
+//    //m = motion_recorder_->fixPelvisFrame(m);
 //    m_class = classifyMotion( m );
-//    cout << "True Class: 1 Predicted Class: " << m_class << endl;
+//    cout << "class: " << m_class << endl;
 
-//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00002.csv");
-//    m = motion_recorder_->fixPelvisFrame(m);
-//    m_class = classifyMotion( m );
-//    cout << "True Class: 2 Predicted Class: " << m_class << endl;
+//     m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/classes/class_3.csv");
+//    //m = motion_recorder_->fixPelvisFrame(m);
+//     m_class = classifyMotion( m );
+//    cout << "class: " << m_class << endl;
 
-//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00003.csv");
-//    m = motion_recorder_->fixPelvisFrame(m);
-//    m_class = classifyMotion( m );
-//    cout << "True Class: 3 Predicted Class: " << m_class << endl;
+//     m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/classes/class_4.csv");
+//    //m = motion_recorder_->fixPelvisFrame(m);
+//     m_class = classifyMotion( m );
+//    cout << "class: " << m_class << endl;
 
-//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00004.csv");
-//    m = motion_recorder_->fixPelvisFrame(m);
-//    m_class = classifyMotion( m );
-//    cout << "True Class: 4 Predicted Class: " << m_class << endl;
+//     m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/classes/class_5.csv");
+//    //m = motion_recorder_->fixPelvisFrame(m);
+//     m_class = classifyMotion( m );
+//    cout << "class: " << m_class << endl;
 
-//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00005.csv");
-//    m = motion_recorder_->fixPelvisFrame(m);
-//    m_class = classifyMotion( m );
-//    cout << "True Class: 5 Predicted Class: " << m_class << endl;
+//     m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/classes/class_6.csv");
+//    //m = motion_recorder_->fixPelvisFrame(m);
+//     m_class = classifyMotion( m );
+//    cout << "class: " << m_class << endl;
 
-//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00006.csv");
-//    m = motion_recorder_->fixPelvisFrame(m);
-//    m_class = classifyMotion( m );
-//    cout << "True Class: 6 Predicted Class: " << m_class << endl;
+//     m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/classes/class_7.csv");
+//    //m = motion_recorder_->fixPelvisFrame(m);
+//     m_class = classifyMotion( m );
+//    cout << "class: " << m_class << endl;
 
-//    m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/motion_saved_00000_00007.csv");
-//    m = motion_recorder_->fixPelvisFrame(m);
-//    m_class = classifyMotion( m );
-//    cout << "True Class: 7 Predicted Class: " << m_class << endl;
+//     m = motion_recorder_->loadFromCSV("/home/rafi/Desktop/classes/class_8.csv");
+//    //m = motion_recorder_->fixPelvisFrame(m);
+//     m_class = classifyMotion( m );
+//    cout << "class: " << m_class << endl;
+}
 
+//void JointListener::classifyLibrary()
+//{
 //    std::ofstream s;
-//    s.open( "/home/rafi/Desktop/Library/classification.csv" );
+//    s.open( "/home/rafi/Desktop/JimsLib/classification.csv" );
 
 //    for (int i = 0; i < 8; i++)
 //    {
-//        s << i << ",";
+//        int correct_count = 0;
+
 //        for (int j = 0; j < 25; j++)
 //        {
 
+//            if ( !(m_classifier_->load_model(j+1)) )
+//            {
+//                cout << "Couldn't initialize classifier" << endl;
+//                return;
+//            }
+
 //            std::ostringstream filename;
-//            filename << "/home/rafi/Desktop/Library/motion_saved_00000_";
+//            filename << "/home/rafi/Desktop/JimsLib/motion_saved_00000_";
 
 //            filename << std::setfill('0') << std::setw(5) << (j*8)+i << ".csv";
 
 //            motion_t m = motion_recorder_->loadFromCSV(filename.str());
 //            m = motion_recorder_->fixPelvisFrame(m);
 //            int m_class = classifyMotion( m );
+//            if (m_class == i)
+//                correct_count++;
 
 //            s << m_class << ",";
 //        }
+//        s << correct_count;
 //        s << endl;
 //    }
 
 //    s.close();
 
-//    while (nh_.ok())
-//    {
-//        rate_->sleep();
-//        ros::spinOnce();
-//    }
-}
-
-void JointListener::classifyLibrary()
-{
-    std::ofstream s;
-    s.open( "/home/rafi/Desktop/Library/classification.csv" );
-
-    for (int i = 0; i < 8; i++)
-    {
-        s << i << ",";
-        for (int j = 0; j < 25; j++)
-        {
-
-//            if (m_classifier_->load_model(1))
-//                cout << "Successfully loaded classifier" <<endl;
-//            else
-//            {
-//                cout << "Couldn't initialize classifier" << endl;
-//                return;
-//            }
-
-            std::ostringstream filename;
-            filename << "/home/rafi/Desktop/Library/motion_saved_00000_";
-
-            filename << std::setfill('0') << std::setw(5) << (j*8)+i << ".csv";
-
-            motion_t m = motion_recorder_->loadFromCSV(filename.str());
-            m = motion_recorder_->fixPelvisFrame(m);
-            int m_class = classifyMotion( m );
-
-            s << m_class << ",";
-        }
-        s << endl;
-    }
-
-    s.close();
-
-}
+//}
 
 bool JointListener::checkRestingPos(double offset)
 {
-    if (offset > .15)
+    if (offset > .12)
     {
         return false;
     }
@@ -225,14 +209,34 @@ double JointListener::getRestingOffset()
     Eigen::Vector3d p = or_vector_to_eigen( human_->GetJoint("rWristX")->GetAnchor() );
     Eigen::Affine3d T = get_joint_transform( human_->GetJoint("PelvisRotX") );
     p = T.inverse()*p;
+    //cout << "p: " << p[0] << " " << p[1] << " " << p[2] << endl;
 
-    Eigen::Vector3d pInitial( -0.20, 0.10, -0.05 );  //TODO recalculate ideal initial resting offset
+    Eigen::Vector3d pInitial( 0.10, 0.20, -0.1 );  //TODO recalculate ideal initial resting offset
     double offset = (p-pInitial).norm();
 
     return offset;
 }
 
-int JointListener::classifyMotion( const motion_t& motion )
+//Gets the rotation matrix of the torso while resting.
+void JointListener::getRestingRot()
+{
+    Eigen::Affine3d Torso = get_joint_transform(human_->GetJoint("TorsoZ"));
+
+    Eigen::Matrix3d rot;
+//    rot(0,0) = -1; rot(0,1) = 0; rot(0,2) = 0; //180deg
+//    rot(1,0) = 0; rot(1,1) = -1; rot(1,2) = 0;
+//    rot(2,0) = 0; rot(2,1) = 0; rot(2,2) = 1;
+
+    rot(0,0) = -0.8660254; rot(0,1) = -0.5; rot(0,2) = 0; // 5pi/6
+    rot(1,0) = 0.5; rot(1,1) = -0.8660254; rot(1,2) = 0;
+    rot(2,0) = 0; rot(2,1) = 0; rot(2,2) = 1;
+
+    rest_rot_.linear() = rot*Torso.linear();
+
+    updated_offsets_ = update_classes();
+}
+
+std::vector<double> JointListener::classifyMotion( const motion_t& motion )
 {
     std::vector<double> likelihood;
 
@@ -265,7 +269,8 @@ int JointListener::classifyMotion( const motion_t& motion )
 //        cout << std::max_element(likelihood.begin(),likelihood.end()) - likelihood.begin() << " ";
 //    }
 
-    return std::max_element(likelihood.begin(),likelihood.end()) - likelihood.begin();
+    //return std::max_element(likelihood.begin(),likelihood.end()) - likelihood.begin();
+    return likelihood;
 }
 
 void JointListener::setMatrixCol(Eigen::MatrixXd& matrix, int j, confPtr_t q)
@@ -319,6 +324,258 @@ void JointListener::tryToRecord()
         }
 
     }
+}
+
+void JointListener::load_classes()
+{
+
+    confPtr_t q;
+    human_->GetDOFValues( q ); //Current Position
+
+
+    motion_t temp_m = motion_recorder_->loadFromCSV("/home/rafi/workspace/gmm-gmr-true/data/gestures/8classes_fixed/traj_classes/class_0.csv");
+    human_->SetJointValues( temp_m[55].second ); //Around the final point for the class
+    Eigen::Affine3d p = get_joint_transform( human_->GetJoint("rWristX") );
+    Eigen::Affine3d T = get_joint_transform(human_->GetJoint("PelvisRotZ"));
+    class_offsets_.push_back(T.inverse()*p);
+
+
+    temp_m = motion_recorder_->loadFromCSV("/home/rafi/workspace/gmm-gmr-true/data/gestures/8classes_fixed/traj_classes/class_1.csv");
+    human_->SetJointValues( temp_m[55].second ); //Around the final point for the class
+    p = get_joint_transform( human_->GetJoint("rWristX") );
+    T = get_joint_transform(human_->GetJoint("PelvisRotZ"));
+    class_offsets_.push_back(T.inverse()*p);
+
+
+    temp_m = motion_recorder_->loadFromCSV("/home/rafi/workspace/gmm-gmr-true/data/gestures/8classes_fixed/traj_classes/class_2.csv");
+    human_->SetJointValues( temp_m[55].second ); //Around the final point for the class
+    p = get_joint_transform( human_->GetJoint("rWristX") );
+    T = get_joint_transform(human_->GetJoint("PelvisRotZ"));
+    class_offsets_.push_back(T.inverse()*p);
+
+
+    temp_m = motion_recorder_->loadFromCSV("/home/rafi/workspace/gmm-gmr-true/data/gestures/8classes_fixed/traj_classes/class_3.csv");
+    human_->SetJointValues( temp_m[55].second ); //Around the final point for the class
+    p = get_joint_transform( human_->GetJoint("rWristX") );
+   T = get_joint_transform(human_->GetJoint("PelvisRotZ"));
+    class_offsets_.push_back(T.inverse()*p);
+
+
+    temp_m = motion_recorder_->loadFromCSV("/home/rafi/workspace/gmm-gmr-true/data/gestures/8classes_fixed/traj_classes/class_4.csv");
+    human_->SetJointValues( temp_m[58].second ); //Around the final point for the class
+    p = get_joint_transform( human_->GetJoint("rWristX") );
+    T = get_joint_transform(human_->GetJoint("PelvisRotZ"));
+    class_offsets_.push_back(T.inverse()*p);
+
+    temp_m = motion_recorder_->loadFromCSV("/home/rafi/workspace/gmm-gmr-true/data/gestures/8classes_fixed/traj_classes/class_5.csv");
+    human_->SetJointValues( temp_m[58].second ); //Around the final point for the class
+    p = get_joint_transform( human_->GetJoint("rWristX") );
+    T = get_joint_transform(human_->GetJoint("PelvisRotZ"));
+    class_offsets_.push_back(T.inverse()*p);
+
+
+    temp_m = motion_recorder_->loadFromCSV("/home/rafi/workspace/gmm-gmr-true/data/gestures/8classes_fixed/traj_classes/class_6.csv");
+    human_->SetJointValues( temp_m[58].second ); //Around the final point for the class
+    p = get_joint_transform( human_->GetJoint("rWristX") );
+    T = get_joint_transform(human_->GetJoint("PelvisRotZ"));
+    class_offsets_.push_back(T.inverse()*p);
+
+
+    temp_m = motion_recorder_->loadFromCSV("/home/rafi/workspace/gmm-gmr-true/data/gestures/8classes_fixed/traj_classes/class_7.csv");
+    human_->SetJointValues( temp_m[60].second ); //Around the final point for the class
+    p = get_joint_transform( human_->GetJoint("rWristX") );
+    T = get_joint_transform(human_->GetJoint("PelvisRotZ"));
+    class_offsets_.push_back(T.inverse()*p);
+
+
+    human_->SetJointValues(q); //Restore human state
+}
+
+std::vector<Eigen::Affine3d> JointListener::update_classes()
+{
+    std::vector<Eigen::Affine3d> ret;
+    ret.resize(8);
+
+    Eigen::Affine3d Torso = get_joint_transform(human_->GetJoint("TorsoZ"));
+    Eigen::Affine3d Pelv = get_joint_transform(human_->GetJoint("PelvisRotZ"));
+
+    for (int i = 0; i < 8; i++)
+    {
+        Eigen::IOFormat CleanFmt(4, 0, ", ", "\n", "[", "]");
+
+//        cout << "\n\n class: " << i << endl;
+//        cout << "torso wrist:" << class_offsets_[i].rotation().format(CleanFmt) << endl;
+//        cout << "world torso:" << T.rotation().format(CleanFmt) << endl;
+
+//        Eigen::Matrix3d rot;
+//        rot(0,0) = -1; rot(0,1) = 0; rot(0,2) = 0;
+//        rot(1,0) = 0; rot(1,1) = -1; rot(1,2) = 0;
+//        rot(2,0) = 0; rot(2,1) = 0; rot(2,2) = 1;
+
+        Eigen::Affine3d T;
+        T.linear() = rest_rot_.linear();
+        T.translation() = Pelv.translation();
+
+
+        ret[i] = T*class_offsets_[i]; //Works with base frame
+        //cout << "world wrist" << ret[i].rotation().format(CleanFmt) << endl;
+    }
+
+    return ret;
+}
+
+
+//void JointListener::draw_classes(std::vector<double> likelihood) //Openrave markers
+//{
+
+//    std::vector<Eigen::Affine3d> offsets = update_classes();
+
+//    double mostLikely = std::max_element(likelihood.begin(),likelihood.end()) - likelihood.begin();
+
+//    OpenRAVE::GraphHandlePtr figure;
+//    std::vector<OpenRAVE::RaveVector<float> > vpoints;
+//    std::vector<float> vcolors;
+
+//    //std::vector< std::vector<Eigen::Vector3d> > pos_;
+//    //
+//    if (likelihood.size() == 8)
+//    {
+//        for(int c = 0; c<8; c++)
+//        {
+
+//            float x = offsets[c].translation()[0];
+//            float y = offsets[c].translation()[1];
+//            float z = offsets[c].translation()[2];
+
+//            OpenRAVE::RaveVector<float> pnt(x,y,z);
+//            vpoints.push_back(pnt);
+//            if (c == mostLikely)
+//            {
+//                vcolors.push_back(0);
+//                vcolors.push_back(1);
+//                vcolors.push_back(0);
+//            }
+//            else if ( std::abs(likelihood[c]-likelihood[mostLikely]) <= 100 && c != mostLikely )
+//            {
+//                vcolors.push_back(1);
+//                vcolors.push_back(1);
+//                vcolors.push_back(0);
+//            }
+//            else if ( std::abs(likelihood[c]-likelihood[mostLikely]) <= 150 && c != mostLikely )
+//            {
+//                vcolors.push_back(1);
+//                vcolors.push_back(0);
+//                vcolors.push_back(0);
+//            }
+//            else
+//            {
+//                vcolors.push_back(0.66);
+//                vcolors.push_back(0.66);
+//                vcolors.push_back(0.66);
+//            }
+//        }
+//    }
+//    else
+//    {
+//        for(int c = 0; c < 8; c++)
+//        {
+//            float x = offsets[c].translation()[0];
+//            float y = offsets[c].translation()[1];
+//            float z = offsets[c].translation()[2];
+
+//            OpenRAVE::RaveVector<float> pnt(x,y,z);
+//            vpoints.push_back(pnt);
+//            vcolors.push_back(0.66);
+//            vcolors.push_back(0.66);
+//            vcolors.push_back(0.66);
+//        }
+//    }
+
+//    figure = env_->plot3( &vpoints[0].x, vpoints.size(), sizeof(vpoints[0]), 0.07, &vcolors[0], 1 );
+//    graphptrs_.push_back( figure );
+//}
+
+double JointListener::likelihood_to_range(double x)
+{
+    double from_min = -708.396;
+    double from_max = 0;
+    double to_min = 0;
+    double to_max = 1;
+    x = (x - from_min) * (to_max - to_min) / (from_max - from_min) + to_min;
+    return x;
+}
+
+
+void JointListener::draw_classes(std::vector<double> likelihood)
+{
+
+    std::vector<visualization_msgs::Marker> markers;
+    visualization_msgs::MarkerArray c_array = visualization_msgs::MarkerArray();
+
+    double mostLikely = std::max_element(likelihood.begin(),likelihood.end()) - likelihood.begin();
+    double leastLikely = std::min_element(likelihood.begin(),likelihood.end()) - likelihood.begin();
+
+    for(int c = 0; c < 8; c++)
+    {
+
+//        float x = offsets[c].translation()[0];
+//        float y = offsets[c].translation()[1];
+//        float z = offsets[c].translation()[2];
+
+
+//        float x = class_offsets_[c].translation()[0];
+//        float y = class_offsets_[c].translation()[1];
+//        float z = class_offsets_[c].translation()[2];
+
+//        Eigen::Vector3d p = class_offsets_[c].translation();
+        if(updated_offsets_.size() != 8)
+            continue;
+        Eigen::Vector3d p = updated_offsets_[c].translation();
+        //Eigen::Quaterniond q = (Eigen::Quaterniond)offsets[c].rotation();
+
+        //Rotate the point with the quaternion
+
+
+
+
+        visualization_msgs::Marker marker;
+        marker.header.frame_id = "/base"; //PelvisDummyTransZ proper spot, no rotation//TorsoDummyX okay
+        marker.header.stamp = ros::Time::now();
+        marker.ns = "motion_class";
+        marker.id = c;
+        marker.type = visualization_msgs::Marker::SPHERE;
+        marker.pose.position.x = p.x();
+        marker.pose.position.y = p.y();
+        marker.pose.position.z = p.z();
+        marker.pose.orientation.x = 0;
+        marker.pose.orientation.y = 0;
+        marker.pose.orientation.z = 0;
+        marker.pose.orientation.w = 1;
+        marker.scale.x = .1;
+        marker.scale.y = .1;
+        marker.scale.z = .1;
+
+        if(likelihood.size() != 0)
+        {
+            double val = likelihood_to_range(likelihood[c]);
+            marker.color.r = 1-val;
+            marker.color.g = val;
+            marker.color.b = 0;
+            marker.color.a = 1; //Alpha
+        }
+        else
+        {
+            marker.color.r = 0.66;
+            marker.color.g = 0.66;
+            marker.color.b = 0.66;
+            marker.color.a = 1; //Alpha
+        }
+        c_array.markers.push_back(marker);
+
+    }
+    marker_pub_.publish(c_array);
+
+
 }
 
 

@@ -42,21 +42,21 @@ def toPelvis(Library):
 if __name__ == "__main__":
     print "main function"
 
-    Class0 = "/home/rafi/Desktop/Library/compound/compound_0.csv"
+    Class0 = "/home/rafi/Desktop/compounds/compound_0.csv"
 
-    Class1 = "/home/rafi/Desktop/Library/compound/compound_1.csv"
+    Class1 = "/home/rafi/Desktop/compounds/compound_1.csv"
 
-    Class2 = "/home/rafi/Desktop/Library/compound/compound_2.csv"
+    Class2 = "/home/rafi/Desktop/compounds/compound_2.csv"
 
-    Class3 = "/home/rafi/Desktop/Library/compound/compound_3.csv"
+    Class3 = "/home/rafi/Desktop/compounds/compound_3.csv"
 
-    Class4 = "/home/rafi/Desktop/Library/compound/compound_4.csv"
+    Class4 = "/home/rafi/Desktop/compounds/compound_4.csv"
 
-    Class5 = "/home/rafi/Desktop/Library/compound/compound_5.csv"
+    Class5 = "/home/rafi/Desktop/compounds/compound_5.csv"
 
-    Class6 = "/home/rafi/Desktop/Library/compound/compound_6.csv"
+    Class6 = "/home/rafi/Desktop/compounds/compound_6.csv"
 
-    Class7 = "/home/rafi/Desktop/Library/compound/compound_7.csv"
+    Class7 = "/home/rafi/Desktop/compounds/compound_7.csv"
 
 
     Library = [Class0, Class1, Class2, Class3, Class4, Class5, Class6, Class7]

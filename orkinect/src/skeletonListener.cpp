@@ -3,11 +3,33 @@
 #include <Eigen/Geometry>
 #include <sensor_msgs/JointState.h>
 #include "../../orcommon/include/orcommon.hpp"
+#include "tf/transform_datatypes.h"
 #include "tf_conversions/tf_eigen.h"
 
 using namespace HRICS;
 using std::cout;
 using std::endl;
+
+
+
+
+//Couldn't get the correct header file, so I just copied the file from trac
+void TransformTFToEigen(const tf::Transform &t, Eigen::Affine3d &k)
+{
+    for(int i=0; i<3; i++)
+    {
+        k.matrix()(i,3) = t.getOrigin()[i];
+        for(int j=0; j<3; j++)
+        {
+            k.matrix()(i,j) = t.getBasis()[i][j];
+        }
+    }
+    // Fill in identity in last row
+    for (int col = 0 ; col < 3; col ++)
+        k.matrix()(3, col) = 0;
+    k.matrix()(3,3) = 1;
+};
+
 
 SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv, ros::NodeHandle nh) : nh_(nh)
 {
@@ -39,7 +61,6 @@ SkeletonListener::SkeletonListener(OpenRAVE::EnvironmentBasePtr penv, ros::NodeH
         transforms_[i].resize(15);
         confidences_[i] = Eigen::VectorXd::Zero(15);
     }
-
 
     humans_.clear();
 
@@ -211,7 +232,6 @@ void SkeletonListener::listen_once()
 
     if (use_pr2_)
     {
-        cout << "trying to apply pr2 frame" << endl;
         applyPR2Frame();
     }
 
@@ -468,6 +488,7 @@ void SkeletonListener::applyPR2Frame()
 
     try
     {
+//        listener_->lookupTransform("head_mount_link", "base_footprint", ros::Time(0), transform);
         listener_->lookupTransform("head_mount_kinect_ir_link", "base_footprint", ros::Time(0), transform);
     }
 
@@ -477,7 +498,7 @@ void SkeletonListener::applyPR2Frame()
     }
 
     Eigen::Affine3d frame_offset;
-    tf::transformTFToEigen(transform, frame_offset);
+    TransformTFToEigen(transform, frame_offset);
     for (int i = 0; i < int(_motion_recorders.size()); i++ )
     {
         setKinectFrame(i, frame_offset);
@@ -600,15 +621,22 @@ void SkeletonListener::draw()
             //            if( j == 3 || j == 4 || j == 5 )
             //                continue;
 
-            float x = pos_[tracked_user_id_[i]][j][0];
-            float y = pos_[tracked_user_id_[i]][j][1];
-            float z = pos_[tracked_user_id_[i]][j][2];
+            if (pos_[tracked_user_id_[i]][j].size() >= 3)
+            {
+                float x = pos_[tracked_user_id_[i]][j][0];
+                float y = pos_[tracked_user_id_[i]][j][1];
+                float z = pos_[tracked_user_id_[i]][j][2];
 
-            OpenRAVE::RaveVector<float> pnt(x,y,z);
-            vpoints.push_back(pnt);
-            vcolors.push_back(1);
-            vcolors.push_back(0);
-            vcolors.push_back(0);
+                OpenRAVE::RaveVector<float> pnt(x,y,z);
+                vpoints.push_back(pnt);
+                vcolors.push_back(1);
+                vcolors.push_back(0);
+                vcolors.push_back(0);
+            }
+            else
+            {
+                ROS_ERROR("WHOA - SHIT SHIT SHIT");
+            }
         }
 
         if( print_ )
@@ -652,9 +680,10 @@ void SkeletonListener::setKinectFrame( int KinID, Eigen::Affine3d frame_offset)
 
     //    kinect_to_origin_ =  T_Tra * T_Pan * T_Til * kinect_to_origin_;
     //kinect_to_origin_[KinID] = T_Tra * T_Pan * T_Til * tempTranslation;
+
     kinect_to_origin_[KinID] = frame_offset * tempTranslation;
-    cout << "Set kinect frame : " << KinID << endl;
-    //kinect_to_origin_.push_back();  //TODO fix this so it uses kinect id.
+//    kinect_to_origin_[KinID] = frame_offset;
+
 }
 
 void SkeletonListener::setKinectFrame( int KinID, double TX, double TY, double TZ, double RotZ, double RotY )

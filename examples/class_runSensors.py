@@ -77,8 +77,9 @@ class kinect_subscriber():
         self.h = None
         self.orEnv.SetViewer('qtcoin')
 
-        self.dir = "/home/rafi/workspace/statFiles/recorded_motion/"
-        self.files = ["motion_saved_00000_00000.csv",
+        #self.dir = "/home/rafi/workspace/statFiles/recorded_motion/"
+        self.dir = "/home/rafi/Desktop/classes/"
+        self.files = ["temp.csv",
                      ] #One file for each human in the scene
 
         self.split = [0,0]
@@ -109,12 +110,12 @@ class kinect_subscriber():
         #Dual Kinect Across Setup.
         #self.prob.SendCommand('SetKinectFrame 0 -0.3556 -0.8636 1.3208 62.0 7.0')
         #self.prob.SendCommand('SetKinectFrame 1 1.1938 0.7493 1.2446 -125 0.0') 
-        self.prob.SendCommand('UsePR2Frame 1')
+        self.prob.SendCommand('UsePR2Frame 0')
 
 
 
         #Single Kinect
-        #self.prob.SendCommand('SetKinectFrame 0 0.49 -1.02 1.32 90.0 7.0') 
+        self.prob.SendCommand('SetKinectFrame 0 0.49 -1.02 1.32 90.0 7.0') 
 
         print "Python: starting listener!"
         self.prob.SendCommand('StartListening')
@@ -133,7 +134,7 @@ class kinect_subscriber():
             self.prob.SendCommand('SetTrajectoryControl 0')
 
         #self.prob.SendCommand('PlayTrajectoryFiles')
-        self.prob.SendCommand('PlayTrajectoryFolder /home/rafi/Desktop/Library/')
+        self.prob.SendCommand('PlayTrajectoryFolder /home/rafi/Desktop/classes/test/')
 
         if controlled:
             sleep(1)
@@ -174,7 +175,8 @@ class kinect_subscriber():
                 for file in self.files:
                     print "Segmenting file: " + file + " from: " + str(self.split[0]) + " to: " + str(self.split[1])
                     segment_file.segment([(self.split[0], self.split[1])], self.dir+file)
-        
+
+
     def loadFiles(self, dir, files):
         for file in files:
             self.prob.SendCommand( 'LoadTrajectoryFile '+ dir + file )
@@ -195,4 +197,5 @@ if __name__ == "__main__":
 
     w = wiimote_subscriber(k.prob)
     w.run()
+
 

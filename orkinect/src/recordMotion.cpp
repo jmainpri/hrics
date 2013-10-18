@@ -83,6 +83,14 @@ RecordMotion::~RecordMotion()
     reset();
 }
 
+void RecordMotion::decrement_file()
+{
+    cout << "Decrementing file id: " << m_id_file;
+    m_id_file--;
+    cout << " new: " << m_id_file << endl;
+
+}
+
 void RecordMotion::setRobot(const std::string &robotname)
 {
     cout << "set robot to : " << m_robot << endl;
@@ -108,7 +116,7 @@ void RecordMotion::saveCurrentToCSV()
 {
 //    cout << "saving curent file" << endl;
     //string home(getenv("HOME_MOVE3D"));
-    string home = "/home/rafihayne";
+    string home = "/home/rafi";
     ostringstream file_name;
     file_name << "/workspace/statFiles/recorded_motion/motion_saved_";
     file_name << std::setw( 5 ) << std::setfill( '0' ) << m_id_human << "_";

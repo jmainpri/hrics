@@ -33,6 +33,7 @@ public:
     bool SaveToFile(ostream& sout, istream& sinput);
     bool LoadTrajectoryFile(ostream& sout, istream& sinput);
     bool ResampleFiles(ostream& sout, istream& sinput);
+    bool DecrementFile(ostream& sout, istream& sinput);
     bool PlayTrajectoryFiles(ostream& sout, istream& sinput);
     bool PlayTrajectoryFolder(ostream& sout, istream& sinput);
     bool SetTrajectoryControl(ostream& sout, istream& sinput);

@@ -19,7 +19,7 @@ orEnv = Environment()
 h = 0
     
 def loadFiles(prob):
-    dir = "/home/rafi/Desktop/Library/"
+    dir = "/home/rafi/Desktop/oct_lib/"
 
     for i in range(8):
         for j in range(25):

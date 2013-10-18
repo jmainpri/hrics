@@ -21,6 +21,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("setnumkinect",boost::bind(&KinectProblem::SetNumKinect, this,_1,_2),"set the number of kinects that are being used");
     RegisterCommand("setcustomtracker",boost::bind(&KinectProblem::SetCustomTracker, this,_1,_2),"set which openni tracker is being used");
     RegisterCommand("resamplefiles",boost::bind(&KinectProblem::ResampleFiles, this,_1,_2),"resample all files in _filepaths");
+    RegisterCommand("decrementfile",boost::bind(&KinectProblem::DecrementFile, this,_1,_2),"decrement the file id.  allows you to overwrite a saved motion");
     RegisterCommand("enablecamera",boost::bind(&KinectProblem::EnableCamera, this,_1,_2),"Enable the camera to take live snapshots");
     RegisterCommand("usepr2frame",boost::bind(&KinectProblem::UsePR2Frame, this,_1,_2),"Enable use of the pr2 headframe as a transform");
 
@@ -209,7 +210,7 @@ bool KinectProblem::ResampleFiles(ostream& sout, istream& sinput) //TODO fix out
 
         motion_t a_motion = recorder->loadFromCSV(_filepaths[f]);
         a_motion = recorder->resample( a_motion, sampleSize);
-        recorder->saveToCSVJoints( "/home/rafi/Desktop/Level_Lib/resampled_"+f_num.str()+".csv" , a_motion);
+        recorder->saveToCSVJoints( "/home/rafi/Desktop/oct_lib/resampled_"+f_num.str()+".csv" , a_motion);
     }
 
     return true;
@@ -229,6 +230,16 @@ bool KinectProblem::EnableCamera(ostream& sout, istream& sinput)
             cout << "More humans than kinects.  Disabling camera for human: " << i << endl;
             _motion_recorders[i]->use_camera_ = false;
         }
+    }
+
+    return true;
+}
+
+bool KinectProblem::DecrementFile(ostream& sout, istream& sinput)
+{
+
+    for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
+        _motion_recorders[i]->decrement_file();
     }
 
     return true;

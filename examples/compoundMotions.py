@@ -20,7 +20,7 @@ def filterFields(fullRow):
 
 
 def compound():
-    dir = "/home/rafi/Desktop/Library/resampled/"
+    dir = "/home/rafi/Desktop/oct_lib/resampled/"
         
     for i in range(8):
         compoundFile = dir+'compound_'+str(i)+'.csv'
