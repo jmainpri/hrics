@@ -43,10 +43,13 @@ import keystroke
 from time import sleep
 import segment_file
 
-
-#print "HOME : " + os.environ['HOME']
-#print "PYTHONPATH : " + os.environ['PYTHONPATH']
-#print "OPENRAVE_PLUGINS : " + os.environ['OPENRAVE_PLUGINS']
+play_folder = False
+show_images = 1 # 0 to not show
+#trajectories_directory = "/home/rafi/workspace/statFiles/recorded_motion/"
+#trajectories_directory = "/home/rafi/Desktop/classes/"
+trajectories_directory = "/media/57f621de-c63b-4d30-84fc-da4ce0b1e1eb/home/rafihayne/workspace/statFiles/saved/8/"
+#trajectories_files = ["temp.csv"] #One file for each human in the scene
+trajectories_files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.csv"]
 
 #in order to use the wiimote, create a wiimote subscriber object and call run.
 class wiimote_subscriber():
@@ -77,10 +80,8 @@ class kinect_subscriber():
         self.h = None
         self.orEnv.SetViewer('qtcoin')
 
-        #self.dir = "/home/rafi/workspace/statFiles/recorded_motion/"
-        self.dir = "/home/rafi/Desktop/classes/"
-        self.files = ["temp.csv",
-                     ] #One file for each human in the scene
+        self.dir = trajectories_directory
+        self.files = trajectories_files
 
         self.split = [0,0]
 
@@ -89,7 +90,8 @@ class kinect_subscriber():
         self.orEnv.Reset()
 
         self.orEnv.Load("../ormodels/human_wpi.xml")
-        #self.orEnv.Load("../ormodels/human_wpi_blue.xml")
+        if len(self.files) > 1 :
+            self.orEnv.Load("../ormodels/human_wpi_blue.xml")
 
         #self.orEnv.Load("../ormodels/env.xml")
 
@@ -104,7 +106,7 @@ class kinect_subscriber():
         print "Trying to listen"
         self.prob.SendCommand('SetCustomTracker 0')
         self.prob.SendCommand('SetNumKinect 1') #still need to call as 1 if using default tracker.
-        self.prob.SendCommand('EnableCamera 0')
+        self.prob.SendCommand('EnableCamera ' + str(show_images))
 
         print "Trying to set kinect frame"
         #Dual Kinect Across Setup.
@@ -112,30 +114,31 @@ class kinect_subscriber():
         #self.prob.SendCommand('SetKinectFrame 1 1.1938 0.7493 1.2446 -125 0.0') 
         self.prob.SendCommand('UsePR2Frame 0')
 
-
-
         #Single Kinect
         self.prob.SendCommand('SetKinectFrame 0 0.49 -1.02 1.32 90.0 7.0') 
 
         print "Python: starting listener!"
         self.prob.SendCommand('StartListening')
 
-    def play(self, controlled):
+    def play(self, controlled, play_folder=False ):
         print "loading files"
    
-        #self.loadFiles(self.dir, self.files)
+        if not play_folder :
+            self.loadFiles(self.dir, self.files)
 
-        self.prob.SendCommand('SetCustomTracker 0') #FIX THIS ASAP.  MESSY kin prob enable camera
-        self.prob.SendCommand('EnableCamera 0')
+        self.prob.SendCommand('SetCustomTracker ' + str(len(self.files)-1) ) #FIX THIS ASAP.  MESSY kin prob enable camera
+        self.prob.SendCommand('EnableCamera ' + str(show_images) + ' ' + trajectories_directory + 'images/' )
 
         if controlled:
             self.prob.SendCommand('SetTrajectoryControl 1')
         else:
             self.prob.SendCommand('SetTrajectoryControl 0')
 
-        #self.prob.SendCommand('PlayTrajectoryFiles')
-        self.prob.SendCommand('PlayTrajectoryFolder /home/rafi/Desktop/classes/test/')
-
+        if play_folder :
+            self.prob.SendCommand('PlayTrajectoryFolder /home/rafi/Desktop/classes/test/')
+        else :
+            self.prob.SendCommand('PlayTrajectoryFiles')
+            
         if controlled:
             sleep(1)
             print "\n \n"

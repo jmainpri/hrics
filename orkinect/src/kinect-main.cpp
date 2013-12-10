@@ -218,12 +218,19 @@ bool KinectProblem::ResampleFiles(ostream& sout, istream& sinput) //TODO fix out
 
 bool KinectProblem::EnableCamera(ostream& sout, istream& sinput)
 {
-
     bool useCamera;
+    std::string folder;
+
     sinput >> useCamera;
+    sinput >> folder;
+
+    if( folder != "" )
+        cout << "folder : " << folder << endl;
 
     for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
         _motion_recorders[i]->use_camera_ = useCamera;
+        if( folder != "" )
+            _motion_recorders[i]->_camera->setFolder( folder );
         //TODO fix this.  I think this can be implemented better.
         if(_skel_listen->getTracker() == false && i >= 1) //If we're not using the custom tracker (only 1 kinect used), but have multiple humans in the scene, we only need 1 camera feed.
         {

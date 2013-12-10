@@ -31,12 +31,11 @@ namespace HRICS
             void pubImage(timeval time);
             ros::NodeHandle nh_;
             bool _is_recording;
-
+            void setFolder(const std::string& foldername) { _folder = foldername; }
 
         private:
             int _id;
-
-
+            std::string _folder;
     };
 }
 
