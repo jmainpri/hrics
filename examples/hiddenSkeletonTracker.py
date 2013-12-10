@@ -66,7 +66,7 @@ class kinect_subscriber():
         print "Trying to listen"
         self.prob.SendCommand('SetCustomTracker 0')
         self.prob.SendCommand('SetNumKinect 1') #still need to call as 1 if using default tracker.
-        self.prob.SendCommand('EnableCamera 0')
+        self.prob.SendCommand('EnableCamera 0 /home/rafihayne/workspace/statFiles/snapshots/')
 
         print "Trying to set kinect frame"
         #Dual Kinect Across Setup.

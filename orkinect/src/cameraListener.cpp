@@ -12,6 +12,7 @@ CameraListener::CameraListener(ros::NodeHandle nh) : nh_(nh)
     _is_recording = false;
     _file = 0;
 
+    _folder = "/home/rafihayne/workspace/statFiles/snapshots/";
 
     cout << "start subscriber" << endl;
     _sub = it.subscribe("camera/rgb/image_raw", 1, &CameraListener::imageConverter, this);
@@ -56,8 +57,8 @@ void CameraListener::takeSnapshot(timeval time)
     try
     {
         std::stringstream s;
-        s << "/home/rafihayne/workspace/statFiles/snapshots/" << _id << "_" << time.tv_sec << "_" << time.tv_usec << ".png";
-//        s << "/home/rafihayne/workspace/statFiles/snapshots/" << _id << "_" << _file++ << ".png";
+        s << _folder << _id << "_" << time.tv_sec << "_" << time.tv_usec << ".png";
+//        s << _folder << _id << "_" << _file++ << ".png";
         cv::imwrite(s.str().c_str(), _current_img->image);
     }
     catch (cv_bridge::Exception& e)
@@ -70,8 +71,8 @@ void CameraListener::takeSnapshot(timeval time)
 void CameraListener::pubImage(timeval time)
 {
     std::stringstream file;
-    file << "/home/rafihayne/workspace/statFiles/snapshots/" << _id << "_" << time.tv_sec << "_" << time.tv_usec << ".png";
-//    file << "/home/rafihayne/workspace/statFiles/snapshots/" << _id << "_" << frame << ".png";
+    file << _folder << _id << "_" << time.tv_sec << "_" << time.tv_usec << ".png";
+//    file << _folder << _id << "_" << frame << ".png";
 
     cv::WImageBuffer3_b image( cvLoadImage(file.str().c_str(), CV_LOAD_IMAGE_COLOR) );
     cv::Mat imageMat(image.Ipl());
