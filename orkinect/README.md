@@ -107,14 +107,14 @@ Now, when the A button on the wiimote is pressed the plugin will begin to record
 
 Before one can begin recording, there are a few settings that must be edited in the class_runSensors.py file.  Namely, the directory of saved motion files, the files to be played back, and enable/disabling of the camera.
 
-    self.dir = "/home/rafihayne/workspace/statFiles/recorded_motion/"
-    self.files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.csv" ]
+    trajectories_directory = "/home/rafihayne/workspace/statFiles/recorded_motion/"
+    trajectories_files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.csv" ]
 
 Here you put the motion you would like to play back.  There should be 1 motion file for each kinect or human that you want to play back. (The above example is playing back both humans).
 
-    self.prob.SendCommand('EnableCamera 1')
+    show_images = 1 # 0 to not show
     
-Notice that EnableCamera is present in both the listen() and play() functions.  For playback edit the one in play()
+Notice that EnableCamera (self.prob.SendCommand('EnableCamera 1')) is present in both the listen() and play() functions.  For playback edit the one in play()
 
 
 ### (ii) Launch Ros
