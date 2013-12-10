@@ -75,8 +75,10 @@ void JointListener::listen_cb(const sensor_msgs::JointState::ConstPtr& msg)
         if(!resting && !motion_started_) //We're not resting, and we haven't found the true start of the motion yet
         {
             cout << "We're not resting anymore" << endl;
+
             motion_recorder_->findTrueStart();
             motion_started_ = true;
+            motion_recorder_->saveCurrentToCSV();
         }
         else if(resting)
         {
@@ -88,7 +90,7 @@ void JointListener::listen_cb(const sensor_msgs::JointState::ConstPtr& msg)
         if (motion_started_)
         {
             //cout << "We got a motion!" << endl;
-            //motion_recorder_->saveCurrentToCSV();
+//            motion_recorder_->saveCurrentToCSV();
             motion_t m = motion_recorder_->getCurrentMotion();
             m = motion_recorder_->fixPelvisFrame(m);
             likelihood = classifyMotion( m );
@@ -195,7 +197,7 @@ void JointListener::listen()
 
 bool JointListener::checkRestingPos(double offset)
 {
-    if (offset > .12)
+    if (offset > .2)
     {
         return false;
     }
