@@ -89,6 +89,6 @@ if __name__ == "__main__":
     k = kinect_subscriber()
     k.listen()
 
-    while(1):
+    while(1):       #Python node dies without this
         a = None
  
