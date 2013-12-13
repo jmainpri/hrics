@@ -29,15 +29,24 @@ The prediction launch script can also be found in the examples folder
 ##Description of pipeline operation
 
 ###Openni Tracker
-    The openni tracker takes kinect data and publishes joint values to /tf
+
+The openni tracker takes kinect data and publishes joint values to /tf
+
 ###ORKinect
-    ORKinect subscribes to the tf frames published by Openni Tracker and publishes joint states values on the topic /human_state
+
+ORKinect subscribes to the tf frames published by Openni Tracker and publishes joint states values on the topic /human_state
+
 ###ORPrediction
-    The prediction node subscribes to the human state topic published by ORKinect, does some calculations and publishes motion class markers on the topic class_markers
+
+The prediction node subscribes to the human state topic published by ORKinect, does some calculations and publishes motion class markers on the topic class_markers
+
 ###base_pointing_pub
-    The base pointing publisher is required at all times.  Its use is to publish the angle between the PR2s base frame and head frame
+
+The base pointing publisher is required at all times.  Its use is to publish the angle between the PR2s base frame and head frame
+
 ###Human URDF
-    The human urdf launch file subscribes to the ORKinect joint states and publishes joint states on the topic /human/joint_states
+
+The human urdf launch file subscribes to the ORKinect joint states and publishes joint states on the topic /human/joint_states
 
 ##Configuring RViZ
 
