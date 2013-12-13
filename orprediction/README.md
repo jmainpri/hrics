@@ -14,6 +14,8 @@ A python script named hiddenSkeletonTracker.py is in the examples folder.
     
 ###Launch the Human URDF
 
+Install https://github.com/WPI-ARC/human_urdf
+
     roslaunch human_urdf human_urdf.launch
     
 ###Launch the base pointing node:
