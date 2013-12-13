@@ -2,6 +2,8 @@ OR PREDICTION
 ==========================
 ##How to run Prediction Node:
 
+TODO : MIGHT HAVE ISSUE WITH NAMESPACE /human
+
 ###First run the skeleton tracker:
 
     rosrun openni_tracker openni_tracker
