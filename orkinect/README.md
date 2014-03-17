@@ -105,12 +105,12 @@ Now, when the A button on the wiimote is pressed the plugin will begin to record
 
 ### (i) Set directory
 
-Before one can begin recording, there are a few settings that must be edited in the class_runSensors.py file.  Namely, the directory of saved motion files, the files to be played back, and enable/disabling of the camera.
+Before one can begin playback, there are a few settings that must be edited in the class_runSensors.py file. Namely, the directory of saved motion files, the files to be played back, and enable/disabling of the camera.
 
     trajectories_directory = "/home/rafihayne/workspace/statFiles/recorded_motion/"
     trajectories_files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.csv" ]
 
-Here you put the motion you would like to play back.  There should be 1 motion file for each kinect or human that you want to play back. (The above example is playing back both humans).
+Here you put the motion you would like to playback. There should be 1 motion file for each kinect or human that you want to playback (The above example is playing back both humans).
 
     show_images = 1 # 0 to not show
     
@@ -133,21 +133,23 @@ Run the image viewer:
 
 ### (iii) Playback
 
-There are two options for playback: controlled and uncontrolled.
+There are two options for playback: controlled and uncontrolled. In both case open a python terminal:
 
-uncontrolled:
+    ipython
 
-    run ipython
+#### uncontrolled:
 
-In ipython import the class_runSensors module, create a kinect subscriber, and tell it to play uncontrolled:
+In the terminal import the class_runSensors module, create a kinect subscriber, and tell it to play uncontrolled:
 
     import class_runSensors; k = class_runSensors.kinect_subscriber(); k.play(0)
 
-controlled: almost identical to above:
+#### controlled: 
+
+almost identical to above:
 
     import class_runSensors; k = class_runSensors.kinect_subscriber(); k.play(1)
 
-In order to use keyboard controlls, the ipython window must have focus.  When you start playing, openrave will steal focus; so click back onto the ipython window.
+In order to use keyboard controlls, the ipython window must have focus. When you start playing, openrave will steal focus; so click back onto the ipython window.
 
 Controlls:
 
