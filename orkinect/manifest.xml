@@ -14,7 +14,8 @@
   <depend package="std_msgs"/>
   <depend package="sensor_msgs"/>
   <depend package="geometry_msgs"/>
-  <depend package="openni_tracker"/>
+  <depend package="openni_tracker_multi"/>
+  <!-- TO USE DEFAULT : <depend package="openni_tracker"/> -->
   <depend package="image_transport"/>
   <depend package="opencv2"/>
   <depend package="cv_bridge"/>
