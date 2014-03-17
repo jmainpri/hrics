@@ -10,7 +10,7 @@
   <url>http://ros.org/wiki/openni_tracker</url>
 
   <depend package="geometry_msgs"/>
-  <depend package="kdl"/>
+  <depend package="orocos_kdl"/>
   <depend package="roscpp"/>
   <depend package="roslib"/>
   <depend package="tf"/>
