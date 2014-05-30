@@ -66,10 +66,10 @@
         <offsetfrom>PlevisDummyRotX</offsetfrom>
         <translation>0.0 0.0 0.0</translation>
         <geom type="cylinder">
-            <translation>0 0 0</translation>
+            <translation>0 0 -0.05</translation>
             <rotationaxis>1 0 0 90</rotationaxis>
             <radius>0.1595</radius>
-            <height>0.25</height>
+            <height>0.30</height>
             <diffuseColor>0.3 0.3 0.3</diffuseColor>
         </geom>
     </body>
@@ -174,7 +174,7 @@
         <offsetfrom>rSholderDummyX</offsetfrom>
         <translation>0 0 0</translation>
         <geom type="sphere">
-            <radius>0.10</radius>
+            <radius>0.02</radius>
             <transparency>1</transparency>
         </geom>
     </body>
@@ -182,10 +182,6 @@
     <body name="rHumerus">
         <offsetfrom>rSholderDummyZ</offsetfrom>
         <translation>0 0 0</translation>
-        <geom type="sphere">
-            <radius>0.10</radius>
-            <transparency>1</transparency>
-        </geom>
         <geom type="cylinder">
 <!--            <translation>0 0 0</translation>-->
             <translation>0 -.08 0</translation> <!-- Why ??? ... -->
@@ -366,10 +362,9 @@
             <transparency>1</transparency>
         </geom>
     </body>
-
     <body name="rHipDummyY">
         <offsetfrom>rHipDummyX</offsetfrom>
-        <translation>0.0 0.0 0.0</translation>
+        <translation>0 0 0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
             <transparency>1</transparency>
@@ -438,18 +433,35 @@
     <!-- ******************* LEFT LEG ***************************** -->
     <!-- *********************************************************** -->
     
+    <body name="lHipDummyX">
+        <offsetfrom>PelvisBody</offsetfrom>
+        <translation>0.022487  0.100975 -0.086017</translation>
+        <geom type="sphere">
+            <radius>0.02</radius>
+            <transparency>1</transparency>
+        </geom>
+    </body>
+    <body name="lHipDummyY">
+        <offsetfrom>lHipDummyX</offsetfrom>
+        <translation>0 0 0</translation>
+        <geom type="sphere">
+            <radius>0.02</radius>
+            <transparency>1</transparency>
+        </geom>
+    </body>
+
     <body name="lFemur">
-        <offsetfrom>base</offsetfrom>
+        <offsetfrom>lHipDummyX</offsetfrom>
         <translation>0 0 0</translation>
         <geom type="cylinder">
-            <translation>0.024098 0.101405 -0.282207</translation>
+            <translation>0.001611 0.00043 -0.19619</translation>
             <rotationaxis>1 0 0 90</rotationaxis>
             <radius>0.0871</radius>
             <height>0.18</height>
             <diffuseColor>0.3 0.3 0.3</diffuseColor>
         </geom>
         <geom type="cylinder">
-            <translation>0.010046 0.09243 -0.476062</translation>
+            <translation>-0.012441 -0.008545 -0.390045</translation>
             <rotationaxis>1 0 0 90</rotationaxis>
             <radius>0.067</radius>
             <height>0.2149</height>
@@ -457,61 +469,45 @@
         </geom>
     </body>
     
-    <body name="lHipDummyX">
-        <translation>0.0 0.0 0.0</translation>
-        <geom type="sphere">
-            <radius>0.02</radius>
-            <transparency>1</transparency>
-        </geom>
-    </body>
-
-    <body name="lHipDummyY">
-        <translation>0.0 0.0 0.0</translation>
-        <geom type="sphere">
-            <radius>0.02</radius>
-            <transparency>1</transparency>
-        </geom>
-    </body>
-    
     <body name="lTibia">
-        <offsetfrom>base</offsetfrom>
-        <translation>0 0 0</translation>
+        <offsetfrom>lFemur</offsetfrom>
+        <translation>-0.024908 -0.003224 -0.468294</translation>
         <geom type="cylinder">
-            <translation>-0.013396 0.09778 -0.759714</translation>
+            <translation>-0.010975 2.9e-05 -0.205403</translation> <!-- Move3D set z to -y--> 
             <rotationaxis>1 0 0 90</rotationaxis>
             <radius>0.0685</radius>
             <height>0.3498</height>
             <diffuseColor>0.3 0.3 0.3</diffuseColor>
         </geom>
     </body>
-    
+
+    <body name="lAnkleDummyX">
+        <offsetfrom>lTibia</offsetfrom>
+        <translation>-0.013991 -0.005449 -0.388599</translation>
+        <geom type="sphere">
+            <radius>0.02</radius>
+            <transparency>1</transparency>
+        </geom>
+    </body>
+    <body name="lAnkleDummyY">
+        <offsetfrom>lAnkleDummyX</offsetfrom>
+        <translation>0 0 0</translation>
+        <geom type="sphere">
+            <radius>0.02</radius>
+            <transparency>1</transparency>
+        </geom>
+    </body>
     
     <body name="lFoot">
-        <offsetfrom>base</offsetfrom>
+        <offsetfrom>lAnkleDummyY</offsetfrom>
         <translation>0 0 0</translation>
          <geom type="box">    
-            <translation>0.063501 0.094253 -0.992633</translation>
+            <translation>0.079913 0.001951 -0.049723</translation>
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.0744 0.164 0.063</extents>
             <diffuseColor>0.3 0.3 0.3</diffuseColor>
         </geom>
     </body>
-
-    <body name="lAnkleDummyX">
-        <translation>0.0 0.0 0.0</translation>
-        <geom type="sphere">
-            <radius>0.02</radius>
-            <transparency>1</transparency>
-        </geom>
-    </body>    
-    <body name="lAnkleDummyY">
-        <translation>0.0 0.0 0.0</translation>
-        <geom type="sphere">
-            <radius>0.02</radius>
-            <transparency>1</transparency>
-        </geom>
-    </body>
-
 
 <!--*********************************************************************-->
 <!--*********************************************************************-->
