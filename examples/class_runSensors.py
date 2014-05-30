@@ -47,7 +47,8 @@ play_folder = False
 show_images = 1 # 0 to not show
 #trajectories_directory = "/home/rafi/workspace/statFiles/recorded_motion/"
 #trajectories_directory = "/home/rafi/Desktop/classes/"
-trajectories_directory = "/media/57f621de-c63b-4d30-84fc-da4ce0b1e1eb/home/rafihayne/workspace/statFiles/saved/8/"
+#trajectories_directory = "/media/57f621de-c63b-4d30-84fc-da4ce0b1e1eb/home/rafihayne/workspace/statFiles/saved/8/"
+trajectories_directory = "/home/rafi/workspace/experiment/2/"
 #trajectories_files = ["temp.csv"] #One file for each human in the scene
 trajectories_files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.csv"]
 
@@ -89,7 +90,8 @@ class kinect_subscriber():
         self.orEnv.SetDebugLevel(DebugLevel.Verbose)
         self.orEnv.Reset()
 
-        self.orEnv.Load("../ormodels/human_wpi.xml")
+        # self.orEnv.Load("../ormodels/human_wpi.xml")
+        self.orEnv.Load("../ormodels/human_wpi_new.xml")
         if len(self.files) > 1 :
             self.orEnv.Load("../ormodels/human_wpi_blue.xml")
 
@@ -196,9 +198,13 @@ class kinect_subscriber():
 if __name__ == "__main__":
     print "main function"
     k = kinect_subscriber()
-    k.listen()
+    k.play(0)
+#    k.listen()
 
-    w = wiimote_subscriber(k.prob)
-    w.run()
+#    w = wiimote_subscriber(k.prob)
+#    w.run()
 
+    print "Press return to run "
+    sys.stdin.readline()
+    
 

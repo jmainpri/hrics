@@ -619,14 +619,14 @@
         <axis>0 -1 0</axis>
         <limitsdeg>-60 30</limitsdeg>
     </joint>
-<!--    <joint name="HeadX" type="hinge">-->
-<!--        <body>HeadDummyY</body>-->
-<!--        <body>head</body>-->
-<!--        <offsetfrom>head</offsetfrom>-->
+    <joint name="HeadX" type="hinge">
+        <body>HeadDummyY</body>
+        <body>head</body>
+        <offsetfrom>head</offsetfrom>
 <!--        <anchor>0.023497 0 0.593966</anchor>-->
-<!--        <axis>0 0 0</axis>-->
-<!--        <limitsdeg>-45 45</limitsdeg>-->
-<!--    </joint>-->
+        <axis>1 0 0</axis>
+        <limitsdeg>-45 45</limitsdeg>
+    </joint>
     
     <!-- ******************* RIGHT ARM ***************************** -->
     <!-- *********************************************************** -->
