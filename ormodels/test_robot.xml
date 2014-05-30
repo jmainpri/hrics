@@ -28,7 +28,7 @@
      <resolution>1</resolution>
    </Joint>
    
-   <Body name="Arm1" type="dynamic">
+   <Body name="Arm1_b" type="dynamic">
      <offsetfrom>Arm0_b</offsetfrom>
      <Translation>0.14 0 0.01</Translation>
      <Geom type="box">
@@ -38,8 +38,8 @@
    </Body>
    <Joint circular="true" name="Arm1" type="hinge">
      <Body>Arm0_b</Body>
-     <Body>Arm1</Body>
-     <offsetfrom>Arm1</offsetfrom>
+     <Body>Arm1_b</Body>
+     <offsetfrom>Arm1_b</offsetfrom>
      <weight>3</weight>
      <limitsdeg>-180 180</limitsdeg>
      <axis>0 0 1</axis>
@@ -47,8 +47,8 @@
      <resolution>1</resolution>
    </Joint>
    
-   <Body name="Arm2" type="dynamic">
-     <offsetfrom>Arm1</offsetfrom>
+   <Body name="Arm2_b" type="dynamic">
+     <offsetfrom>Arm1_b</offsetfrom>
      <Translation>0.14 0 0.01</Translation>
      <Geom type="box">
        <Translation>0.04 0 0</Translation>
@@ -56,9 +56,9 @@
      </Geom>
    </Body>
    <Joint circular="true" name="Arm2" type="hinge">
-     <Body>Arm1</Body>
-     <Body>Arm2</Body>
-     <offsetfrom>Arm2</offsetfrom>
+     <Body>Arm1_b</Body>
+     <Body>Arm2_b</Body>
+     <offsetfrom>Arm2_b</offsetfrom>
      <weight>3</weight>
      <limitsdeg>-180 180</limitsdeg>
      <axis>0 0 1</axis>
@@ -67,7 +67,7 @@
    </Joint>
    
    <Body name="RClaw" type="dynamic">
-     <offsetfrom>Arm2</offsetfrom>
+     <offsetfrom>Arm2_b</offsetfrom>
      <Translation>0.08 0 0.005</Translation>
      <rotationaxis>0 0 1 -90</rotationaxis>
 <!--     <Geom type="trimesh">-->
@@ -76,7 +76,7 @@
 <!--     </Geom>-->
    </Body>
    <Joint name="j1" type="hinge">
-     <Body>Arm2</Body>
+     <Body>Arm2_b</Body>
      <Body>RClaw</Body>
      <offsetfrom>RClaw</offsetfrom>
      <weight>0.2</weight>
@@ -89,14 +89,14 @@
    <Body name="LClaw" type="dynamic">
      <Translation>0.08 0.005 0</Translation>
      <rotationaxis>0 0 1 -90</rotationaxis>
-     <offsetfrom>Arm2</offsetfrom>
+     <offsetfrom>Arm2_b</offsetfrom>
 <!--     <Geom type="trimesh">-->
 <!--       <Data>models/puma/LClaw.iv</Data>-->
 <!--       <Render>models/puma/LClaw.iv</Render>-->
 <!--     </Geom>-->
    </Body>
    <Joint name="j2" type="hinge">
-     <Body>Arm2</Body>
+     <Body>Arm2_b</Body>
      <Body>LClaw</Body>
      <offsetfrom>LClaw</offsetfrom>
      <weight>0.2</weight>
@@ -109,7 +109,7 @@
  </KinBody>
  
  <Manipulator name="arm">
-   <effector>Arm2</effector>   
+   <effector>Arm2_b</effector>   
    <base>Base</base>           
    <joints>j1 j2</joints>      
    <closingdirection>1 1</closingdirection>

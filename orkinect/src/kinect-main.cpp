@@ -210,7 +210,8 @@ bool KinectProblem::ResampleFiles(ostream& sout, istream& sinput) //TODO fix out
 
         motion_t a_motion = recorder->loadFromCSV(_filepaths[f]);
         a_motion = recorder->resample( a_motion, sampleSize);
-        recorder->saveToCSVJoints( "/home/rafi/Desktop/oct_lib/resampled_"+f_num.str()+".csv" , a_motion);
+        string home(getenv("HOME"));
+        recorder->saveToCSVJoints( home + "/Desktop/oct_lib/resampled_"+f_num.str()+".csv" , a_motion);
     }
 
     return true;

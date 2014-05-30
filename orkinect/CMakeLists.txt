@@ -38,6 +38,7 @@ else( NOT DEFINED ENV{PLUGIN_INSTALL_DIR} )
 endif( NOT DEFINED ENV{PLUGIN_INSTALL_DIR} )
 
 message(STATUS "PLUGIN_INSTALL_DIR : " ${PLUGIN_INSTALL_DIR})
+set(CMAKE_INSTALL_PREFIX "${PLUGIN_INSTALL_DIR}")
 
 # Find important packages
 # --------------------------------------------------

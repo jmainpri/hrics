@@ -12,7 +12,8 @@ CameraListener::CameraListener(ros::NodeHandle nh) : nh_(nh)
     _is_recording = false;
     _file = 0;
 
-    _folder = "/home/rafihayne/workspace/statFiles/snapshots/";
+    string home(getenv("HOME"));
+    _folder = home + "/workspace/statFiles/snapshots/";
 
     cout << "start subscriber" << endl;
     _sub = it.subscribe("camera/rgb/image_raw", 1, &CameraListener::imageConverter, this);

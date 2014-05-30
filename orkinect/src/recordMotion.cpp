@@ -116,7 +116,7 @@ void RecordMotion::saveCurrentToCSV()
 {
 //    cout << "saving curent file" << endl;
     //string home(getenv("HOME_MOVE3D"));
-    string home = "/home/rafi";
+    string home(getenv("HOME"));
     ostringstream file_name;
     file_name << "/workspace/statFiles/recorded_motion/motion_saved_";
     file_name << std::setw( 5 ) << std::setfill( '0' ) << m_id_human << "_";
