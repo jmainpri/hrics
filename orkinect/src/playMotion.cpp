@@ -8,6 +8,7 @@ PlayMotion::PlayMotion( OpenRAVE::EnvironmentBasePtr env, const std::vector<HRIC
 {
     env_ = env;
     _motion_recorders = recorders;
+    _StopRun = false;
 }
 
 
@@ -33,6 +34,7 @@ void PlayMotion::play( const std::vector<std::string>& filepaths )
         _motion_recorders[i]->storeMotion( _motion_recorders[i]->loadFromCSV(filepaths[i]), true );
     }
 
+    _StopRun = false;
     if (_play_controlled) runControlled();
     else runRealTime();
 
@@ -50,12 +52,11 @@ void PlayMotion::runRealTime()
         return;
     }
 
-    int StopRun = false;
     _current_frame=0;
     double tu_last = 0.0;
     double dt = 0.0;
 
-    while ( !StopRun )
+    while ( !_StopRun )
     {
         timeval tim;
         gettimeofday(&tim, NULL);
@@ -76,7 +77,7 @@ void PlayMotion::runRealTime()
         }
 
         if ( _current_frame >= int(_motion_recorders[0]->getStoredMotions()[0].size())) {
-            StopRun = true;
+            _StopRun = true;
         }
 
 //        graphptrs_.clear();
@@ -106,11 +107,10 @@ void PlayMotion::runControlled() //TODO weird implementation. should be fixed at
         return;
     }
 
-    int StopRun = false;
     _current_frame = 0;
     _recent_input = false;
 
-    while ( !StopRun )
+    while ( !_StopRun )
     {
 
         for (int j=0; j<int(_motion_recorders.size()); j++)
@@ -125,7 +125,7 @@ void PlayMotion::runControlled() //TODO weird implementation. should be fixed at
 
         if ( _current_frame >= numFrames)
         {
-            StopRun = true;
+            _StopRun = true;
         }
 
         _recent_input = false;
@@ -149,11 +149,10 @@ void PlayMotion::runControlled_folder() //TODO weird implementation. should be f
             return;
         }
 
-        int StopRun = false;
         _current_frame = 0;
         _recent_input = false;
 
-        while ( !StopRun )
+        while ( !_StopRun )
         {
 
             for (int j=0; j<int(_motion_recorders.size()); j++)
@@ -168,7 +167,7 @@ void PlayMotion::runControlled_folder() //TODO weird implementation. should be f
 
             if ( _current_frame >= numFrames)
             {
-                StopRun = true;
+                _StopRun = true;
             }
 
             _recent_input = false;
@@ -178,4 +177,14 @@ void PlayMotion::runControlled_folder() //TODO weird implementation. should be f
         cout << "End of motion:" << i << endl;
     }
     return;
+}
+
+void PlayMotion::reset_recorders()
+{
+    _StopRun = true;
+
+    for (int j=0; j<int(_motion_recorders.size()); j++)
+    {
+        _motion_recorders[j]->reset();
+    }
 }

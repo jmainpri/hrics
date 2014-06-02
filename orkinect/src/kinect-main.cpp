@@ -13,6 +13,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("setkinectframe",boost::bind(&KinectProblem::SetKinectFrame, this,_1,_2),"sets the kinect frame");
     RegisterCommand("setbuttonstate",boost::bind(&KinectProblem::SetButtonState, this,_1,_2),"sets the button state");
     RegisterCommand("loadtrajectoryfile",boost::bind(&KinectProblem::LoadTrajectoryFile, this,_1,_2),"Loads the trajectory file from given path");
+    RegisterCommand("resettrajectoryfiles",boost::bind(&KinectProblem::ResetTrajectoryFiles, this,_1,_2),"Resets the loaded trajectory files");
     RegisterCommand("playtrajectoryfiles",boost::bind(&KinectProblem::PlayTrajectoryFiles, this,_1,_2),"Plays the trajectory files");
     RegisterCommand("playtrajectoryfolder",boost::bind(&KinectProblem::PlayTrajectoryFolder, this,_1,_2),"Plays the trajectory folder");
     RegisterCommand("settrajectorycontrol",boost::bind(&KinectProblem::SetTrajectoryControl, this,_1,_2),"Set control of playback flag");
@@ -191,6 +192,15 @@ bool KinectProblem::LoadTrajectoryFile(ostream& sout, istream& sinput)
     string path;
     sinput >> path;
     _filepaths.push_back( path );
+
+    return true;
+}
+
+bool KinectProblem::ResetTrajectoryFiles(ostream& sout, istream& sinput)
+{
+    cout << "Resetting Loaded Trajectories" << endl;
+    _filepaths.clear();
+    _motion_player->reset_recorders();
 
     return true;
 }

@@ -443,6 +443,26 @@ bool RecordMotion::setRobotToStoredMotionConfig(int motion_id, int config_id)
 //    cout << endl;
     m_robot->SetJointValues( m_stored_motions[motion_id][config_id].second );
 
+    const std::vector<OpenRAVE::KinBody::JointPtr> joints = m_robot->GetJoints();
+
+    OpenRAVE::GraphHandlePtr figure;
+    std::vector<OpenRAVE::RaveVector<float> > vpoints;
+    std::vector<float> vcolors;
+    for( int i=0;i<int(joints.size());i++)
+    {
+        OpenRAVE::Vector p = joints[i]->GetAnchor();
+
+        vpoints.push_back(p);
+        vcolors.push_back(1);
+        vcolors.push_back(0);
+        vcolors.push_back(0);
+
+    }
+
+
+
+    figure = m_robot->GetEnv()->plot3( &vpoints[0].x, vpoints.size(), sizeof(vpoints[0]), 0.1, &vcolors[0], 1 );
+
     if(use_camera_)
     {
         _camera->pubImage(m_times[config_id]);

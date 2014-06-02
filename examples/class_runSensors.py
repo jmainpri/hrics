@@ -30,7 +30,7 @@
 
 from openravepy import *
 import os
-import sys 
+import sys
 from numpy import *
 from TransformMatrix import *
 from rodrigues import *
@@ -54,25 +54,25 @@ trajectories_files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.
 
 #in order to use the wiimote, create a wiimote subscriber object and call run.
 class wiimote_subscriber():
-	def __init__(self, a_prob):
-		self.record_state = False
-		self.is_pressed = False
-		self.a_prob = a_prob
-		
-	def callback(self, State):
-		if State.buttons[4] == True and self.is_pressed == False:
-			self.record_state = False
-			self.is_pressed = True
-			cmdout = self.a_prob.SendCommand('SetButtonState 1')
+    def __init__(self, a_prob):
+        self.record_state = False
+        self.is_pressed = False
+        self.a_prob = a_prob
 
-		if State.buttons[4] == False and self.is_pressed == True:
-			self.is_pressed = False
-			cmdout = self.a_prob.SendCommand('SetButtonState 0')
-			
-	def run(self):	
-		rospy.init_node('wii_listener')
-		rospy.Subscriber("/wiimote/state", State, self.callback)
-		rospy.spin()
+    def callback(self, State):
+        if State.buttons[4] == True and self.is_pressed == False:
+            self.record_state = False
+            self.is_pressed = True
+            cmdout = self.a_prob.SendCommand('SetButtonState 1')
+
+        if State.buttons[4] == False and self.is_pressed == True:
+            self.is_pressed = False
+            cmdout = self.a_prob.SendCommand('SetButtonState 0')
+
+    def run(self):
+        rospy.init_node('wii_listener')
+        rospy.Subscriber("/wiimote/state", State, self.callback)
+        rospy.spin()
 
 class kinect_subscriber():
     def __init__(self):
@@ -98,7 +98,7 @@ class kinect_subscriber():
         #self.orEnv.Load("../ormodels/env.xml")
 
         print "draw frame"
-        T = MakeTransform( eye(3), transpose(matrix([0,0,0]))) 
+        T = MakeTransform( eye(3), transpose(matrix([0,0,0])))
         self.h = misc.DrawAxes( self.orEnv, matrix(T), 1 )
 
         print "try to create problem"
@@ -107,7 +107,7 @@ class kinect_subscriber():
     def listen(self):
         print "Trying to listen"
         self.prob.SendCommand('SetCustomTracker 0')
-        self.prob.SendCommand('SetNumKinect 1') #still need to call as 1 if using default tracker.
+        self.prob.SendCommand('SetNumKinect 1')  # still need to call as 1 if using default tracker.
         self.prob.SendCommand('EnableCamera ' + str(show_images))
 
         print "Trying to set kinect frame"
@@ -117,14 +117,14 @@ class kinect_subscriber():
         self.prob.SendCommand('UsePR2Frame 0')
 
         #Single Kinect
-        self.prob.SendCommand('SetKinectFrame 0 0.49 -1.02 1.32 90.0 7.0') 
+        self.prob.SendCommand('SetKinectFrame 0 0.49 -1.02 1.32 90.0 7.0')
 
         print "Python: starting listener!"
         self.prob.SendCommand('StartListening')
 
     def play(self, controlled, play_folder=False ):
         print "loading files"
-   
+
         if not play_folder :
             self.loadFiles(self.dir, self.files)
 
@@ -137,15 +137,15 @@ class kinect_subscriber():
             self.prob.SendCommand('SetTrajectoryControl 0')
 
         if play_folder :
-            self.prob.SendCommand('PlayTrajectoryFolder /home/rafi/Desktop/classes/test/')
+            self.prob.SendCommand('PlayTrajectoryFolder /home/rafi/workspace/experiment/1/Run0/')
         else :
             self.prob.SendCommand('PlayTrajectoryFiles')
-            
+
         if controlled:
             sleep(1)
             print "\n \n"
             print "Controlls:     u   i    o   p      q         space            1            2          s"
-            print "              <<<  <<  >>  >>>    exit    current frame  split start  split end    segment" 
+            print "              <<<  <<  >>  >>>    exit    current frame  split start  split end    segment"
             print "Enter character:"
             self.keyboardControll()
 
@@ -155,8 +155,8 @@ class kinect_subscriber():
             #print "Enter new character"
             c = keystroke.getch(-1)
             #print c
-            if c == 'q': 
-                sys.exit()    		
+            if c == 'q':
+                sys.exit()
             if c == 'u':
                 self.prob.SendCommand('ControlTrajectoryPlayback -25')
             if c == 'i':
@@ -193,16 +193,16 @@ class kinect_subscriber():
 
         else:
             self.prob.SendCommand('SetButtonState 0')
-            
+
 
 if __name__ == "__main__":
     print "main function"
     k = kinect_subscriber()
     k.play(0)
-#    k.listen()
+    #    k.listen()
 
-#    w = wiimote_subscriber(k.prob)
-#    w.run()
+    #    w = wiimote_subscriber(k.prob)
+    #    w.run()
 
     print "Press return to run "
     sys.stdin.readline()

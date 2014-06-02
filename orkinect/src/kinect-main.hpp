@@ -32,6 +32,7 @@ public:
     bool StartRecording(ostream& sout, istream& sinput);
     bool SaveToFile(ostream& sout, istream& sinput);
     bool LoadTrajectoryFile(ostream& sout, istream& sinput);
+    bool ResetTrajectoryFiles(ostream& sout, istream& sinput);
     bool ResampleFiles(ostream& sout, istream& sinput);
     bool DecrementFile(ostream& sout, istream& sinput);
     bool PlayTrajectoryFiles(ostream& sout, istream& sinput);

@@ -19,6 +19,7 @@ public:
     int getCurrentFrame();
 
     void play_folder( std::string &folder );
+    void reset_recorders();
 
 private:
 
@@ -35,6 +36,7 @@ private:
     int _step_size;
     bool _play_controlled;
     bool _recent_input;
+    bool _StopRun;
 
 };
 #endif //PLAYMOION_HPP
