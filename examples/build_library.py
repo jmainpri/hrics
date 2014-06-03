@@ -45,9 +45,9 @@ import shutil
 from extractImages import getImages
 
 play_folder = False
-show_images = 1 # 0 to not show
-m_dir = "/home/rafi/workspace/experiment/1/Run0/"
-out_dir = "/home/rafi/workspace/experiment/filtered_lib/1/"
+show_images = 1  # 0 to not show
+m_dir = "/home/rafi/workspace/experiment/6/Run1/"
+out_dir = "/home/rafi/workspace/experiment/filtered_lib/6/"
 #trajectories_files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.csv"]
 
 class kinect_subscriber():
@@ -117,15 +117,15 @@ class kinect_subscriber():
             if c == '1':
                 print "Marking files: "+self.currentFileOne+" and "+self.currentFileTwo+" as"
                 print "----------------------GOOD--------------------------"
-                outFileOne = out_dir+'/good/'+self.currentFileOne
-                outFileTwo = out_dir+'/good/'+self.currentFileTwo
+                outFileOne = out_dir+'good/'+self.currentFileOne
+                outFileTwo = out_dir+'good/'+self.currentFileTwo
 
                 # Copy the file
                 shutil.copy2(m_dir+self.currentFileOne, outFileOne)
                 shutil.copy2(m_dir+self.currentFileTwo,  outFileTwo)
                 # Move its associated images
-                getImages(outFileOne, out_dir+'/images/')
-                getImages(outFileTwo, out_dir+'/images/')
+                getImages(m_dir+self.currentFileOne, out_dir+'images/')
+                getImages(m_dir+self.currentFileTwo, out_dir+'images/')
 
                 #Include spaces in the name
                 os.rename(outFileOne, outFileOne.replace('#', ' '))
@@ -136,15 +136,15 @@ class kinect_subscriber():
             if c == '2':
                 print "Marking files: "+self.currentFileOne+" and "+self.currentFileTwo+" as"
                 print "----------------------OK--------------------------"
-                outFileOne = out_dir+'/ok/'+self.currentFileOne
-                outFileTwo = out_dir+'/ok/'+self.currentFileTwo
+                outFileOne = out_dir+'ok/'+self.currentFileOne
+                outFileTwo = out_dir+'ok/'+self.currentFileTwo
 
                 # Copy the file
                 shutil.copy2(m_dir+self.currentFileOne, outFileOne)
                 shutil.copy2(m_dir+self.currentFileTwo,  outFileTwo)
                 # Move its associated images
-                getImages(outFileOne, out_dir+'/images/')
-                getImages(outFileTwo, out_dir+'/images/')
+                getImages(m_dir+self.currentFileOne, out_dir+'images/')
+                getImages(m_dir+self.currentFileTwo, out_dir+'images/')
 
                 #Include spaces in the name
                 os.rename(outFileOne, outFileOne.replace('#', ' '))
@@ -155,15 +155,15 @@ class kinect_subscriber():
             if c == '3':
                 print "Marking files: "+self.currentFileOne+" and "+self.currentFileTwo+" as"
                 print "----------------------BAD--------------------------"
-                outFileOne = out_dir+'/bad/'+self.currentFileOne
-                outFileTwo = out_dir+'/bad/'+self.currentFileTwo
+                outFileOne = out_dir+'bad/'+self.currentFileOne
+                outFileTwo = out_dir+'bad/'+self.currentFileTwo
 
                 # Copy the file
                 shutil.copy2(m_dir+self.currentFileOne, outFileOne)
                 shutil.copy2(m_dir+self.currentFileTwo,  outFileTwo)
                 # Move its associated images
-                getImages(outFileOne, out_dir+'/images/')
-                getImages(outFileTwo, out_dir+'/images/')
+                getImages(m_dir+self.currentFileOne, out_dir+'images/')
+                getImages(m_dir+self.currentFileTwo, out_dir+'images/')
 
                 #Include spaces in the name
                 os.rename(outFileOne, outFileOne.replace('#', ' '))
@@ -171,6 +171,9 @@ class kinect_subscriber():
 
                 self.prob.SendCommand('ResetTrajectoryFiles')
                 break
+
+            if c == 'x':
+                sys.exit(0)
 
 
     def loadFiles(self, dir, files):

@@ -50,7 +50,6 @@ def getImages(filein, outpath):
 
             imagefile = "0_"+s+"_"+ms+".png"
 
-
             if os.path.exists(path+'/../images/'+imagefile):
                 print "copying: " + imagefile
                 copyfile(path+'/../images/'+imagefile, outpath+imagefile)
