@@ -10,7 +10,18 @@
 
 #include <openrave/openrave.h>
 
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <Eigen/StdVector>
 #include <Eigen/Dense>
+
+namespace Eigen
+{
+
+typedef Affine3d Transform3d;
+
+};
 
 /*
 enum kinect_frames
@@ -100,7 +111,7 @@ public:
 
 private:
 
-    void drawFrame(const Eigen::Affine3d& t);
+    void drawFrame(const Eigen::Transform3d& t);
     void draw();
 
     std::vector<bool> check_active_user();
@@ -108,7 +119,7 @@ private:
     void tryToRecord();
     void applyPR2Frame();
 
-    void setKinectFrame(int KinID, Eigen::Affine3d frame_offset);
+    void setKinectFrame(int KinID, Eigen::Transform3d frame_offset);
 
     void setEigenPositions(int id);
     void setHumanConfiguration(int id, OpenRAVE::RobotBasePtr human);
@@ -137,7 +148,7 @@ private:
     std::vector<int> tracked_user_id_;
     std::vector<int> active_kinect_;
     std::vector<int> users_id_to_kinect_;
-    std::vector<Eigen::Affine3d> kinect_to_origin_; //Changed to a vector to support multiple kinects.
+    std::vector<Eigen::Transform3d> kinect_to_origin_; //Changed to a vector to support multiple kinects.
     int max_num_skel_;
 
     bool use_pr2_;

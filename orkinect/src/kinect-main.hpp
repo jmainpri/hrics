@@ -44,6 +44,7 @@ public:
     bool SetCustomTracker(ostream& sout, istream& sinput);
     bool EnableCamera(ostream& sout, istream& sinput);
     bool UsePR2Frame(ostream& sout, istream& sinput);
+    bool InitMove3D(ostream& sout, istream& sinput);
 
 
 private:

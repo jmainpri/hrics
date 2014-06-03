@@ -1,10 +1,12 @@
+#include "tf/transform_datatypes.h"
+#include "tf_conversions/tf_eigen.h"
+
 #include "skeletonListener.hpp"
 #include "skeletonDrawing.hpp"
 #include <Eigen/Geometry>
 #include <sensor_msgs/JointState.h>
 #include "../../orcommon/include/orcommon.hpp"
-#include "tf/transform_datatypes.h"
-#include "tf_conversions/tf_eigen.h"
+
 
 using namespace HRICS;
 using std::cout;
@@ -14,7 +16,7 @@ using std::endl;
 
 
 //Couldn't get the correct header file, so I just copied the file from trac
-void TransformTFToEigen(const tf::Transform &t, Eigen::Affine3d &k)
+void TransformTFToEigen(const tf::Transform &t, Eigen::Transform3d &k)
 {
     for(int i=0; i<3; i++)
     {
@@ -497,7 +499,7 @@ void SkeletonListener::applyPR2Frame()
         return;
     }
 
-    Eigen::Affine3d frame_offset;
+    Eigen::Transform3d frame_offset;
     TransformTFToEigen(transform, frame_offset);
     for (int i = 0; i < int(_motion_recorders.size()); i++ )
     {
@@ -545,7 +547,7 @@ void SkeletonListener::setEigenPositions(int id)
     //cout << "clear pos at id : " << id << endl;
     pos_[id].clear();
     pos_[id].resize(15);
-    Eigen::Affine3d tempTransform;
+    Eigen::Transform3d tempTransform;
 
     //TODO replace with somehing more clever!!!
     for (int k = 0; k < num_kinect_; k++)
@@ -570,7 +572,7 @@ void SkeletonListener::setEigenPositions(int id)
     }
 }
 
-void SkeletonListener::drawFrame(const Eigen::Affine3d &T)
+void SkeletonListener::drawFrame(const Eigen::Transform3d &T)
 {
     if( print_ )
     {
@@ -647,11 +649,11 @@ void SkeletonListener::draw()
     graphptrs_.push_back( figure );
 }
 
-void SkeletonListener::setKinectFrame( int KinID, Eigen::Affine3d frame_offset)
+void SkeletonListener::setKinectFrame( int KinID, Eigen::Transform3d frame_offset)
 {
-    Eigen::Affine3d tempTranslation;
+    Eigen::Transform3d tempTranslation;
 
-    Eigen::Affine3d T_Tra,T_Pan,T_Til;
+    Eigen::Transform3d T_Tra,T_Pan,T_Til;
     Eigen::Matrix3d kin_cam;
 
     //         Y  X                  Z  Y
@@ -688,12 +690,12 @@ void SkeletonListener::setKinectFrame( int KinID, Eigen::Affine3d frame_offset)
 
 void SkeletonListener::setKinectFrame( int KinID, double TX, double TY, double TZ, double RotZ, double RotY )
 {
-    Eigen::Affine3d tempTranslation;
+    Eigen::Transform3d tempTranslation;
 
     RotZ = M_PI * RotZ / 180;
     RotY = M_PI * RotY / 180;
 
-    Eigen::Affine3d T_Tra,T_Pan,T_Til;
+    Eigen::Transform3d T_Tra,T_Pan,T_Til;
     Eigen::Matrix3d kin_cam;
 
     //         Y  X                  Z  Y
@@ -787,12 +789,12 @@ void SkeletonListener::setHumanConfiguration(int id, OpenRAVE::RobotBasePtr huma
     //    }
 
     //--------------------------------------------------------------
-    Eigen::Affine3d Tinv,Tpelv;
+    Eigen::Transform3d Tinv,Tpelv;
     Eigen::Vector3d shoulder;
     //Eigen::Vector3d Xaxis; Xaxis << 1 , 0 , 0 ;
-    Eigen::Affine3d TrotX,TrotXtmp;
+    Eigen::Transform3d TrotX,TrotXtmp;
     //Eigen::Vector3d Yaxis; Yaxis << 0 , 1 , 0 ;
-    Eigen::Affine3d TrotY,TrotYtmp;
+    Eigen::Transform3d TrotY,TrotYtmp;
 
     joint = human->GetJoint("TorsoX");
 
@@ -835,9 +837,9 @@ void SkeletonListener::setHumanConfiguration(int id, OpenRAVE::RobotBasePtr huma
     // Set and update robot to
     // new position
     // -----------------------------------------------------------------
-    Eigen::Affine3d Trot;
-    Eigen::Affine3d Trot2,Trot3;
-    Eigen::Affine3d Trot4;
+    Eigen::Transform3d Trot;
+    Eigen::Transform3d Trot2,Trot3;
+    Eigen::Transform3d Trot4;
     Eigen::Vector3d vect1,vect2,vect3;
 
     //    if( data.ELBOW_RIGHT.confidence > 0 && data.HAND_RIGHT.confidence > 0 )
@@ -848,7 +850,7 @@ void SkeletonListener::setHumanConfiguration(int id, OpenRAVE::RobotBasePtr huma
         cout << "Set human torso configuration" << endl;
 
     joint = human->GetJoint("rShoulderX");
-    Eigen::Affine3d T = get_joint_transform( joint );
+    Eigen::Transform3d T = get_joint_transform( joint );
     pos = T.translation();
     shoulder = T.translation();
 

@@ -2,6 +2,11 @@
 #include "skeletonListener.hpp"
 #include <boost/thread.hpp>
 
+#include <libmove3d/planners/API/Device/robot.hpp>
+#include <libmove3d/planners/API/Device/joint.hpp>
+#include <libmove3d/planners/API/project.hpp>
+#include <libmove3d/planners/API/scene.hpp>
+
 #define FORIT(it, v) for(it = (v).begin(); it != (v).end(); (it)++)
 
 KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
@@ -25,6 +30,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("decrementfile",boost::bind(&KinectProblem::DecrementFile, this,_1,_2),"decrement the file id.  allows you to overwrite a saved motion");
     RegisterCommand("enablecamera",boost::bind(&KinectProblem::EnableCamera, this,_1,_2),"Enable the camera to take live snapshots");
     RegisterCommand("usepr2frame",boost::bind(&KinectProblem::UsePR2Frame, this,_1,_2),"Enable use of the pr2 headframe as a transform");
+    RegisterCommand("initmove3d",boost::bind(&KinectProblem::InitMove3D, this,_1,_2),"initializes move3d data structures");
 
     int argc = 0;
     char** argv;
@@ -322,7 +328,46 @@ bool KinectProblem::GetPlaybackFrame(ostream& sout, istream& sinput)
     return true;
 }
 
+bool KinectProblem::InitMove3D(ostream& sout, istream& sinput)
+{
+    RobotBasePtr human = GetEnv()->GetRobot("human_model"); // Getting transform
+    TransformMatrix T = human->GetTransform();
+    T.trans.x=-1;  T.trans.y=1;  T.trans.z=0;
+    human->SetTransform(T);
 
+    std::ostringstream out;
+    std::istringstream iss;
+
+    std::string coll_checker_name = "VoxelColChecker" ;
+    CollisionCheckerBasePtr pchecker = RaveCreateCollisionChecker( GetEnv(), coll_checker_name.c_str() ); // create the module
+    if( !pchecker ) {
+        RAVELOG_ERROR( "Failed to create checker %s\n", coll_checker_name.c_str() );
+        return false;
+    }
+
+    // VOXEL COLLISON CHECKER
+//    iss.clear(); iss.str("SetDimension robotcentered extent 2.0 2.0 2.0 offset 1.0 1.0 -1.0"); pchecker->SendCommand( out, iss );
+//    iss.clear(); iss.str("SetCollisionPointsRadii radii 6 0.20 .14 .10 .08 .07 .05 activation 6 0 1 1 1 1 0"); pchecker->SendCommand( out, iss );
+//    iss.clear(); iss.str("Initialize"); pchecker->SendCommand( out, iss );
+//    iss.clear(); iss.str("SetDrawing off"); pchecker->SendCommand( out, iss );
+//    GetEnv()->SetCollisionChecker( pchecker );
+
+    std::string coll_move3d_name = "Move3d" ;
+    ModuleBasePtr pmove3d = RaveCreateModule( GetEnv(), coll_move3d_name.c_str() ); // create the module
+    if( !pmove3d ) {
+        RAVELOG_ERROR( "Failed to create checker %s\n", coll_move3d_name.c_str() );
+        return false;
+    }
+
+    // MOVE3D
+    iss.clear(); iss.str("InitMove3dEnv"); pmove3d->SendCommand( out, iss );
+    iss.clear(); iss.str("LoadConfigFile " + std::string(getenv("HOME")) + "/workspace/move3d/move3d-launch/parameters/params_collaboration_planning"); pmove3d->SendCommand( out, iss );
+    iss.clear(); iss.str("SetParameter drawTraj 1"); pmove3d->SendCommand( out, iss );
+    iss.clear(); iss.str("SetParameter jntToDraw 5"); pmove3d->SendCommand( out, iss );
+    iss.clear(); iss.str("SetParameter trajStompTimeLimit 2.5"); pmove3d->SendCommand( out, iss );
+
+    cout << "Move3D::global_Project->getActiveScene()->getActiveRobot()->getName() : " << Move3D::global_Project->getActiveScene()->getActiveRobot()->getName() << endl;
+}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

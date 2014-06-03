@@ -186,5 +186,3 @@ if __name__ == "__main__":
     k = kinect_subscriber()
     print "finish init"
     k.play()
-
-
