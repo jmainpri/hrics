@@ -34,18 +34,20 @@ import sys
 from numpy import *
 from TransformMatrix import *
 from rodrigues import *
-import roslib; roslib.load_manifest('wiimote')
+import roslib;
 import rospy
 from std_msgs.msg import *
 from sensor_msgs.msg import *
-from wiimote.msg import*
 import keystroke
 from time import sleep
 import segment_file
+import shutil
+from extractImages import getImages
 
 play_folder = False
 show_images = 1 # 0 to not show
-base_dir = "/home/rafi/workspace/experiment/1/"
+m_dir = "/home/rafi/workspace/experiment/1/Run0/"
+out_dir = "/home/rafi/workspace/experiment/filtered_lib/1/"
 #trajectories_files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.csv"]
 
 class kinect_subscriber():
@@ -54,6 +56,9 @@ class kinect_subscriber():
         self.prob = None
         self.h = None
         self.orEnv.SetViewer('qtcoin')
+
+        self.currentFileOne = ''
+        self.currentFileTwo = ''
 
         print "hello!"
 
@@ -80,20 +85,20 @@ class kinect_subscriber():
         fileList = []
 
         self.prob.SendCommand('SetCustomTracker ' + str(1) )
-        self.prob.SendCommand('EnableCamera ' + str(show_images) + ' ' + base_dir + 'images/' )
+        self.prob.SendCommand('EnableCamera ' + str(show_images) + ' ' + m_dir + 'images/' )
         self.prob.SendCommand('SetTrajectoryControl 0')
 
-        for root, dirs, filenames in os.walk(base_dir+'Run0/'):
+        for root, dirs, filenames in os.walk(m_dir):
             fileList = sort(filenames)
             break
 
-        print len(fileList)
         for i in xrange(0,len(fileList), 2):
-            self.prob.SendCommand('ResetTrajectoryFiles')
-            print base_dir+'' + fileList[i]
-            print base_dir+'' + fileList[i+1]
-            self.prob.SendCommand( 'LoadTrajectoryFile '+ base_dir+'Run0/' + fileList[i] )
-            self.prob.SendCommand( 'LoadTrajectoryFile '+ base_dir+'Run0/' + fileList[i+1] )
+            print m_dir + fileList[i]
+            print m_dir + fileList[i+1]
+            self.currentFileOne = fileList[i]
+            self.currentFileTwo = fileList[i+1]
+            self.prob.SendCommand( 'LoadTrajectoryFile '+ m_dir + fileList[i] )
+            self.prob.SendCommand( 'LoadTrajectoryFile '+ m_dir + fileList[i+1] )
             self.prob.SendCommand('PlayTrajectoryFiles')
 
             self.keyboardControll()
@@ -105,30 +110,67 @@ class kinect_subscriber():
             c = keystroke.getch(-1)
             #print c
             if c == 'q':
+                self.prob.SendCommand('ResetTrajectoryFiles')
                 break
-            if c == 'u':
-                self.prob.SendCommand('ControlTrajectoryPlayback -25')
-            if c == 'i':
-                self.prob.SendCommand('ControlTrajectoryPlayback -1')
-            if c == 'o':
-                self.prob.SendCommand('ControlTrajectoryPlayback 1')
-            if c == 'p':
-                self.prob.SendCommand('ControlTrajectoryPlayback 25')
-            if c == ' ':
-                currentFrame = int(self.prob.SendCommand('GetPlaybackFrame'))
-                print "Current Frame: " + str(currentFrame)
+            if c == 'r':
+                self.prob.SendCommand('PlayTrajectoryFiles')
             if c == '1':
-                currentFrame = int(self.prob.SendCommand('GetPlaybackFrame'))
-                self.split[0] = currentFrame
-                print "Set split beginning to: " + str(self.split[0])
+                print "Marking files: "+self.currentFileOne+" and "+self.currentFileTwo+" as"
+                print "----------------------GOOD--------------------------"
+                outFileOne = out_dir+'/good/'+self.currentFileOne
+                outFileTwo = out_dir+'/good/'+self.currentFileTwo
+
+                # Copy the file
+                shutil.copy2(m_dir+self.currentFileOne, outFileOne)
+                shutil.copy2(m_dir+self.currentFileTwo,  outFileTwo)
+                # Move its associated images
+                getImages(outFileOne, out_dir+'/images/')
+                getImages(outFileTwo, out_dir+'/images/')
+
+                #Include spaces in the name
+                os.rename(outFileOne, outFileOne.replace('#', ' '))
+                os.rename(outFileTwo, outFileTwo.replace('#', ' '))
+
+                self.prob.SendCommand('ResetTrajectoryFiles')
+                break
             if c == '2':
-                currentFrame = int(self.prob.SendCommand('GetPlaybackFrame'))
-                self.split[1] = currentFrame
-                print "Set split ending to: " + str(self.split[1])
-            if c == 's':
-                for file in self.files:
-                    print "Segmenting file: " + file + " from: " + str(self.split[0]) + " to: " + str(self.split[1])
-                    segment_file.segment([(self.split[0], self.split[1])], self.dir+file)
+                print "Marking files: "+self.currentFileOne+" and "+self.currentFileTwo+" as"
+                print "----------------------OK--------------------------"
+                outFileOne = out_dir+'/ok/'+self.currentFileOne
+                outFileTwo = out_dir+'/ok/'+self.currentFileTwo
+
+                # Copy the file
+                shutil.copy2(m_dir+self.currentFileOne, outFileOne)
+                shutil.copy2(m_dir+self.currentFileTwo,  outFileTwo)
+                # Move its associated images
+                getImages(outFileOne, out_dir+'/images/')
+                getImages(outFileTwo, out_dir+'/images/')
+
+                #Include spaces in the name
+                os.rename(outFileOne, outFileOne.replace('#', ' '))
+                os.rename(outFileTwo, outFileTwo.replace('#', ' '))
+
+                self.prob.SendCommand('ResetTrajectoryFiles')
+                break
+            if c == '3':
+                print "Marking files: "+self.currentFileOne+" and "+self.currentFileTwo+" as"
+                print "----------------------BAD--------------------------"
+                outFileOne = out_dir+'/bad/'+self.currentFileOne
+                outFileTwo = out_dir+'/bad/'+self.currentFileTwo
+
+                # Copy the file
+                shutil.copy2(m_dir+self.currentFileOne, outFileOne)
+                shutil.copy2(m_dir+self.currentFileTwo,  outFileTwo)
+                # Move its associated images
+                getImages(outFileOne, out_dir+'/images/')
+                getImages(outFileTwo, out_dir+'/images/')
+
+                #Include spaces in the name
+                os.rename(outFileOne, outFileOne.replace('#', ' '))
+                os.rename(outFileTwo, outFileTwo.replace('#', ' '))
+
+                self.prob.SendCommand('ResetTrajectoryFiles')
+                break
 
 
     def loadFiles(self, dir, files):

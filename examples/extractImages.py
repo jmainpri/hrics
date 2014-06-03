@@ -38,7 +38,7 @@ files = [
     "[9494 - 9543] motion_saved_00000_00000.csv",
 ]
 
-def getImages(filein):
+def getImages(filein, outpath):
 
     path,filename = os.path.split(filein)
 
@@ -51,13 +51,13 @@ def getImages(filein):
             imagefile = "0_"+s+"_"+ms+".png"
 
 
-            if os.path.exists("/home/rafihayne/workspace/statFiles/snapshots/"+imagefile):
+            if os.path.exists(path+'/../images/'+imagefile):
                 print "copying: " + imagefile
-                copyfile("/home/rafihayne/workspace/statFiles/snapshots/"+imagefile, "/home/rafihayne/workspace/statFiles/recorded_motion/selectimages/"+imagefile)
+                copyfile(path+'/../images/'+imagefile, outpath+imagefile)
 
 for file in files:
     count = 0
-    getImages(dir+file)
+    #getImages(dir+file)
     print count
     count += 1
                     
