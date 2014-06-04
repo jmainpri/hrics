@@ -367,6 +367,8 @@ bool KinectProblem::InitMove3D(ostream& sout, istream& sinput)
     iss.clear(); iss.str("SetParameter trajStompTimeLimit 2.5"); pmove3d->SendCommand( out, iss );
 
     cout << "Move3D::global_Project->getActiveScene()->getActiveRobot()->getName() : " << Move3D::global_Project->getActiveScene()->getActiveRobot()->getName() << endl;
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
