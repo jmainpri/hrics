@@ -76,7 +76,7 @@ std::vector<double> eigen_vector_to_or(const Eigen::Vector3d& pos)
     return p;
 }
 
-Eigen::Affine3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
+Eigen::Transform3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
 {
     OpenRAVE::RaveTransformMatrix<double> t( joint->GetFirstAttached()->GetTransform() );
     OpenRAVE::Vector right,up,dir,pos;
@@ -86,7 +86,7 @@ Eigen::Affine3d get_joint_transform(OpenRAVE::KinBody::JointPtr joint)
     rot(1,0) = right.y; rot(1,1) = up.y; rot(1,2) = dir.y;
     rot(2,0) = right.z; rot(2,1) = up.z; rot(2,2) = dir.z;
 
-    Eigen::Affine3d T;
+    Eigen::Transform3d T;
     T.linear() = rot;
     T.translation() = or_vector_to_eigen( joint->GetAnchor() );
 
