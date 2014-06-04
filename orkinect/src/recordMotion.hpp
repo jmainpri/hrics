@@ -69,6 +69,7 @@ public:
     void setRobotId(int id) { m_id_human = id; }
 
     const std::vector<motion_t>& getStoredMotions() { return m_stored_motions; }
+    double get_dt(int motion_id, int config_id ) { return m_stored_motions[motion_id][config_id].first; }
 
     void saveImageToFile(timeval time);
 

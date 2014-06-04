@@ -418,7 +418,6 @@ void RecordMotion::storeMotion( const motion_t& motion, bool new_motion )
     }
 }
 
-
 bool RecordMotion::setRobotToStoredMotionConfig(int motion_id, int config_id)
 {
     if( motion_id < 0 || ( motion_id > int(m_stored_motions[motion_id].size())))
@@ -442,7 +441,6 @@ bool RecordMotion::setRobotToStoredMotionConfig(int motion_id, int config_id)
 //    }
 //    cout << endl;
     m_robot->SetJointValues( m_stored_motions[motion_id][config_id].second );
-
 
     //Draw Joint Markers
 //    const std::vector<OpenRAVE::KinBody::JointPtr> joints = m_robot->GetJoints();
@@ -1101,6 +1099,7 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
     std::string                line;
     std::string                cell;
     timeval time;
+    double last_config_time = 0.0;
 
     while( file )
     {
@@ -1162,7 +1161,16 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
 //        convert_text_to_num<double>( q[21], matrix[i][11], std::dec ); // rArmTrans
 //        convert_text_to_num<double>( q[22], matrix[i][12], std::dec ); // rElbowZ
 
-        motion.push_back( make_pair(0.02,q) );
+
+
+        double tu = time.tv_sec+(time.tv_usec/1000000.0);
+        double dt = 0.0;
+        if( last_config_time != 0.0 )
+            dt = tu - last_config_time;
+        last_config_time = tu;
+
+
+        motion.push_back( make_pair(dt,q) );
         m_times.push_back(time);
         //cout << "Add configuration " << i << endl;
 

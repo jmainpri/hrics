@@ -58,23 +58,21 @@ void PlayMotion::runRealTime()
 
     while ( !_StopRun )
     {
-        timeval tim;
-        gettimeofday(&tim, NULL);
-        double tu = tim.tv_sec+(tim.tv_usec/1000000.0);
-        dt += ( tu - tu_last );
-        tu_last = tu;
+//        timeval tim;
+//        gettimeofday(&tim, NULL);
+//        double tu = tim.tv_sec+(tim.tv_usec/1000000.0);
+//        dt += ( tu - tu_last );
+//        tu_last = tu;
+        dt = _motion_recorders[0]->get_dt(0, _current_frame);
+        usleep(dt*1000000.0);
 
-        if ( dt>=0.025 )
+        for (int j=0; j<int(_motion_recorders.size()); j++)
         {
-            for (int j=0; j<int(_motion_recorders.size()); j++)
-            {
 //                cout << "configuration " << i << endl;
-                _motion_recorders[j]->setRobotToStoredMotionConfig(0,_current_frame);
-            }
-
-            dt = 0.0;
-            _current_frame++;
+            _motion_recorders[j]->setRobotToStoredMotionConfig(0,_current_frame);
         }
+
+            _current_frame++;
 
         if ( _current_frame >= int(_motion_recorders[0]->getStoredMotions()[0].size())) {
             _StopRun = true;
