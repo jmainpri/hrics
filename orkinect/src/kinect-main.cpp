@@ -1,6 +1,10 @@
 #include "kinect-main.hpp"
-#include "skeletonListener.hpp"
 #include <boost/thread.hpp>
+
+#include "skeletonListener.hpp"
+#include "playMotion.hpp"
+#include "recordMotion.hpp"
+#include "cameraListener.hpp"
 
 #include <libmove3d/planners/API/Device/robot.hpp>
 #include <libmove3d/planners/API/Device/joint.hpp>
@@ -331,9 +335,9 @@ bool KinectProblem::GetPlaybackFrame(ostream& sout, istream& sinput)
 bool KinectProblem::InitMove3D(ostream& sout, istream& sinput)
 {
     RobotBasePtr human = GetEnv()->GetRobot("human_model"); // Getting transform
-    TransformMatrix T = human->GetTransform();
-    T.trans.x=-1;  T.trans.y=1;  T.trans.z=0;
-    human->SetTransform(T);
+//    TransformMatrix T = human->GetTransform();
+//    T.trans.x=-1;  T.trans.y=1;  T.trans.z=0;
+//    human->SetTransform(T);
 
     std::ostringstream out;
     std::istringstream iss;

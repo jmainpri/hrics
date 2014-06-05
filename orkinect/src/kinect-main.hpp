@@ -1,10 +1,6 @@
 #ifndef KINECTMAIN_HPP
 #define KINECTMAIN_HPP
 
-#include "recordMotion.hpp"
-#include "cameraListener.hpp"
-#include "playMotion.hpp"
-
 #include <openrave/openrave.h>
 #include <openrave/plugin.h>
 #include <boost/bind.hpp>
@@ -14,6 +10,12 @@ using namespace std;
 using namespace OpenRAVE;
 
 class SkeletonListener;
+class PlayMotion;
+
+namespace HRICS
+{
+class RecordMotion;
+}
 
 class KinectProblem : public ModuleBase
 {

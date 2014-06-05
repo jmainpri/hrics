@@ -3,6 +3,9 @@
 
 #include <openrave/openrave.h>
 #include "recordMotion.hpp"
+#include "features/orFeatures.hpp"
+
+class FeaturesOpenRAVE;
 
 class PlayMotion {
 
@@ -28,6 +31,7 @@ private:
     void runControlled_folder();
 
 
+    HRICS::FeaturesOpenRAVE* features_;
     std::vector<HRICS::RecordMotion*> _motion_recorders;
     OpenRAVE::EnvironmentBasePtr env_;
     std::vector<boost::shared_ptr<void> > graphptrs_;

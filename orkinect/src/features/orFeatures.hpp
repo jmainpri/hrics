@@ -15,16 +15,19 @@ namespace HRICS
 
 class FeaturesOpenRAVE
 {
-
-    FeaturesOpenRAVE() {};
-    FeaturesOpenRAVE(std::string human_1, std::string human_2);
-
 public:
-    DistanceFeature* getDistFeat() {return dist_feat_;}
+    FeaturesOpenRAVE() {}
+    void init_dist( std::string human_name_1, std::string human_name_2 );
+    DistanceFeature* getDistFeat() { return dist_feat_;}
+    std::vector<Eigen::VectorXd> getDistBuffer() { return dist_buffer; }
+
+    void printDistances();
+    //void printMinDistances();
+    void bufferDistance();
 
 private:
     DistanceFeature* dist_feat_;
-
+    std::vector<Eigen::VectorXd> dist_buffer;
 };
 
 };

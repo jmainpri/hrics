@@ -1,6 +1,5 @@
 #include "playMotion.hpp"
 
-
 using std::cout;
 using std::endl;
 
@@ -22,6 +21,13 @@ int PlayMotion::getCurrentFrame() { return _current_frame; }
 
 void PlayMotion::play( const std::vector<std::string>& filepaths )
 {
+    if (    _motion_recorders.size() == 2 )
+    {
+        features_ = new HRICS::FeaturesOpenRAVE();
+        features_->init_dist("human_model", "human_model_blue");
+    }
+
+
     if( filepaths.size() > _motion_recorders.size() )
     {
         cout << "The number of motion recorder is reater than te number of motion to play" << endl;
@@ -65,6 +71,8 @@ void PlayMotion::runRealTime()
 //        tu_last = tu;
         dt = _motion_recorders[0]->get_dt(0, _current_frame);
         usleep(dt*1000000.0);
+
+        features_->bufferDistance();
 
         for (int j=0; j<int(_motion_recorders.size()); j++)
         {

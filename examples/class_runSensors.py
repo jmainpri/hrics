@@ -95,7 +95,7 @@ class kinect_subscriber():
         if len(self.files) > 1 :
             self.orEnv.Load("../ormodels/human_wpi_blue.xml")
 
-        #self.orEnv.Load("../ormodels/env.xml")
+        self.orEnv.Load("../ormodels/env.xml")
 
         print "draw frame"
         T = MakeTransform( eye(3), transpose(matrix([0,0,0])))
@@ -103,6 +103,9 @@ class kinect_subscriber():
 
         print "try to create problem"
         self.prob = RaveCreateProblem(self.orEnv,'Kinect')
+
+        print "try to init move3d"
+        self.prob.SendCommand('InitMove3D')
 
     def listen(self):
         print "Trying to listen"
