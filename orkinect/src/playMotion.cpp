@@ -59,10 +59,11 @@ void PlayMotion::runRealTime()
     }
 
     _current_frame=0;
+    int last_frame = _motion_recorders[0]->getStoredMotions()[0].size();  //Assumes all motion recorders have the same # of frames.  Should probably take the highest
     double tu_last = 0.0;
     double dt = 0.0;
 
-    while ( !_StopRun )
+    for (_current_frame; _current_frame < last_frame; _current_frame++)
     {
 //        timeval tim;
 //        gettimeofday(&tim, NULL);
@@ -79,13 +80,6 @@ void PlayMotion::runRealTime()
 //                cout << "configuration " << i << endl;
             _motion_recorders[j]->setRobotToStoredMotionConfig(0,_current_frame);
         }
-
-            _current_frame++;
-
-        if ( _current_frame >= int(_motion_recorders[0]->getStoredMotions()[0].size())) {
-            _StopRun = true;
-        }
-
 //        graphptrs_.clear();
 
 //        std::vector<OpenRAVE::RaveVector<float> > vpoints;
