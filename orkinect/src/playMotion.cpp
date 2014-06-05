@@ -8,12 +8,14 @@ PlayMotion::PlayMotion( OpenRAVE::EnvironmentBasePtr env, const std::vector<HRIC
     env_ = env;
     _motion_recorders = recorders;
     _StopRun = false;
+
+    usingMove3D = false;
 }
 
 
 //void PlayMotion::setDirection(const bool dir) { _play_dir = dir; }
 void PlayMotion::setStep(const int step) { _step_size = step; }
-void PlayMotion::setControlled(const bool controlled) { _play_controlled = controlled; }
+void PlayMotion::setPlayType(const int playType) { _play_type = playType; }
 void PlayMotion::setRecentInput(const bool input) { _recent_input = input;}
 bool PlayMotion::getRecentInput() { return _recent_input;}
 int PlayMotion::getCurrentFrame() { return _current_frame; }
@@ -21,12 +23,12 @@ int PlayMotion::getCurrentFrame() { return _current_frame; }
 
 void PlayMotion::play( const std::vector<std::string>& filepaths )
 {
-    if (    _motion_recorders.size() == 2 )
+    if (    _motion_recorders.size() == 2  && usingMove3D )
     {
         features_ = new HRICS::FeaturesOpenRAVE();
         features_->init_dist("human_model", "human_model_blue");
+        features_->init_vel("human_model");
     }
-
 
     if( filepaths.size() > _motion_recorders.size() )
     {
@@ -41,8 +43,19 @@ void PlayMotion::play( const std::vector<std::string>& filepaths )
     }
 
     _StopRun = false;
-    if (_play_controlled) runControlled();
-    else runRealTime();
+    cout << "Play type is: " << _play_type << endl;
+    switch (_play_type) {
+    case 0:
+        runRealTime();
+        break;
+    case 1:
+        runControlled();
+        break;
+    case 2:
+        runStatistics();
+    default:
+        runRealTime();
+    }
 
 }
 
@@ -73,8 +86,6 @@ void PlayMotion::runRealTime()
         dt = _motion_recorders[0]->get_dt(0, _current_frame);
         usleep(dt*1000000.0);
 
-        features_->bufferDistance();
-
         for (int j=0; j<int(_motion_recorders.size()); j++)
         {
 //                cout << "configuration " << i << endl;
@@ -92,6 +103,106 @@ void PlayMotion::runRealTime()
 //        vcolors.push_back(0);
 
 //        graphptrs_.push_back( env_->plot3( &vpoints[0].x, vpoints.size(), sizeof(vpoints[0]), 0.05, &vcolors[0], 1 ) );
+    }
+
+    cout << "End play motion" << endl;
+    return;
+}
+
+void PlayMotion::runStatistics()
+{
+    cout << "Running statistics on supplied trajectories" << endl;
+
+    if( _motion_recorders.empty() || !usingMove3D ) {
+        return;
+    }
+
+    _current_frame=0;
+    int nb_frames = _motion_recorders[0]->getStoredMotions()[0].size();  //Assumes all motion recorders have the same # of frames.  Should probably take the highest
+    Eigen::VectorXd times(nb_frames);
+    float total_time = 0.0;
+
+    Move3D::Robot* human1 = Move3D::global_Project->getActiveScene()->getRobotByName("human_model");
+    Move3D::Trajectory traj( human1 );
+
+    std::vector<double> dt_tmp;
+
+    for (_current_frame; _current_frame < nb_frames; _current_frame++)
+    {
+        for (int j=0; j<int(_motion_recorders.size()); j++)
+        {
+            _motion_recorders[j]->setRobotToStoredMotionConfig(0,_current_frame);
+        }
+
+        traj.push_back( human1->getCurrentPos() );
+
+        //Get time stamp
+        double dt = _motion_recorders[0]->get_dt(0, _current_frame);
+
+        dt_tmp.push_back( dt );
+
+//        cout << "dt : " << dt << endl;
+        total_time += dt;
+        times(_current_frame) = total_time;
+//        cout << "times(_current_frame) : " << times(_current_frame) << endl;
+
+        features_->bufferDistance();
+        features_->bufferVelocity( dt );
+    }
+
+//    double s = 0.0;
+//    double s_max = traj.getParamMax();
+//    int n_step = nb_frames;
+//    double step = s_max / nb_frames;
+
+//    for ( int i=0; i<n_step; i++ )
+//    {
+//        human1->setAndUpdate( *traj.configAtParam(s) );
+
+//        features_->bufferDistance();
+//        features_->bufferVelocity( dt_tmp[i] );
+
+//        s += step;
+//    }
+
+    cout << "End computing features, saving to file" << endl;
+
+    std::vector<Eigen::VectorXd> features_dist = features_->getDistBuffer();
+    std::vector< std::vector<Eigen::Vector3d> > features_vel = features_->getVelBuffer();
+
+    if( (!features_dist.empty()) || (!features_vel.empty()) || nb_frames < 1 )
+    {
+        int nb_features_dist = features_dist[0].size();
+        Eigen::MatrixXd mat_dist( 1 + nb_features_dist, nb_frames );
+
+        mat_dist.row(0) = times;
+
+        for (int i=0; i < nb_features_dist; i++)
+            for (int j=0; j < nb_frames; j++)
+                mat_dist(i+1,j) = features_dist[j](i);
+
+        cout << "rows : " << mat_dist.rows() << " , cols " << mat_dist.cols() << endl;
+
+        const char* home = getenv("HOME_MOVE3D");
+        if( home ){
+            move3d_save_matrix_to_file( mat_dist, std::string(home) + "/../move3d-launch/matlab/hrics_feature_dist.csv" );
+        }
+
+        int nb_features_vel = features_vel[0].size();
+        Eigen::MatrixXd mat_vel( 1 + 3*nb_features_vel, nb_frames );
+
+        mat_vel.row(0) = times;
+
+        for (int i=0; i < nb_features_vel; i++)
+            for (int j=0; j < nb_frames; j++)
+                for (int k=0; k < 3; k++)
+                    mat_vel(1+3*i+k,j) = features_vel[j][i](k);
+
+        cout << "rows : " << mat_vel.rows() << " , cols " << mat_vel.cols() << endl;
+
+        if( home ){
+            move3d_save_matrix_to_file( mat_vel, std::string(home) + "/../move3d-launch/matlab/hrics_feature_vel.csv" );
+        }
     }
 
     cout << "End play motion" << endl;

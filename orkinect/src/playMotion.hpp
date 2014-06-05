@@ -4,6 +4,10 @@
 #include <openrave/openrave.h>
 #include "recordMotion.hpp"
 #include "features/orFeatures.hpp"
+#include <libmove3d/planners/API/project.hpp>
+#include <libmove3d/planners/API/scene.hpp>
+
+#include "utils/misc_functions.hpp"
 
 class FeaturesOpenRAVE;
 
@@ -16,7 +20,7 @@ public:
 
 //    void setDirection(const bool dir);
     void setStep(const int step);
-    void setControlled(const bool controlled);
+    void setPlayType(const int playType);
     void setRecentInput(const bool input);
     bool getRecentInput();
     int getCurrentFrame();
@@ -24,11 +28,14 @@ public:
     void play_folder( std::string &folder );
     void reset_recorders();
 
+    void setUsingMove3D(bool val) {usingMove3D = val; }
+
 private:
 
     void runRealTime();
     void runControlled();
     void runControlled_folder();
+    void runStatistics();
 
 
     HRICS::FeaturesOpenRAVE* features_;
@@ -38,9 +45,10 @@ private:
     int _current_frame;
 //    bool _play_dir; //true = forward, false = backwards
     int _step_size;
-    bool _play_controlled;
+    int _play_type;
     bool _recent_input;
     bool _StopRun;
+    bool usingMove3D;
 
 };
 #endif //PLAYMOION_HPP

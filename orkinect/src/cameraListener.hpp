@@ -28,7 +28,7 @@ namespace HRICS
             void setId(int id) {_id = id;}
             cv_bridge::CvImagePtr _current_img;
             void takeSnapshot(timeval time);
-            void pubImage(timeval time);
+            bool pubImage(timeval time);
             ros::NodeHandle nh_;
             bool _is_recording;
             void setFolder(const std::string& foldername) { _folder = foldername; }

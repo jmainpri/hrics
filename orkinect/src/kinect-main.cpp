@@ -25,7 +25,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("resettrajectoryfiles",boost::bind(&KinectProblem::ResetTrajectoryFiles, this,_1,_2),"Resets the loaded trajectory files");
     RegisterCommand("playtrajectoryfiles",boost::bind(&KinectProblem::PlayTrajectoryFiles, this,_1,_2),"Plays the trajectory files");
     RegisterCommand("playtrajectoryfolder",boost::bind(&KinectProblem::PlayTrajectoryFolder, this,_1,_2),"Plays the trajectory folder");
-    RegisterCommand("settrajectorycontrol",boost::bind(&KinectProblem::SetTrajectoryControl, this,_1,_2),"Set control of playback flag");
+    RegisterCommand("setplaytype",boost::bind(&KinectProblem::SetPlayType, this,_1,_2),"Set type of playback");
     RegisterCommand("controltrajectoryplayback",boost::bind(&KinectProblem::ControlTrajectoryPlayback, this,_1,_2),"Control playback of trajectory files");
     RegisterCommand("getplaybackframe",boost::bind(&KinectProblem::GetPlaybackFrame, this,_1,_2),"return the current playback frame");
     RegisterCommand("setnumkinect",boost::bind(&KinectProblem::SetNumKinect, this,_1,_2),"set the number of kinects that are being used");
@@ -305,11 +305,11 @@ bool KinectProblem::PlayTrajectoryFolder(ostream& sout, istream& sinput)
     return true;
 }
 
-bool KinectProblem::SetTrajectoryControl(ostream& sout, istream& sinput)
+bool KinectProblem::SetPlayType(ostream& sout, istream& sinput)
 {
-    bool isControlled;
-    sinput >> isControlled;
-    _motion_player->setControlled(isControlled);
+    int playType;
+    sinput >> playType;
+    _motion_player->setPlayType(playType);
 
     return true;
 }
@@ -371,6 +371,9 @@ bool KinectProblem::InitMove3D(ostream& sout, istream& sinput)
     iss.clear(); iss.str("SetParameter trajStompTimeLimit 2.5"); pmove3d->SendCommand( out, iss );
 
     cout << "Move3D::global_Project->getActiveScene()->getActiveRobot()->getName() : " << Move3D::global_Project->getActiveScene()->getActiveRobot()->getName() << endl;
+
+    //Let the motion player know that it can use move3d
+    _motion_player->setUsingMove3D(true);
 
     return true;
 }

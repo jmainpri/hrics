@@ -1,5 +1,7 @@
 #include "cameraListener.hpp"
 
+// Just for log...
+#include <openrave/openrave.h>
 
 using namespace std;
 using namespace HRICS;
@@ -69,13 +71,20 @@ void CameraListener::takeSnapshot(timeval time)
     }
 }
 
-void CameraListener::pubImage(timeval time)
+bool CameraListener::pubImage(timeval time)
 {
     std::stringstream file;
     file << _folder << _id << "_" << time.tv_sec << "_" << time.tv_usec << ".png";
 //    file << _folder << _id << "_" << frame << ".png";
 
-    cv::WImageBuffer3_b image( cvLoadImage(file.str().c_str(), CV_LOAD_IMAGE_COLOR) );
+    IplImage* img = cvLoadImage(file.str().c_str(), CV_LOAD_IMAGE_COLOR);
+    if( img == NULL )
+    {
+        //RAVELOG_ERROR("No image found at : %s\n", file.str().c_str());
+        return false;
+    }
+
+    cv::WImageBuffer3_b image( img );
     cv::Mat imageMat(image.Ipl());
 
     cv_bridge::CvImage out_msg;
@@ -83,6 +92,11 @@ void CameraListener::pubImage(timeval time)
     out_msg.image    = imageMat;
     out_msg.header.stamp = ros::Time::now();
 
+    // TODO maybe release
+//    cvReleaseImage(&img);
+
     _pub.publish(out_msg.toImageMsg());
+
+    return true;
 }
 

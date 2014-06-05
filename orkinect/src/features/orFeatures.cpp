@@ -55,3 +55,30 @@ void FeaturesOpenRAVE::bufferDistance()
 {
     dist_buffer.push_back( dist_feat_->computeDistances() );
 }
+
+void FeaturesOpenRAVE::init_vel( std::string human_name )
+{
+    Robot* human1 = global_Project->getActiveScene()->getRobotByName(human_name);
+
+    vel_feat_ = new VelocityFeature( human1 );
+}
+
+void FeaturesOpenRAVE::bufferVelocity(double dt)
+{
+    confPtr_t q_cur = vel_feat_->getRobot()->getCurrentPos();
+
+    if( q_last_.get() == NULL ){
+        q_last_ = vel_feat_->getRobot()->getCurrentPos();
+        vel_buffer.push_back( vel_feat_->getVelocity( *q_cur, *q_cur, dt ) );
+        return;
+    }
+
+    if( q_last_->equal( *q_cur) ){
+        cout << "Configurations are equal" << endl;
+        vel_buffer.push_back( vel_buffer.back() );
+        return;
+    }
+
+    vel_buffer.push_back( vel_feat_->getVelocity( *q_last_, *q_cur, dt ) );
+    q_last_ = q_cur;
+}

@@ -1125,6 +1125,7 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
     cout << "matrix fully loaded" << endl;
     cout << "size : " << matrix.size() << " , " << matrix[0].size() << endl;
 
+
 //    for (int i=0; i<int(matrix.size()); i++)
 //    {
 //        for (int j=0; j<int(matrix[i].size()); j++)
@@ -1144,8 +1145,9 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
             convert_text_to_num<double>( q[j], matrix[i][j], std::dec );
         }
 
-        convert_text_to_num<time_t>( time.tv_sec, matrix[i][int(matrix[i].size()) - 2], std::dec );
-        convert_text_to_num<time_t>( time.tv_usec, matrix[i][int(matrix[i].size()) - 1], std::dec );
+        //TODO fix matrix size bug at loading...
+        convert_text_to_num<time_t>( time.tv_sec, matrix[i][int(matrix[i].size()) - 3], std::dec );
+        convert_text_to_num<time_t>( time.tv_usec, matrix[i][int(matrix[i].size()) - 2], std::dec );
 
 //        convert_text_to_num<double>( q[6], matrix[i][1], std::dec ); // Pelvis
 //        convert_text_to_num<double>( q[7], matrix[i][2], std::dec ); // Pelvis
@@ -1163,12 +1165,15 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
 
 
 
+
         double tu = time.tv_sec+(time.tv_usec/1000000.0);
         double dt = 0.0;
         if( last_config_time != 0.0 )
             dt = tu - last_config_time;
         last_config_time = tu;
 
+//        cout << "time : " << time.tv_sec << " , " << time.tv_usec << endl;
+//        cout << "dt load : " << dt << endl;
 
         motion.push_back( make_pair(dt,q) );
         m_times.push_back(time);

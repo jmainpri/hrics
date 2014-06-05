@@ -44,15 +44,16 @@ from time import sleep
 import segment_file
 
 play_folder = False
-show_images = 1 # 0 to not show
+show_images = 0 # 0 to not show
 #trajectories_directory = "/home/rafi/workspace/statFiles/recorded_motion/"
 #trajectories_directory = "/home/rafi/Desktop/classes/"
 #trajectories_directory = "/media/57f621de-c63b-4d30-84fc-da4ce0b1e1eb/home/rafihayne/workspace/statFiles/saved/8/"
-trajectories_directory = "/home/rafi/workspace/experiment/2/"
+trajectories_directory = "/home/rafi/workspace/experiment/2/Run0/"
 #trajectories_files = ["temp.csv"] #One file for each human in the scene
-trajectories_files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.csv"]
+trajectories_files = ["[1016#-#1112]#motion_saved_00000_00000.csv", "[1016#-#1112]#motion_saved_00001_00000.csv"]
 
 #in order to use the wiimote, create a wiimote subscriber object and call run.
+
 class wiimote_subscriber():
     def __init__(self, a_prob):
         self.record_state = False
@@ -105,7 +106,7 @@ class kinect_subscriber():
         self.prob = RaveCreateProblem(self.orEnv,'Kinect')
 
         print "try to init move3d"
-        self.prob.SendCommand('InitMove3D')
+        #self.prob.SendCommand('InitMove3D')
 
     def listen(self):
         print "Trying to listen"
@@ -134,10 +135,7 @@ class kinect_subscriber():
         self.prob.SendCommand('SetCustomTracker ' + str(len(self.files)-1) ) #FIX THIS ASAP.  MESSY kin prob enable camera
         self.prob.SendCommand('EnableCamera ' + str(show_images) + ' ' + trajectories_directory + 'images/' )
 
-        if controlled:
-            self.prob.SendCommand('SetTrajectoryControl 1')
-        else:
-            self.prob.SendCommand('SetTrajectoryControl 0')
+        self.prob.SendCommand('SetPlayType 0')
 
         if play_folder :
             self.prob.SendCommand('PlayTrajectoryFolder /home/rafi/workspace/experiment/1/Run0/')
@@ -201,7 +199,7 @@ class kinect_subscriber():
 if __name__ == "__main__":
     print "main function"
     k = kinect_subscriber()
-    k.play(0)
+    k.play(1)
     #    k.listen()
 
     #    w = wiimote_subscriber(k.prob)

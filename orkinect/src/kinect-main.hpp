@@ -39,7 +39,7 @@ public:
     bool DecrementFile(ostream& sout, istream& sinput);
     bool PlayTrajectoryFiles(ostream& sout, istream& sinput);
     bool PlayTrajectoryFolder(ostream& sout, istream& sinput);
-    bool SetTrajectoryControl(ostream& sout, istream& sinput);
+    bool SetPlayType(ostream& sout, istream& sinput);
     bool ControlTrajectoryPlayback(ostream& sout, istream& sinput);
     bool GetPlaybackFrame(ostream& sout, istream& sinput);
     bool SetNumKinect(ostream& sout, istream& sinput);

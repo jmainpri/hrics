@@ -45,7 +45,7 @@ import shutil
 from extractImages import getImages
 
 play_folder = False
-show_images = 1  # 0 to not show
+show_images = 0  # 0 to not show
 m_dir = "/home/rafi/workspace/experiment/6/Run1/"
 out_dir = "/home/rafi/workspace/experiment/filtered_lib/6/"
 #trajectories_files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.csv"]
