@@ -32,8 +32,11 @@ namespace HRICS
             ros::NodeHandle nh_;
             bool _is_recording;
             void setFolder(const std::string& foldername) { _folder = foldername; }
+            int getNumMisses() { return nb_consecutive_misses; }
+
 
         private:
+            int nb_consecutive_misses;
             int _id;
             std::string _folder;
     };

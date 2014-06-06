@@ -13,6 +13,7 @@ CameraListener::CameraListener(ros::NodeHandle nh) : nh_(nh)
     image_transport::ImageTransport it(nh);
     _is_recording = false;
     _file = 0;
+    nb_consecutive_misses = 0;
 
     string home(getenv("HOME"));
     _folder = home + "/workspace/statFiles/snapshots/";
@@ -30,7 +31,7 @@ CameraListener::CameraListener(const int id, ros::NodeHandle nh) : nh_(nh)
     cout << "Enter constructer for camera" << endl;
     setId(id);
     _is_recording = false;
-
+    nb_consecutive_misses = 0;
     image_transport::ImageTransport it(nh);
     _file = 0;
 
@@ -80,9 +81,12 @@ bool CameraListener::pubImage(timeval time)
     IplImage* img = cvLoadImage(file.str().c_str(), CV_LOAD_IMAGE_COLOR);
     if( img == NULL )
     {
+        nb_consecutive_misses++;
         //RAVELOG_ERROR("No image found at : %s\n", file.str().c_str());
         return false;
     }
+
+    nb_consecutive_misses = 0;
 
     cv::WImageBuffer3_b image( img );
     cv::Mat imageMat(image.Ipl());
@@ -93,7 +97,7 @@ bool CameraListener::pubImage(timeval time)
     out_msg.header.stamp = ros::Time::now();
 
     // TODO maybe release
-//    cvReleaseImage(&img);
+    cvReleaseImage(&img);
 
     _pub.publish(out_msg.toImageMsg());
 
