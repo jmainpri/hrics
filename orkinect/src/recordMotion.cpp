@@ -463,8 +463,9 @@ bool RecordMotion::setRobotToStoredMotionConfig(int motion_id, int config_id)
     if(use_camera_)
     {
         _camera->pubImage(m_times[config_id]);
-        if (_camera->getNumMisses() > 10)           //Disable camera if we can't find any images
+        if (_camera->getNumMisses() >= 10)           //Disable camera if we can't find any images
             use_camera_ = false;
+
     }
 
     return true;

@@ -44,36 +44,12 @@ from time import sleep
 import segment_file
 
 play_folder = False
-show_images = 1 # 0 to not show
-#trajectories_directory = "/home/rafi/workspace/statFiles/recorded_motion/"
-#trajectories_directory = "/home/rafi/Desktop/classes/"
-#trajectories_directory = "/media/57f621de-c63b-4d30-84fc-da4ce0b1e1eb/home/rafihayne/workspace/statFiles/saved/8/"
-trajectories_directory = "/home/rafi/workspace/experiment/2/Run0/"
+show_images = 0 # 0 to not show
+traj_dir = "/home/rafi/workspace/experiment/2/Run0/"
 #trajectories_files = ["temp.csv"] #One file for each human in the scene
 trajectories_files = ["[1016#-#1112]#motion_saved_00000_00000.csv", "[1016#-#1112]#motion_saved_00001_00000.csv"]
 
 #in order to use the wiimote, create a wiimote subscriber object and call run.
-
-class wiimote_subscriber():
-    def __init__(self, a_prob):
-        self.record_state = False
-        self.is_pressed = False
-        self.a_prob = a_prob
-
-    def callback(self, State):
-        if State.buttons[4] == True and self.is_pressed == False:
-            self.record_state = False
-            self.is_pressed = True
-            cmdout = self.a_prob.SendCommand('SetButtonState 1')
-
-        if State.buttons[4] == False and self.is_pressed == True:
-            self.is_pressed = False
-            cmdout = self.a_prob.SendCommand('SetButtonState 0')
-
-    def run(self):
-        rospy.init_node('wii_listener')
-        rospy.Subscriber("/wiimote/state", State, self.callback)
-        rospy.spin()
 
 class kinect_subscriber():
     def __init__(self):
@@ -132,9 +108,8 @@ class kinect_subscriber():
         if not play_folder :
             self.loadFiles(self.dir, self.files)
 
-        #self.prob.SendCommand('SetCustomTracker ' + str(len(self.files)-1) ) #FIX THIS ASAP.  MESSY kin prob enable camera
-        self.prob.SendCommand('SetCustomTracker 1');
-        self.prob.SendCommand('EnableCamera ' + str(show_images) + ' ' + trajectories_directory + '../images/' )
+        self.prob.SendCommand('SetCustomTracker ' + str(len(self.files)-1) ) #FIX THIS ASAP.  MESSY kin prob enable camera
+        self.prob.SendCommand('EnableCamera ' + str(show_images) + ' ' + trajectories_directory + 'images/' )
 
         self.prob.SendCommand('SetPlayType 0')
 
@@ -200,11 +175,7 @@ class kinect_subscriber():
 if __name__ == "__main__":
     print "main function"
     k = kinect_subscriber()
-    k.play(0)
-    #    k.listen()
-
-    #    w = wiimote_subscriber(k.prob)
-    #    w.run()
+    k.play(1)
 
     print "Press return to run "
     sys.stdin.readline()

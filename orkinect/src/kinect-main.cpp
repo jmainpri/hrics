@@ -246,7 +246,7 @@ bool KinectProblem::EnableCamera(ostream& sout, istream& sinput)
     sinput >> folder;
 
     if( folder != "" )
-        cout << "folder : " << folder << endl;
+        cout << "Camera Folder : " << folder << endl;
 
     for (int i = 0; i < int(_motion_recorders.size()); i++ ) {
         _motion_recorders[i]->use_camera_ = useCamera;

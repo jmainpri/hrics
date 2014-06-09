@@ -76,28 +76,22 @@ bool CameraListener::pubImage(timeval time)
 {
     std::stringstream file;
     file << _folder << _id << "_" << time.tv_sec << "_" << time.tv_usec << ".png";
-//    file << _folder << _id << "_" << frame << ".png";
 
-    IplImage* img = cvLoadImage(file.str().c_str(), CV_LOAD_IMAGE_COLOR);
-    if( img == NULL )
+    cv::Mat image = cv::imread(file.str());
+    if( image.empty() )
     {
         nb_consecutive_misses++;
-        //RAVELOG_ERROR("No image found at : %s\n", file.str().c_str());
         return false;
     }
 
     nb_consecutive_misses = 0;
 
-    cv::WImageBuffer3_b image( img );
-    cv::Mat imageMat(image.Ipl());
-
     cv_bridge::CvImage out_msg;
     out_msg.encoding = sensor_msgs::image_encodings::BGR8;
-    out_msg.image    = imageMat;
+    out_msg.image    = image;
     out_msg.header.stamp = ros::Time::now();
 
-    // TODO maybe release
-    cvReleaseImage(&img);
+    image.release();
 
     _pub.publish(out_msg.toImageMsg());
 
