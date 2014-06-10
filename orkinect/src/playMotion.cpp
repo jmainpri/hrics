@@ -19,10 +19,13 @@ void PlayMotion::setPlayType(const int playType) { _play_type = playType; }
 void PlayMotion::setRecentInput(const bool input) { _recent_input = input;}
 bool PlayMotion::getRecentInput() { return _recent_input;}
 int PlayMotion::getCurrentFrame() { return _current_frame; }
+int PlayMotion::setCurrentFrame(int frame) { _current_frame = frame; }
 
 
 void PlayMotion::play( const std::vector<std::string>& filepaths )
 {
+    filepaths_ = filepaths;
+
     if (    _motion_recorders.size() == 2  && usingMove3D )
     {
         features_ = new HRICS::FeaturesOpenRAVE();
@@ -30,16 +33,16 @@ void PlayMotion::play( const std::vector<std::string>& filepaths )
         features_->init_vel("human_model");
     }
 
-    if( filepaths.size() > _motion_recorders.size() )
+    if( filepaths_.size() > _motion_recorders.size() )
     {
         cout << "The number of motion recorder is reater than te number of motion to play" << endl;
         return;
     }
 
-    for (int i=0; i<int(filepaths.size()); i++)
+    for (int i=0; i<int(filepaths_.size()); i++)
     {
         //TODO This is supposed to queue motions, but it wont' work that way.  Probably need to use a modulo to select correct human/file
-        _motion_recorders[i]->storeMotion( _motion_recorders[i]->loadFromCSV(filepaths[i]), true );
+        _motion_recorders[i]->storeMotion( _motion_recorders[i]->loadFromCSV(filepaths_[i]), true );
     }
 
     _StopRun = false;
@@ -56,6 +59,8 @@ void PlayMotion::play( const std::vector<std::string>& filepaths )
     default:
         runRealTime();
     }
+
+    return;
 
 }
 
@@ -104,6 +109,8 @@ void PlayMotion::runRealTime()
 
 //        graphptrs_.push_back( env_->plot3( &vpoints[0].x, vpoints.size(), sizeof(vpoints[0]), 0.05, &vcolors[0], 1 ) );
     }
+
+    _StopRun = true;
 
     cout << "End play motion" << endl;
     return;
@@ -294,8 +301,20 @@ void PlayMotion::reset_recorders()
 {
     _StopRun = true;
 
-    for (int j=0; j<int(_motion_recorders.size()); j++)
+    for (int i=0; i<int(_motion_recorders.size()); i++)
     {
-        _motion_recorders[j]->reset();
+        _motion_recorders[i]->reset();
+    }
+}
+
+void PlayMotion::replay_trajectory()
+{
+    _current_frame = 0;
+    if ( _play_type == 0 && _StopRun)
+        runRealTime();
+    if ( _play_type == 1 && _StopRun)
+    {
+        _StopRun = false;
+        runControlled();
     }
 }

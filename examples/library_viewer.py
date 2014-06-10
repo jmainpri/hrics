@@ -34,7 +34,6 @@ import sys
 from numpy import *
 from TransformMatrix import *
 from rodrigues import *
-import roslib; roslib.load_manifest('wiimote')
 import rospy
 from std_msgs.msg import *
 from sensor_msgs.msg import *
@@ -43,33 +42,36 @@ import keystroke
 from time import sleep
 import segment_file
 
-play_folder = False
-show_images = 0 # 0 to not show
-traj_dir = "/home/rafi/workspace/experiment/2/Run0/"
-#trajectories_files = ["temp.csv"] #One file for each human in the scene
-trajectories_files = ["[1016#-#1112]#motion_saved_00000_00000.csv", "[1016#-#1112]#motion_saved_00001_00000.csv"]
-
 #in order to use the wiimote, create a wiimote subscriber object and call run.
 
-class kinect_subscriber():
-    def __init__(self):
+class LibraryViewer:
+    def __init__(self, list_one, list_two, img_dir):
         self.orEnv = Environment()
         self.prob = None
         self.h = None
         self.orEnv.SetViewer('qtcoin')
-
-        self.dir = trajectories_directory
-        self.files = trajectories_files
-
-        self.split = [0,0]
+        self.nb_human = 0
+        self.human_one = list_one
+        self.human_two = list_two
+        self.img_dir = img_dir
+        self.show_images = False
 
         print "start"
         self.orEnv.SetDebugLevel(DebugLevel.Verbose)
         self.orEnv.Reset()
 
-        # self.orEnv.Load("../ormodels/human_wpi.xml")
+        print "find number of humans:"
+        if len(list_one) == len(list_two):
+            nb_human = 2
+        elif (len(list_one) > 0 and len(list_two) == 0):
+            nb_human = 1
+        else:
+            print "Couldn't determine # of humans with : " + str(len(self.human_one)) + " and " + str(len(self.human_two)) + " motions"
+            sys.exit(0)
+
+        print "load environment"
         self.orEnv.Load("../ormodels/human_wpi_new.xml")
-        if len(self.files) > 1 :
+        if nb_human > 1 :
             self.orEnv.Load("../ormodels/human_wpi_blue.xml")
 
         self.orEnv.Load("../ormodels/env.xml")
@@ -81,49 +83,24 @@ class kinect_subscriber():
         print "try to create problem"
         self.prob = RaveCreateProblem(self.orEnv,'Kinect')
 
-        print "try to init move3d"
-        #self.prob.SendCommand('InitMove3D')
-
-    def listen(self):
-        print "Trying to listen"
-        self.prob.SendCommand('SetCustomTracker 0')
-        self.prob.SendCommand('SetNumKinect 1')  # still need to call as 1 if using default tracker.
-        self.prob.SendCommand('EnableCamera ' + str(show_images))
-
-        print "Trying to set kinect frame"
-        #Dual Kinect Across Setup.
-        #self.prob.SendCommand('SetKinectFrame 0 -0.3556 -0.8636 1.3208 62.0 7.0')
-        #self.prob.SendCommand('SetKinectFrame 1 1.1938 0.7493 1.2446 -125 0.0') 
-        self.prob.SendCommand('UsePR2Frame 0')
-
-        #Single Kinect
-        self.prob.SendCommand('SetKinectFrame 0 0.49 -1.02 1.32 90.0 7.0')
-
-        print "Python: starting listener!"
-        self.prob.SendCommand('StartListening')
-
-    def play(self, controlled, play_folder=False ):
+    def play(self, type ):
         print "loading files"
 
-        if not play_folder :
-            self.loadFiles(self.dir, self.files)
+        self.prob.SendCommand('SetCustomTracker ' + str(self.nb_human-1) )
+        if self.img_dir:
+            self.show_images = True
 
-        self.prob.SendCommand('SetCustomTracker ' + str(len(self.files)-1) ) #FIX THIS ASAP.  MESSY kin prob enable camera
-        self.prob.SendCommand('EnableCamera ' + str(show_images) + ' ' + trajectories_directory + 'images/' )
+        self.prob.SendCommand('EnableCamera ' + str(int(self.show_images)) + ' ' + self.img_dir )
+        self.prob.SendCommand('SetPlayType ' + str(type))
 
-        self.prob.SendCommand('SetPlayType 0')
+        for i in range(0,len(self.human_one)):
+            print self.human_one[i]
+            print self.human_two[i]
 
-        if play_folder :
-            self.prob.SendCommand('PlayTrajectoryFolder /home/rafi/workspace/experiment/1/Run0/')
-        else :
+            self.prob.SendCommand( 'LoadTrajectoryFile '+self.human_one[i] )
+            self.prob.SendCommand( 'LoadTrajectoryFile '+ self.human_two[i] )
             self.prob.SendCommand('PlayTrajectoryFiles')
 
-        if controlled:
-            sleep(1)
-            print "\n \n"
-            print "Controlls:     u   i    o   p      q         space            1            2          s"
-            print "              <<<  <<  >>  >>>    exit    current frame  split start  split end    segment"
-            print "Enter character:"
             self.keyboardControll()
 
     def keyboardControll(self):
@@ -131,8 +108,14 @@ class kinect_subscriber():
         while True:
             #print "Enter new character"
             c = keystroke.getch(-1)
-            #print c
+
             if c == 'q':
+                self.prob.SendCommand('ResetTrajectoryFiles')
+                break
+            if c == 'r':
+                self.prob.SendCommand('ReplayTrajectoryFiles')
+            #print c
+            if c == 'x':
                 sys.exit()
             if c == 'u':
                 self.prob.SendCommand('ControlTrajectoryPlayback -25')
@@ -142,42 +125,35 @@ class kinect_subscriber():
                 self.prob.SendCommand('ControlTrajectoryPlayback 1')
             if c == 'p':
                 self.prob.SendCommand('ControlTrajectoryPlayback 25')
-            if c == ' ':
-                currentFrame = int(self.prob.SendCommand('GetPlaybackFrame'))
-                print "Current Frame: " + str(currentFrame)
-            if c == '1':
-                currentFrame = int(self.prob.SendCommand('GetPlaybackFrame'))
-                self.split[0] = currentFrame
-                print "Set split beginning to: " + str(self.split[0])
-            if c == '2':
-                currentFrame = int(self.prob.SendCommand('GetPlaybackFrame'))
-                self.split[1] = currentFrame
-                print "Set split ending to: " + str(self.split[1])
-            if c == 's':
-                for file in self.files:
-                    print "Segmenting file: " + file + " from: " + str(self.split[0]) + " to: " + str(self.split[1])
-                    segment_file.segment([(self.split[0], self.split[1])], self.dir+file)
 
 
     def loadFiles(self, dir, files):
         for file in files:
             self.prob.SendCommand( 'LoadTrajectoryFile '+ dir + file )
 
-    def rec(self, state):
-        if state:
-            print "Recording Motion"
-            self.prob.SendCommand('SetButtonState 1')
-
-        else:
-            self.prob.SendCommand('SetButtonState 0')
-
 
 if __name__ == "__main__":
+    # Generate two lists of files
+    list_one = []
+    list_two = []
+
+    for (dirname, dirs, files) in os.walk('/home/rafi/workspace/experiment/'):
+        for filename in files:
+            if filename.endswith('.csv') and filename.startswith('[') and not "filtered_lib" in dirname :
+                if ('1' in filename.split('_')[2]):
+                    list_two.append(os.path.join(dirname,filename))
+                else:
+                    list_one.append(os.path.join(dirname,filename))
+
+    list_one.sort()
+    list_two.sort()
+
     print "main function"
-    k = kinect_subscriber()
-    k.play(1)
+    v = LibraryViewer(list_one, list_two, "/home/rafi/workspace/experiment/2/images/")
+    v.play(1)
 
     print "Press return to run "
     sys.stdin.readline()
-    
+
+
 

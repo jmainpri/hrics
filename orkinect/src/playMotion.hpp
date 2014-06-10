@@ -24,9 +24,10 @@ public:
     void setRecentInput(const bool input);
     bool getRecentInput();
     int getCurrentFrame();
-
+    int setCurrentFrame(int frame);
     void play_folder( std::string &folder );
     void reset_recorders();
+    void replay_trajectory();
 
     void setUsingMove3D(bool val) {usingMove3D = val; }
 
@@ -42,6 +43,7 @@ private:
     std::vector<HRICS::RecordMotion*> _motion_recorders;
     OpenRAVE::EnvironmentBasePtr env_;
     std::vector<boost::shared_ptr<void> > graphptrs_;
+    std::vector<std::string> filepaths_;
     int _current_frame;
 //    bool _play_dir; //true = forward, false = backwards
     int _step_size;

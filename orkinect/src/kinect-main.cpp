@@ -23,6 +23,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("setbuttonstate",boost::bind(&KinectProblem::SetButtonState, this,_1,_2),"sets the button state");
     RegisterCommand("loadtrajectoryfile",boost::bind(&KinectProblem::LoadTrajectoryFile, this,_1,_2),"Loads the trajectory file from given path");
     RegisterCommand("resettrajectoryfiles",boost::bind(&KinectProblem::ResetTrajectoryFiles, this,_1,_2),"Resets the loaded trajectory files");
+    RegisterCommand("replaytrajectoryfiles",boost::bind(&KinectProblem::ReplayTrajectoryFiles, this,_1,_2),"Replays the loaded trajectory files");
     RegisterCommand("playtrajectoryfiles",boost::bind(&KinectProblem::PlayTrajectoryFiles, this,_1,_2),"Plays the trajectory files");
     RegisterCommand("playtrajectoryfolder",boost::bind(&KinectProblem::PlayTrajectoryFolder, this,_1,_2),"Plays the trajectory folder");
     RegisterCommand("setplaytype",boost::bind(&KinectProblem::SetPlayType, this,_1,_2),"Set type of playback");
@@ -215,6 +216,14 @@ bool KinectProblem::ResetTrajectoryFiles(ostream& sout, istream& sinput)
     return true;
 }
 
+bool KinectProblem::ReplayTrajectoryFiles(ostream& sout, istream& sinput)
+{
+    cout << "Replaying Loaded Trajectories" << endl;
+    _motion_player->replay_trajectory();
+
+    return true;
+}
+
 bool KinectProblem::ResampleFiles(ostream& sout, istream& sinput) //TODO fix output name with proper regular expressions.
 {
     int sampleSize;
@@ -331,6 +340,16 @@ bool KinectProblem::GetPlaybackFrame(ostream& sout, istream& sinput)
 
     return true;
 }
+
+bool KinectProblem::SetPlaybackFrame(ostream& sout, istream& sinput)
+{
+    int frame;
+    sinput >> frame;
+    _motion_player->setCurrentFrame(frame);
+
+    return true;
+}
+
 
 bool KinectProblem::InitMove3D(ostream& sout, istream& sinput)
 {

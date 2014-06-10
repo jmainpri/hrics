@@ -35,6 +35,7 @@ public:
     bool SaveToFile(ostream& sout, istream& sinput);
     bool LoadTrajectoryFile(ostream& sout, istream& sinput);
     bool ResetTrajectoryFiles(ostream& sout, istream& sinput);
+    bool ReplayTrajectoryFiles(ostream& sout, istream& sinput);
     bool ResampleFiles(ostream& sout, istream& sinput);
     bool DecrementFile(ostream& sout, istream& sinput);
     bool PlayTrajectoryFiles(ostream& sout, istream& sinput);
@@ -42,6 +43,7 @@ public:
     bool SetPlayType(ostream& sout, istream& sinput);
     bool ControlTrajectoryPlayback(ostream& sout, istream& sinput);
     bool GetPlaybackFrame(ostream& sout, istream& sinput);
+    bool SetPlaybackFrame(ostream& sout, istream& sinput);
     bool SetNumKinect(ostream& sout, istream& sinput);
     bool SetCustomTracker(ostream& sout, istream& sinput);
     bool EnableCamera(ostream& sout, istream& sinput);
