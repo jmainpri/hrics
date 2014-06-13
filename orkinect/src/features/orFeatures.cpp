@@ -116,12 +116,13 @@ std::vector< std::vector < double > > FeaturesOpenRAVE::getCurviture()
                 curviture[i][j] = 0.0;
             else
             {
-                Eigen::Vector3d v2 = vel_buffer[i][j];
-                Eigen::Vector3d v1 = vel_buffer[i-1][j];
+                Eigen::Vector3d v1 = vel_buffer[i][j].normalized();
+                Eigen::Vector3d v2 = vel_buffer[i-1][j].normalized();
 
-                double angle = acos(v1.dot(v2) / ( v1.norm() * v2.norm() ));
-                cout << "v1.dot(v2)" << v1.dot(v2) << endl;
-                cout << "norm * norm" << v1.norm() * v2.norm() << endl;
+                double angle = atan2( v1.cross(v2).norm() , v1.dot(v2) ) ;
+//                cout << "v1.dot(v2)" << v1.dot(v2) << endl;
+                cout << "norm * norm " << v1.norm() * v2.norm() << endl;
+                cout << "angle : " << angle << endl;
                 curviture[i][j] = angle;
             }
         }
@@ -166,7 +167,6 @@ int FeaturesOpenRAVE::getMaxWristDistance(std::string human_name)
         wrist_id =  human->getJoint("rWristX")->getId();
         pelv_id =  human->getJoint("Pelvis")->getId();
     }
-
 
     double max_dist = 0;
     int max_frame = 0;
