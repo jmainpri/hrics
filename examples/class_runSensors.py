@@ -48,9 +48,9 @@ show_images = 1 # 0 to not show
 #trajectories_directory = "/home/rafi/workspace/statFiles/recorded_motion/"
 #trajectories_directory = "/home/rafi/Desktop/classes/"
 #trajectories_directory = "/media/57f621de-c63b-4d30-84fc-da4ce0b1e1eb/home/rafihayne/workspace/statFiles/saved/8/"
-trajectories_directory = "/home/rafi/workspace/experiment/filtered_lib/2/good/"
+trajectories_directory = "/home/rafi/workspace/experiment/2/Run0/"
 #trajectories_files = ["temp.csv"] #One file for each human in the scene
-trajectories_files = ["[1016 - 1112] motion_saved_00000_00000.csv", "[1016 - 1112] motion_saved_00001_00000.csv"]
+trajectories_files = ["[1016#-#1112]#motion_saved_00000_00000.csv", "[1016#-#1112]#motion_saved_00001_00000.csv"]
 
 #in order to use the wiimote, create a wiimote subscriber object and call run.
 
@@ -106,7 +106,7 @@ class kinect_subscriber():
         self.prob = RaveCreateProblem(self.orEnv,'Kinect')
 
         print "try to init move3d"
-        #self.prob.SendCommand('InitMove3D')
+        self.prob.SendCommand('InitMove3D')
 
     def listen(self):
         print "Trying to listen"

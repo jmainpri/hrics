@@ -6,6 +6,7 @@
 #include "features/orFeatures.hpp"
 #include <libmove3d/planners/API/project.hpp>
 #include <libmove3d/planners/API/scene.hpp>
+#include <libmove3d/planners/API/Graphic/drawModule.hpp>
 
 #include "utils/misc_functions.hpp"
 
@@ -28,6 +29,7 @@ public:
     void play_folder( std::string &folder );
     void reset_recorders();
     void replay_trajectory();
+    void saveStatsToCSV();
 
     void setUsingMove3D(bool val) {usingMove3D = val; }
 

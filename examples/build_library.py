@@ -113,7 +113,7 @@ class kinect_subscriber():
                 self.prob.SendCommand('ResetTrajectoryFiles')
                 break
             if c == 'r':
-                self.prob.SendCommand('PlayTrajectoryFiles')
+                self.prob.SendCommand('ReplayTrajectoryFiles')
             if c == '1':
                 print "Marking files: "+self.currentFileOne+" and "+self.currentFileTwo+" as"
                 print "----------------------GOOD--------------------------"

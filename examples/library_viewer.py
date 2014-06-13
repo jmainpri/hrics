@@ -149,11 +149,9 @@ if __name__ == "__main__":
     list_two.sort()
 
     print "main function"
-    v = LibraryViewer(list_one, list_two, "/home/rafi/workspace/experiment/2/images/")
-    v.play(1)
+    v = LibraryViewer(list_one, list_two, "/home/rafi/workspace/experiment/filtered_lib/images/")
+    v.play(2)
 
     print "Press return to run "
     sys.stdin.readline()
-
-
 

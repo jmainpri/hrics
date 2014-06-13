@@ -369,11 +369,11 @@ bool KinectProblem::InitMove3D(ostream& sout, istream& sinput)
     }
 
     // VOXEL COLLISON CHECKER
-//    iss.clear(); iss.str("SetDimension robotcentered extent 2.0 2.0 2.0 offset 1.0 1.0 -1.0"); pchecker->SendCommand( out, iss );
-//    iss.clear(); iss.str("SetCollisionPointsRadii radii 6 0.20 .14 .10 .08 .07 .05 activation 6 0 1 1 1 1 0"); pchecker->SendCommand( out, iss );
-//    iss.clear(); iss.str("Initialize"); pchecker->SendCommand( out, iss );
-//    iss.clear(); iss.str("SetDrawing off"); pchecker->SendCommand( out, iss );
-//    GetEnv()->SetCollisionChecker( pchecker );
+    iss.clear(); iss.str("SetDimension robotcentered extent 2.0 2.0 2.0 offset 1.0 1.0 -1.0"); pchecker->SendCommand( out, iss );
+    iss.clear(); iss.str("SetCollisionPointsRadii radii 6 0.20 .14 .10 .08 .07 .05 activation 6 0 1 1 1 1 0"); pchecker->SendCommand( out, iss );
+    iss.clear(); iss.str("Initialize"); pchecker->SendCommand( out, iss );
+    iss.clear(); iss.str("SetDrawing off"); pchecker->SendCommand( out, iss );
+    GetEnv()->SetCollisionChecker( pchecker );
 
     std::string coll_move3d_name = "Move3d" ;
     ModuleBasePtr pmove3d = RaveCreateModule( GetEnv(), coll_move3d_name.c_str() ); // create the module

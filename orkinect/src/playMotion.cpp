@@ -28,9 +28,11 @@ void PlayMotion::play( const std::vector<std::string>& filepaths )
 
     if (    _motion_recorders.size() == 2  && usingMove3D )
     {
-        features_ = new HRICS::FeaturesOpenRAVE();
+        features_ = new HRICS::FeaturesOpenRAVE("human_model", "human_model_blue");
         features_->init_dist("human_model", "human_model_blue");
         features_->init_vel("human_model");
+        features_->init_pos("human_model");
+        features_->init_col("human_model");
     }
 
     if( filepaths_.size() > _motion_recorders.size() )
@@ -95,6 +97,7 @@ void PlayMotion::runRealTime()
         {
 //                cout << "configuration " << i << endl;
             _motion_recorders[j]->setRobotToStoredMotionConfig(0,_current_frame);
+            //features_->printPosition();
         }
 //        graphptrs_.clear();
 
@@ -108,6 +111,26 @@ void PlayMotion::runRealTime()
 //        vcolors.push_back(0);
 
 //        graphptrs_.push_back( env_->plot3( &vpoints[0].x, vpoints.size(), sizeof(vpoints[0]), 0.05, &vcolors[0], 1 ) );
+
+        bool draw = true;
+        if (draw)
+        {
+            features_->bufferVelocity( dt );
+            features_->bufferPosition();
+            if (_current_frame > 0)
+            {
+                move3d_draw_clear_handles();
+                Eigen::Vector3d anchor = features_->getPosBuffer()[_current_frame][0];
+                Eigen::Vector3d vel = features_->getVelBuffer()[_current_frame][0];
+                Eigen::Vector3d p2 = anchor+vel;
+
+                double color[4] = {1,0,0,1};
+
+                move3d_draw_one_line( anchor[0], anchor[1], anchor[2], p2[0], p2[1], p2[2], Any, color );
+            }
+        }
+
+
     }
 
     _StopRun = true;
@@ -155,6 +178,8 @@ void PlayMotion::runStatistics()
 
         features_->bufferDistance();
         features_->bufferVelocity( dt );
+        features_->bufferPosition();
+        //features_->bufferCollision();
     }
 
 //    double s = 0.0;
@@ -173,12 +198,23 @@ void PlayMotion::runStatistics()
 //    }
 
     cout << "End computing features, saving to file" << endl;
+//    cout << "Pos size: " << features_->getPosBuffer()[0][0].size() << endl;
+//    return;
 
     std::vector<Eigen::VectorXd> features_dist = features_->getDistBuffer();
     std::vector< std::vector<Eigen::Vector3d> > features_vel = features_->getVelBuffer();
+    std::vector< std::vector<Eigen::Vector3d> > features_pos = features_->getPosBuffer();
+    std::vector< std::vector<double> > features_curv = features_->getCurviture();
+    std::vector< std::vector<double> > features_speed = features_->getSpeed();
 
-    if( (!features_dist.empty()) || (!features_vel.empty()) || nb_frames < 1 )
+    if( (!features_dist.empty()) || (!features_vel.empty()) || (!features_pos.empty()) || (!features_curv.empty()) || (!features_speed.empty()) || nb_frames < 1 )
     {
+        cout << "End of motion : " << features_->getMaxWristDistance("human_model") << endl;
+
+        const char* home = getenv("HOME_MOVE3D");
+        static int fileNum = 0;
+
+        /*--------------------DIST--------------------*/
         int nb_features_dist = features_dist[0].size();
         Eigen::MatrixXd mat_dist( 1 + nb_features_dist, nb_frames );
 
@@ -190,11 +226,18 @@ void PlayMotion::runStatistics()
 
         cout << "rows : " << mat_dist.rows() << " , cols " << mat_dist.cols() << endl;
 
-        const char* home = getenv("HOME_MOVE3D");
         if( home ){
-            move3d_save_matrix_to_file( mat_dist, std::string(home) + "/../move3d-launch/matlab/hrics_feature_dist.csv" );
+            std::ostringstream file_name;
+            file_name << std::string(home);
+            file_name << "/../move3d-launch/matlab/quan_motion/hrics_feature_dist_";
+            file_name << fileNum;
+            file_name << ".csv";
+
+
+            move3d_save_matrix_to_csv_file( mat_dist, file_name.str() );
         }
 
+        /*--------------------VEL--------------------*/
         int nb_features_vel = features_vel[0].size();
         Eigen::MatrixXd mat_vel( 1 + 3*nb_features_vel, nb_frames );
 
@@ -208,8 +251,82 @@ void PlayMotion::runStatistics()
         cout << "rows : " << mat_vel.rows() << " , cols " << mat_vel.cols() << endl;
 
         if( home ){
-            move3d_save_matrix_to_file( mat_vel, std::string(home) + "/../move3d-launch/matlab/hrics_feature_vel.csv" );
+            std::ostringstream file_name;
+            file_name << std::string(home);
+            file_name << "/../move3d-launch/matlab/quan_motion/hrics_feature_vel_";
+            file_name << fileNum;
+            file_name << ".csv";
+
+            move3d_save_matrix_to_csv_file( mat_vel, file_name.str() );
         }
+
+        /*--------------------CURV--------------------*/
+        int nb_features_curv = features_curv[0].size();
+        Eigen::MatrixXd mat_curv( 1 + nb_features_curv, nb_frames );
+
+        mat_curv.row(0) = times;
+
+        for (int i=0; i < nb_features_curv; i++)
+            for (int j=0; j < nb_frames; j++)
+                    mat_curv(i+1,j) = features_curv[j][i];
+
+        cout << "rows : " << mat_curv.rows() << " , cols " << mat_curv.cols() << endl;
+
+        if( home ){
+            std::ostringstream file_name;
+            file_name << std::string(home);
+            file_name << "/../move3d-launch/matlab/quan_motion/hrics_feature_curv_";
+            file_name << fileNum;
+            file_name << ".csv";
+
+            move3d_save_matrix_to_csv_file( mat_curv, file_name.str() );
+        }
+
+        /*--------------------SPEED--------------------*/
+        int nb_features_speed = features_speed[0].size();
+        Eigen::MatrixXd mat_speed( 1 + nb_features_speed, nb_frames );
+
+        mat_speed.row(0) = times;
+
+        for (int i=0; i < nb_features_speed; i++)
+            for (int j=0; j < nb_frames; j++)
+                    mat_speed(i+1,j) = features_speed[j][i];
+
+        cout << "rows : " << mat_speed.rows() << " , cols " << mat_speed.cols() << endl;
+
+        if( home ){
+            std::ostringstream file_name;
+            file_name << std::string(home);
+            file_name << "/../move3d-launch/matlab/quan_motion/hrics_feature_speed_";
+            file_name << fileNum;
+            file_name << ".csv";
+
+            move3d_save_matrix_to_csv_file( mat_speed, file_name.str() );
+        }
+
+        /*--------------------POS--------------------*/
+        int nb_features_pos = features_pos[0].size();
+        Eigen::MatrixXd mat_pos( 1 + 3*nb_features_pos, nb_frames );
+
+        mat_pos.row(0) = times;
+
+        for (int i=0; i < nb_features_pos; i++)
+            for (int j=0; j < nb_frames; j++)
+                for (int k=0; k < 3; k++)
+                    mat_pos(1+3*i+k,j) = features_pos[j][i](k);
+
+        cout << "rows : " << mat_pos.rows() << " , cols " << mat_pos.cols() << endl;
+
+        if( home ){
+            std::ostringstream file_name;
+            file_name << std::string(home);
+            file_name << "/../move3d-launch/matlab/quan_motion/hrics_feature_pos_";
+            file_name << fileNum;
+            file_name << ".csv";
+
+            move3d_save_matrix_to_csv_file( mat_pos, file_name.str() );
+        }
+        fileNum++;
     }
 
     cout << "End play motion" << endl;
