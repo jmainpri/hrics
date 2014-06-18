@@ -106,6 +106,7 @@ std::vector< std::vector < double > > FeaturesOpenRAVE::getCurviture()
 
     curviture.resize(vel_buffer.size());
 
+    //Find the curviture
     for (int i = 0; i < vel_buffer.size(); i++) //Each frame
     {
         curviture[i].resize(vel_buffer[0].size());
@@ -120,15 +121,38 @@ std::vector< std::vector < double > > FeaturesOpenRAVE::getCurviture()
                 Eigen::Vector3d v2 = vel_buffer[i-1][j].normalized();
 
                 double angle = atan2( v1.cross(v2).norm() , v1.dot(v2) ) ;
-//                cout << "v1.dot(v2)" << v1.dot(v2) << endl;
-                cout << "norm * norm " << v1.norm() * v2.norm() << endl;
-                cout << "angle : " << angle << endl;
                 curviture[i][j] = angle;
             }
         }
     }
 
-    return curviture;
+    //Smooth the curviture with a moving average
+    std::vector<std::vector<double> > smoothed_curv = curviture;
+
+    int numFrames = curviture.size();
+    for ( int i = 0; i < numFrames; i++ )
+    {
+        for ( int j = 0; j < curviture[0].size(); j++)
+        {
+            double smoothed = 0;
+
+            for ( int k = -3; k <= 3; k++)
+            {
+
+                if ( (i + k) < 0)
+                    smoothed += curviture[0][j];
+                else if (i + k > numFrames)
+                    smoothed += curviture[numFrames][j];
+                else
+                    smoothed += curviture[i+k][j];
+            }
+            smoothed = smoothed/7;
+
+            smoothed_curv[i][j] = smoothed;
+        }
+    }
+
+    return smoothed_curv;
 }
 
 std::vector< std::vector < double > > FeaturesOpenRAVE::getSpeed()
