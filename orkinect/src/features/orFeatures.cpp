@@ -100,6 +100,7 @@ void FeaturesOpenRAVE::bufferVelocity(double dt)
     q_last_ = q_cur;
 }
 
+//Needs velocity vector to be computed first
 std::vector< std::vector < double > > FeaturesOpenRAVE::getCurviture()
 {
     std::vector< std::vector < double > > curviture;
@@ -113,7 +114,7 @@ std::vector< std::vector < double > > FeaturesOpenRAVE::getCurviture()
 
         for (int j = 0; j < vel_buffer[0].size(); j++) //Each Joint
         {
-            if (i == 0)
+            if (i == 0 || i == 1)
                 curviture[i][j] = 0.0;
             else
             {
@@ -138,13 +139,17 @@ std::vector< std::vector < double > > FeaturesOpenRAVE::getCurviture()
 
             for ( int k = -3; k <= 3; k++)
             {
+                bool nanb = isnan(smoothed);
 
-                if ( (i + k) < 0)
+                if ( (i + k) < 1 ) //Take index 1 because 0 is nan
                     smoothed += curviture[0][j];
                 else if (i + k > numFrames)
                     smoothed += curviture[numFrames][j];
                 else
                     smoothed += curviture[i+k][j];
+
+                if (isnan(smoothed))
+                    cout << "NAN! i : " << i << " k " << k << " i+k " << i+k << " before? " << nanb << endl;
             }
             smoothed = smoothed/7;
 

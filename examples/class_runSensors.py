@@ -202,6 +202,7 @@ class kinect_subscriber():
 if __name__ == "__main__":
     print "main function"
     k = kinect_subscriber()
+    sys.stdin.readline()
     k.play(0)
     #    k.listen()
 

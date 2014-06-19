@@ -1101,7 +1101,7 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
     std::vector< std::string >   row;
     std::string                line;
     std::string                cell;
-    timeval time;
+    timeval tim;
     double last_config_time = 0.0;
 
     while( file )
@@ -1143,14 +1143,14 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
         confPtr_t q;
         m_robot->GetDOFValues( q );
 
-        for(int j=0; j < ( int(matrix[i].size()) - 2 ); j++) //Last two fields in the csv are time values.
+        for(int j=0; j < ( int(matrix[i].size()) - 3 ); j++) //Last two fields in the csv are time values.
         {
             convert_text_to_num<double>( q[j], matrix[i][j], std::dec );
         }
 
         //TODO fix matrix size bug at loading...
-        convert_text_to_num<time_t>( time.tv_sec, matrix[i][int(matrix[i].size()) - 3], std::dec );
-        convert_text_to_num<time_t>( time.tv_usec, matrix[i][int(matrix[i].size()) - 2], std::dec );
+        convert_text_to_num<time_t>( tim.tv_sec, matrix[i][int(matrix[i].size()) - 3], std::dec );
+        convert_text_to_num<time_t>( tim.tv_usec, matrix[i][int(matrix[i].size()) - 2], std::dec );
 
 //        convert_text_to_num<double>( q[6], matrix[i][1], std::dec ); // Pelvis
 //        convert_text_to_num<double>( q[7], matrix[i][2], std::dec ); // Pelvis
@@ -1169,17 +1169,17 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
 
 
 
-        double tu = time.tv_sec+(time.tv_usec/1000000.0);
+        double tu = tim.tv_sec+(tim.tv_usec/1000000.0);
         double dt = 0.0;
         if( last_config_time != 0.0 )
             dt = tu - last_config_time;
         last_config_time = tu;
 
-//        cout << "time : " << time.tv_sec << " , " << time.tv_usec << endl;
-//        cout << "dt load : " << dt << endl;
+        cout << "time : " << tim.tv_sec << " , " << tim.tv_usec << endl;
+        cout << "dt load : " << dt << endl;
 
         motion.push_back( make_pair(dt,q) );
-        m_times.push_back(time);
+        m_times.push_back(tim);
         //cout << "Add configuration " << i << endl;
 
 //        print_config_rec( motion[i].second );
