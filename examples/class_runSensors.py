@@ -48,7 +48,7 @@ show_images = 1 # 0 to not show
 #trajectories_directory = "/home/rafi/workspace/statFiles/recorded_motion/"
 #trajectories_directory = "/home/rafi/Desktop/classes/"
 #trajectories_directory = "/media/57f621de-c63b-4d30-84fc-da4ce0b1e1eb/home/rafihayne/workspace/statFiles/saved/8/"
-trajectories_directory = "/home/rafi/workspace/experiment/2/"
+trajectories_directory = "/home/rafi/workspace/experiment/6/"
 #trajectories_files = ["temp.csv"] #One file for each human in the scene
 trajectories_files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.csv"]
 
@@ -106,7 +106,7 @@ class kinect_subscriber():
         self.prob = RaveCreateProblem(self.orEnv,'Kinect')
 
         print "try to init move3d"
-        self.prob.SendCommand('InitMove3D')
+        #self.prob.SendCommand('InitMove3D')
 
     def listen(self):
         print "Trying to listen"
@@ -202,7 +202,7 @@ class kinect_subscriber():
 if __name__ == "__main__":
     print "main function"
     k = kinect_subscriber()
-    sys.stdin.readline()
+    #sys.stdin.readline()
     k.play(1)
     #    k.listen()
 

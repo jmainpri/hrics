@@ -58,8 +58,6 @@ void PlayMotion::play( const std::vector<std::string>& filepaths )
         break;
     case 2:
         runStatistics();
-    default:
-        runRealTime();
     }
 
     return;
@@ -157,6 +155,7 @@ void PlayMotion::runStatistics()
 
     std::vector<double> dt_tmp;
 
+    //Run over entire motion buffering velocity/pos data at each frame
     for (_current_frame; _current_frame < nb_frames; _current_frame++)
     {
         for (int j=0; j<int(_motion_recorders.size()); j++)
@@ -204,13 +203,12 @@ void PlayMotion::runStatistics()
     std::vector<Eigen::VectorXd> features_dist = features_->getDistBuffer();
     std::vector< std::vector<Eigen::Vector3d> > features_vel = features_->getVelBuffer();
     std::vector< std::vector<Eigen::Vector3d> > features_pos = features_->getPosBuffer();
-    std::vector< std::vector<double> > features_curv = features_->getCurviture();
-    std::vector< std::vector<double> > features_speed = features_->getSpeed();
+    vel_t smoothed = features_->getSmoothedVelBuffer();
+    std::vector< std::vector<double> > features_curv = features_->getCurviture(smoothed);
+    std::vector< std::vector<double> > features_speed = features_->getSpeed(smoothed);
 
     if( (!features_dist.empty()) || (!features_vel.empty()) || (!features_pos.empty()) || (!features_curv.empty()) || (!features_speed.empty()) || nb_frames < 1 )
     {
-        cout << "End of motion : " << features_->getMaxWristDistance("human_model") << endl;
-
         const char* home = getenv("HOME_MOVE3D");
         static int fileNum = 0;
 

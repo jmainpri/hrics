@@ -77,6 +77,7 @@ bool CameraListener::pubImage(timeval time)
     std::stringstream file;
     file << _folder << _id << "_" << time.tv_sec << "_" << time.tv_usec << ".png";
 
+
     cv::Mat image = cv::imread(file.str());
     if( image.empty() )
     {

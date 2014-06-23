@@ -8,9 +8,9 @@ def segment(splits, filein):
         for split in splits:
             if (split[0] < split[1]):
                 if '1' in filename.split('_')[2]:
-                    fileout = path+ '/replan/human_two/' + '['+ str( split[0] ).zfill(5) + '-' + str( split[1] ).zfill(5) + ']' + filename
+                    fileout = path+ '/replan/human_two/' + '['+ str( split[0] ).zfill(4) + '-' + str( split[1] ).zfill(4) + ']' + filename
                 else:
-                    fileout = path+ '/replan/human_one/' + '['+ str( split[0] ).zfill(5) + '-' + str( split[1] ).zfill(5) + ']' + filename
+                    fileout = path+ '/replan/human_one/' + '['+ str( split[0] ).zfill(4) + '-' + str( split[1] ).zfill(4) + ']' + filename
                 with open(fileout, 'wb') as csvOut:
                     writer = csv.writer(csvOut)
                     reader = csv.reader(csvIn)

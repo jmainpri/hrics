@@ -13,6 +13,8 @@
 #include "positionFeature.hpp"
 
 
+typedef std::vector< std::vector<Eigen::Vector3d> > vel_t;
+
 namespace HRICS
 {
 
@@ -30,12 +32,14 @@ public:
 
     void init_vel( std::string human_name );
     VelocityFeature* getVelFeat() { return vel_feat_;}
-    std::vector< std::vector<Eigen::Vector3d> > getVelBuffer() { return vel_buffer; }
+    vel_t getVelBuffer() { return vel_buffer; }
+    vel_t getSmoothedVelBuffer();
     void printVelocities();
     void bufferVelocity(double dt);
 
-    std::vector< std::vector<double> > getCurviture();
-    std::vector< std::vector < double > > getSpeed();
+    std::vector< std::vector<double> > getCurviture(vel_t vel_buff);
+    std::vector< std::vector < double > > getSpeed(vel_t vel_buff);
+
     int getMaxWristDistance(std::string human_name);
 
     void init_pos( std::string human_name );

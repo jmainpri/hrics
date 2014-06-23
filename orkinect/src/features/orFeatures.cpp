@@ -84,7 +84,7 @@ void FeaturesOpenRAVE::bufferVelocity(double dt)
     confPtr_t q_cur = vel_feat_->getRobot()->getCurrentPos();
 
     if( q_last_.get() == NULL ){
-        q_last_ = vel_feat_->getRobot()->getCurrentPos();
+        q_last_ = vel_feat_->getRobot()->getCurrentPos(); 
         vel_buffer.push_back( vel_feat_->getVelocity( *q_cur, *q_cur, dt ) );
         return;
     }
@@ -100,26 +100,92 @@ void FeaturesOpenRAVE::bufferVelocity(double dt)
     q_last_ = q_cur;
 }
 
+//Returns a smoothed velocity buffer with a moving average
+vel_t FeaturesOpenRAVE::getSmoothedVelBuffer()
+{
+    vel_t smoothed;
+    int nb_frames = vel_buffer.size();
+    int nb_joints;
+    smoothed.resize( nb_frames );
+
+    if ( !nb_frames > 0)
+        return smoothed;
+    else
+        nb_joints = vel_buffer[0].size();
+
+    for ( int i = 0; i < nb_frames; i++ )
+    {
+        smoothed[i].resize(nb_joints);
+
+        for ( int j = 0; j < nb_joints; j++)
+        {
+            Eigen::Vector3d smoothed_frame;
+
+
+            int count = 0;
+            for ( int k = -3; k <= 3; k++)              //TODO very messy loop/check.  first index or two of vel buff tends to be nan ;(
+            {
+                if ( (i + k) < 1 )
+                {
+                    if ( !isnan(vel_buffer[1][j](0)) || !isnan(vel_buffer[1][j](1)) || !isnan(vel_buffer[1][j](2)) )
+                    {
+                        smoothed_frame += vel_buffer[1][j];
+                        ++count;
+                    }
+//                    cout << "i + k : " << i+k << endl << vel_buffer[1][j] << endl;
+                }
+                else if (i + k > nb_frames-1)
+                {
+                    if ( !isnan(vel_buffer[nb_frames-1][j](0)) || !isnan(vel_buffer[nb_frames-1][j](1)) || !isnan(vel_buffer[nb_frames-1][j](2)) )
+                    {
+                        smoothed_frame += vel_buffer[nb_frames-1][j];
+                        ++count;
+                    }
+
+//                    cout << "i + k : " << i+k << endl << vel_buffer[nb_frames-1][j] << endl;
+                }
+                else
+                {
+                    if ( !isnan(vel_buffer[i+k][j](0)) || !isnan(vel_buffer[i+k][j](1)) || !isnan(vel_buffer[i+k][j](2)) )
+                    {
+                        smoothed_frame += vel_buffer[i+k][j];
+                        ++count;
+                    }
+
+//                    cout << "i + k : " << i+k << endl << vel_buffer[i+k][j] << endl;
+                }
+
+            }
+            smoothed_frame = smoothed_frame/count;
+
+            smoothed[i][j] = smoothed_frame;
+        }
+    }
+
+    return smoothed;
+
+}
+
 //Needs velocity vector to be computed first
-std::vector< std::vector < double > > FeaturesOpenRAVE::getCurviture()
+std::vector< std::vector < double > > FeaturesOpenRAVE::getCurviture(vel_t vel_buff)
 {
     std::vector< std::vector < double > > curviture;
 
-    curviture.resize(vel_buffer.size());
+    curviture.resize(vel_buff.size());
 
     //Find the curviture
-    for (int i = 0; i < vel_buffer.size(); i++) //Each frame
+    for (int i = 0; i < vel_buff.size(); i++) //Each frame
     {
-        curviture[i].resize(vel_buffer[0].size());
+        curviture[i].resize(vel_buff[0].size());
 
-        for (int j = 0; j < vel_buffer[0].size(); j++) //Each Joint
+        for (int j = 0; j < vel_buff[0].size(); j++) //Each Joint
         {
             if (i == 0 || i == 1)
                 curviture[i][j] = 0.0;
             else
             {
-                Eigen::Vector3d v1 = vel_buffer[i][j].normalized();
-                Eigen::Vector3d v2 = vel_buffer[i-1][j].normalized();
+                Eigen::Vector3d v1 = vel_buff[i][j].normalized();
+                Eigen::Vector3d v2 = vel_buff[i-1][j].normalized();
 
                 double angle = atan2( v1.cross(v2).norm() , v1.dot(v2) ) ;
                 curviture[i][j] = angle;
@@ -127,52 +193,22 @@ std::vector< std::vector < double > > FeaturesOpenRAVE::getCurviture()
         }
     }
 
-    //Smooth the curviture with a moving average
-    std::vector<std::vector<double> > smoothed_curv = curviture;
-
-    int numFrames = curviture.size();
-    for ( int i = 0; i < numFrames; i++ )
-    {
-        for ( int j = 0; j < curviture[0].size(); j++)
-        {
-            double smoothed = 0;
-
-            for ( int k = -3; k <= 3; k++)
-            {
-                bool nanb = isnan(smoothed);
-
-                if ( (i + k) < 1 ) //Take index 1 because 0 is nan
-                    smoothed += curviture[0][j];
-                else if (i + k > numFrames)
-                    smoothed += curviture[numFrames][j];
-                else
-                    smoothed += curviture[i+k][j];
-
-                if (isnan(smoothed))
-                    cout << "NAN! i : " << i << " k " << k << " i+k " << i+k << " before? " << nanb << endl;
-            }
-            smoothed = smoothed/7;
-
-            smoothed_curv[i][j] = smoothed;
-        }
-    }
-
-    return smoothed_curv;
+    return curviture;
 }
 
-std::vector< std::vector < double > > FeaturesOpenRAVE::getSpeed()
+std::vector< std::vector < double > > FeaturesOpenRAVE::getSpeed(vel_t vel_buff)
 {
     std::vector< std::vector < double > > speed;
 
-    speed.resize(vel_buffer.size());
+    speed.resize(vel_buff.size());
 
-    for (int i = 0; i < vel_buffer.size(); i++) //Each frame
+    for (int i = 0; i < vel_buff.size(); i++) //Each frame
     {
-        speed[i].resize(vel_buffer[0].size());
+        speed[i].resize(vel_buff[0].size());
 
-        for (int j = 0; j < vel_buffer[0].size(); j++) //Each Joint
+        for (int j = 0; j < vel_buff[0].size(); j++) //Each Joint
         {
-            speed[i][j] = vel_buffer[i][j].norm();
+            speed[i][j] = vel_buff[i][j].norm();
         }
     }
 

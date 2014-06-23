@@ -1143,7 +1143,7 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
         confPtr_t q;
         m_robot->GetDOFValues( q );
 
-        for(int j=0; j < ( int(matrix[i].size()) - 3 ); j++) //Last two fields in the csv are time values.
+        for(int j=0; j < ( int(matrix[i].size()) - 4 ); j++) //Last two fields in the csv are time values.
         {
             convert_text_to_num<double>( q[j], matrix[i][j], std::dec );
         }
@@ -1174,9 +1174,6 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename )
         if( last_config_time != 0.0 )
             dt = tu - last_config_time;
         last_config_time = tu;
-
-        cout << "time : " << tim.tv_sec << " , " << tim.tv_usec << endl;
-        cout << "dt load : " << dt << endl;
 
         motion.push_back( make_pair(dt,q) );
         m_times.push_back(tim);
