@@ -43,7 +43,7 @@ import keystroke
 from time import sleep
 import segment_file
 
-mapping = [-1, 6, 7, 8, 12, 13, 14, 17, 18, 19]
+mapping = [-1, 6, 7, 8, 12, 13, 14, 16, 17, 18]
 
 class human():
 
@@ -56,14 +56,11 @@ class human():
         # self.env.Load("../ormodels/human_wpi_new.xml")
         # self.orEnv.Load("robots/pr2-beta-static.zae")
 
-        motion = numpy.genfromtxt('output.ik.csv', delimiter=',')
-        motion = numpy.delete(motion, 0, axis=0)
+        self.motion = numpy.genfromtxt('output.ik.csv', delimiter=',')
+        self.motion = numpy.delete(self.motion, 0, axis=0)
         # print motion.shape
-        for row in motion:
-            print ' '.join(map(str, row))
-
-        # self.prob = RaveCreateProblem(self.env, 'Kinect')
-         #self.prob.SendCommand('InitMove3D')
+        # for row in self.motionmotion:
+        #     print ' '.join(map(str, row))
 
         self.human = self.env.GetRobots()[0]
         self.handles = []
@@ -72,13 +69,15 @@ class human():
             t_link = j.GetHierarchyChildLink().GetTransform()
             self.handles.append(misc.DrawAxes(self.env, t_link, 0.3))
 
-        traj = self.GetHumanTrajectory(motion)
+    # def SetConfiguration(row):
+
+    def PlayTrajectory(self):
+
+        traj = self.GetTrajectory(self.motion)
         self.human.GetController().SetPath(traj)
         self.human.WaitForController(0)
 
-    # def SetConfiguration(row):
-
-    def GetHumanTrajectory(self, motion):
+    def GetTrajectory(self, motion):
 
         configSpec = self.human.GetActiveConfigurationSpecification()
         g = configSpec.GetGroupFromName('joint_values')
@@ -99,7 +98,7 @@ class human():
             for i, dof in enumerate(q):
                 if mapping[i] >= 0:
                     wp[mapping[i]] = dof * pi / 180
-            wp = append(wp,  t)
+            wp = append(wp, t)
             traj.Insert(traj.GetNumWaypoints(), wp)
             t += dt
 
@@ -107,9 +106,11 @@ class human():
 
 
 if __name__ == "__main__":
-    print "main function"
-    k = human()
-    print "Press return to exit."
-    sys.stdin.readline()
 
+    h = human()
 
+    while True:
+        print "main function"
+        h.PlayTrajectory()
+        print "Press return to exit."
+        sys.stdin.readline()
