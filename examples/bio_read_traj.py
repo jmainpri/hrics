@@ -30,20 +30,14 @@
 
 from openravepy import *
 import os
-import sys 
+import sys
+import time
 from numpy import *
 from TransformMatrix import *
 from rodrigues import *
-import roslib; roslib.load_manifest('wiimote')
-import rospy
-from std_msgs.msg import *
-from sensor_msgs.msg import *
-from wiimote.msg import*
-import keystroke
-from time import sleep
-import segment_file
 
 mapping = [-1, 6, 7, 8, 12, 13, 14, 16, 17, 18]
+
 
 class human():
 
@@ -56,10 +50,14 @@ class human():
         # self.env.Load("../ormodels/human_wpi_new.xml")
         # self.orEnv.Load("robots/pr2-beta-static.zae")
 
+        self.markers = numpy.genfromtxt('points.csv', delimiter=',')
+
         self.motion = numpy.genfromtxt('output.ik.csv', delimiter=',')
         self.motion = numpy.delete(self.motion, 0, axis=0)
+
+        # Print the array
         # print motion.shape
-        # for row in self.motionmotion:
+        # for row in self.motion:
         #     print ' '.join(map(str, row))
 
         self.human = self.env.GetRobots()[0]
@@ -77,30 +75,44 @@ class human():
         self.human.GetController().SetPath(traj)
         self.human.WaitForController(0)
 
+    def PlayMarkers(self):
+
+        # Remove two first columns
+        markers = numpy.delete(self.markers, s_[0:2], 1)
+        markers /= 1000
+
+        for points in markers:
+            # (m,) = points.shape
+            # p = [points[n:n+3] for n in range(0, m, 3)]
+            colors = points
+            self.handles.append(self.env.plot3(points=points, pointsize=5.0))
+            # , color=array((1, 0, 0)), drawstyle=1))
+            time.sleep(0.02)
+            del self.handles[:]
+
     def GetTrajectory(self, motion):
 
-        configSpec = self.human.GetActiveConfigurationSpecification()
-        g = configSpec.GetGroupFromName('joint_values')
+        config_spec = self.human.GetActiveConfigurationSpecification()
+        g = config_spec.GetGroupFromName('joint_values')
         g.interpolation = 'linear'
-        configSpec = ConfigurationSpecification()
-        configSpec.AddGroup(g)
-        # Uncomment for velocities
-        # configSpec.AddDerivativeGroups(1,False)
-        configSpec.AddDeltaTimeGroup()
+        config_spec = ConfigurationSpecification()
+        config_spec.AddGroup(g)
+        config_spec.AddDeltaTimeGroup()
 
         traj = RaveCreateTrajectory(self.human.GetEnv(), '')
-        traj.Init(configSpec)
+        traj.Init(config_spec)
         t = 0.0
-        dt = 0.001
+        alpha = 4  # Time scaling
 
         for q in motion:
             wp = self.human.GetDOFValues()
             for i, dof in enumerate(q):
                 if mapping[i] >= 0:
                     wp[mapping[i]] = dof * pi / 180
-            wp = append(wp, t)
+            dt = q[0] - t  # q[0] is time
+            wp = append(wp, alpha*dt)
             traj.Insert(traj.GetNumWaypoints(), wp)
-            t += dt
+            t = q[0]
 
         return traj
 
@@ -108,9 +120,18 @@ class human():
 if __name__ == "__main__":
 
     h = human()
+    print "Press return to play trajectory."
+    sys.stdin.readline()
 
     while True:
-        print "main function"
-        h.PlayTrajectory()
-        print "Press return to exit."
-        sys.stdin.readline()
+        h.PlayMarkers()
+        #print "Press return to exit."
+        #sys.stdin.readline()
+
+    # h.human.SetDOFValues([90 * pi / 180], [13])
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
+    #
+    # h.PlayTrajectory()
+    # print "Press return to exit."
+    # sys.stdin.readline()
