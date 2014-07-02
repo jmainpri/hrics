@@ -106,7 +106,7 @@ class kinect_subscriber():
         self.prob = RaveCreateProblem(self.orEnv,'Kinect')
 
         print "try to init move3d"
-        #self.prob.SendCommand('InitMove3D')
+        self.prob.SendCommand('InitMove3D')
 
     def listen(self):
         print "Trying to listen"
@@ -137,6 +137,10 @@ class kinect_subscriber():
         self.prob.SendCommand('EnableCamera ' + str(show_images) + ' ' + trajectories_directory + 'images/' )
 
         self.prob.SendCommand('SetPlayType 1')
+
+        sleep(2)
+        self.prob.SendCommand('DrawMocapFile /home/rafi/workspace/hrics-or-plugins/examples/positions_fixed.csv')
+        return
 
         if play_folder :
             self.prob.SendCommand('PlayTrajectoryFolder /home/rafi/workspace/experiment/1/Run0/')

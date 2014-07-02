@@ -3,6 +3,16 @@
 using std::cout;
 using std::endl;
 
+
+template <class T>
+bool convert_text_to_num(T& t,
+                 const std::string& s,
+                 std::ios_base& (*f)(std::ios_base&))
+{
+  std::istringstream iss(s);
+  return !(iss >> f >> t).fail();
+}
+
 PlayMotion::PlayMotion( OpenRAVE::EnvironmentBasePtr env, const std::vector<HRICS::RecordMotion*>& recorders )
 {
     env_ = env;
@@ -68,6 +78,85 @@ void PlayMotion::play_folder( std::string &folder )
 {
     _motion_recorders[0]->loadFolder(folder);
     runControlled_folder();
+}
+
+void PlayMotion::play_mocap( std::string &filename )
+{
+    cout << "Loading Mocap Data from CSV" << endl;
+    cout << "file: " << filename.c_str() << endl;
+
+    std::ifstream       file( filename.c_str() );
+    std::vector< std::vector<std::string> >   matrix;
+    std::vector< std::string >   row;
+    std::string                line;
+    std::string                cell;
+    timeval tim;
+    double last_config_time = 0.0;
+
+    while( file )           //Create matrix from csv
+    {
+        std::getline(file,line);
+        std::stringstream lineStream(line);
+        row.clear();
+
+        while(std::getline( lineStream, cell, ',' ))
+        {
+            row.push_back( cell );
+        }
+
+        if( !row.empty() )
+            matrix.push_back( row );
+    }
+
+    if( matrix.empty() ) {
+        cout << "no data has been loaded" << endl;
+        return;
+    }
+
+    cout << "File fully loaded!" << endl;
+
+    // time sec, time nsec, # of markers, marker id, x, y, z,...
+    for ( int row = 0; row < matrix.size(); ++row)
+    {
+        double temp;
+        int nb_markers;
+
+        convert_text_to_num<time_t>( tim.tv_sec, matrix[row][0], std::dec );
+        convert_text_to_num<double>( temp, matrix[row][1], std::dec );
+        tim.tv_usec = temp / 1000; //Convert from nsec to use
+
+        convert_text_to_num<int>( nb_markers, matrix[row][2], std::dec );
+
+        double tu = tim.tv_sec+(tim.tv_usec/1000000.0);
+        double dt = 0.0;
+        if( last_config_time != 0.0 )
+            dt = tu - last_config_time;
+        last_config_time = tu;
+
+        for ( int col = 3; col <= nb_markers*4; col+=4  )
+        {
+
+            int id;
+            double x;
+            double y;
+            double z;
+
+            convert_text_to_num<int>( id, matrix[row][col], std::dec );
+            convert_text_to_num<double>( x, matrix[row][col+1], std::dec );
+            convert_text_to_num<double>( y, matrix[row][col+2], std::dec );
+            convert_text_to_num<double>( z, matrix[row][col+3], std::dec );
+
+            double color[4] = {1,0,0,1};
+
+            move3d_draw_sphere(x, y, z, 0.05, color );
+
+        }
+
+        usleep(dt*1000000.0);
+        move3d_draw_clear_handles();
+    }
+
+
 }
 
 void PlayMotion::runRealTime()

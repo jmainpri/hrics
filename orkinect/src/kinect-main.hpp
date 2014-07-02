@@ -49,7 +49,7 @@ public:
     bool EnableCamera(ostream& sout, istream& sinput);
     bool UsePR2Frame(ostream& sout, istream& sinput);
     bool InitMove3D(ostream& sout, istream& sinput);
-
+    bool DrawMocapFile(ostream& sout, istream& sinput);
 
 private:
     string _strRobotName; ///< name of the active robot

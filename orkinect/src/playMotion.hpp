@@ -30,6 +30,7 @@ public:
     void reset_recorders();
     void replay_trajectory();
     void saveStatsToCSV();
+    void play_mocap( std::string &filename );
 
     void setUsingMove3D(bool val) {usingMove3D = val; }
 
