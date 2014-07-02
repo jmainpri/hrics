@@ -81,14 +81,25 @@ class human():
         markers = numpy.delete(self.markers, s_[0:2], 1)
         markers /= 1000
 
-        for points in markers:
-            # (m,) = points.shape
+        # time for playing
+        t = 0.0
+        alpha = 4  # Time scaling
+
+        for i, points in enumerate(markers):
+            (m,) = points.shape
             # p = [points[n:n+3] for n in range(0, m, 3)]
-            colors = points
-            self.handles.append(self.env.plot3(points=points, pointsize=5.0))
+            colors = []
+            nb_points = len(range(0, m, 3))
+            for n in linspace(0.0, 1.0, num=nb_points):
+                colors.append((float(n)*1, (1-float(n))*1, 0))
+
+            self.handles.append(self.env.plot3(points=points, pointsize=0.02, colors=array(colors), drawstyle=1))
             # , color=array((1, 0, 0)), drawstyle=1))
-            time.sleep(0.02)
+            dt = self.markers.item((i, 1)) - t  # self.markers(1, i) is time
+            t = self.markers.item((i, 1))
+            time.sleep(alpha*dt)
             del self.handles[:]
+
 
     def GetTrajectory(self, motion):
 
@@ -110,9 +121,9 @@ class human():
                 if mapping[i] >= 0:
                     wp[mapping[i]] = dof * pi / 180
             dt = q[0] - t  # q[0] is time
+            t = q[0]
             wp = append(wp, alpha*dt)
             traj.Insert(traj.GetNumWaypoints(), wp)
-            t = q[0]
 
         return traj
 
