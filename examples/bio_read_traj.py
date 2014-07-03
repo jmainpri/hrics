@@ -86,6 +86,7 @@ class Human():
 
         # Set model size from file
         self.set_model_size()
+        self.traj = None
 
         # Torso frame
         # self.t_torso = self.human.GetJoint("TorsoX").GetHierarchyChildLink().GetTransform()
@@ -184,8 +185,45 @@ class Human():
             # , color=array((1, 0, 0)), drawstyle=1))
             dt = self.markers.item((i, 1)) - t  # self.markers(1, i) is time
             t = self.markers.item((i, 1))
+
+            if self.traj is not None:
+                q = self.traj.Sample(t)  # get configuration
+                self.human.SetDOFValues(q[0:self.human.GetDOF()])
             # print t
             time.sleep(alpha*dt)
+
+    def compute_dist_to_points(self):
+
+        markers = deepcopy(self.markers)
+        markers = numpy.delete(markers, s_[0:2], 1)
+        markers /= 1000
+        (m,) = markers[0].shape
+        p = [markers[0][n:n+3] for n in range(0, m, 3)]
+
+        dist = 0.0
+
+        p_shoulder_center = array([p[4][0], p[4][1], p[5][2]])
+        p_elbow_center = (p[6] + p[7])/2
+        p_wrist_center = (p[9] - p[8])/2 + p[8]
+
+        inv_torso = la.inv(self.t_torso)
+
+        for j in self.human.GetJoints():
+            p_link = j.GetHierarchyChildLink().GetTransform()[0:3, 3]
+            if j.GetName() == "rShoulderX":
+                dist += la.norm(p_link - array(inv_torso).dot(append(p_shoulder_center, 1))[0:3])
+            if j.GetName() == "rElbowZ":
+                dist += la.norm(p_link - array(inv_torso).dot(append(p_elbow_center, 1))[0:3])
+            if j.GetName() == "rWristX":
+                dist += la.norm(p_link - array(inv_torso).dot(append(p_wrist_center, 1))[0:3])
+        return dist
+
+    def get_configuration(self, q):
+        wp = self.human.GetDOFValues()
+        for i, dof in enumerate(q):
+            if mapping[i] >= 0:
+                wp[mapping[i]] = dof * pi / 180
+        return wp
 
     def get_trajectory(self, motion):
 
@@ -196,43 +234,40 @@ class Human():
         config_spec.AddGroup(g)
         config_spec.AddDeltaTimeGroup()
 
-        traj = RaveCreateTrajectory(self.human.GetEnv(), '')
-        traj.Init(config_spec)
+        self.traj = RaveCreateTrajectory(self.human.GetEnv(), '')
+        self.traj.Init(config_spec)
         t = 0.0
         alpha = 4  # Time scaling
 
         for q in motion:
-            wp = self.human.GetDOFValues()
-            for i, dof in enumerate(q):
-                if mapping[i] >= 0:
-                    wp[mapping[i]] = dof * pi / 180
             dt = q[0] - t  # q[0] is time
             t = q[0]
-            wp = append(wp, alpha*dt)
-            traj.Insert(traj.GetNumWaypoints(), wp)
+            wp = append(self.get_configuration(q), alpha*dt)
+            self.traj.Insert(self.traj.GetNumWaypoints(), wp)
 
-        return traj
+        return self.traj
 
 
 if __name__ == "__main__":
 
     h = Human()
     # print "Press return to play trajectory."
-    sys.stdin.readline()
+    # sys.stdin.readline()
 
+    h.get_trajectory(h.motion)
 
     while True:
         h.play_markers()
         print "Press return to exit."
         sys.stdin.readline()
 
-    h.human.SetDOFValues([90 * pi / 180], [16])  # Elevation
-    print "Press return to play trajectory."
-    sys.stdin.readline()
-
-    h.human.SetDOFValues([90 * pi / 180], [15])  # Plane of Elevation
-    print "Press return to play trajectory."
-    sys.stdin.readline()
+    # h.human.SetDOFValues([90 * pi / 180], [16])  # Elevation
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
+    #
+    # h.human.SetDOFValues([90 * pi / 180], [15])  # Plane of Elevation
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
 
     # h.human.SetDOFValues([-30 * pi / 180], [17]) # In rotation
     # print "Press return to play trajectory."
@@ -250,14 +285,15 @@ if __name__ == "__main__":
     # print "Press return to play trajectory."
     # sys.stdin.readline()
 
-    while True:
-        h.play_trajectory()
-        print "Press return to exit."
-        sys.stdin.readline()
-
-    # for idx in list(permutations([12, 13, 14])):
-    #     mapping = [-1, 8, 6, 7, idx[0], idx[1], idx[2], 16, 17, 18]
+    # while True:
     #     h.play_trajectory()
-    #     print idx
     #     print "Press return to exit."
     #     sys.stdin.readline()
+
+    for idx in list(permutations([15, 16, 17])):
+        mapping = [-1, 8, 6, 7, idx[0], idx[1], idx[2], 19, 21, 22]
+        # h.play_trajectory()
+        q = h.get_configuration(h.motion[0])
+        h.human.SetDOFValues(q)
+        print mapping
+        print h.compute_dist_to_points()
