@@ -32,16 +32,32 @@ from openravepy import *
 import os
 import sys
 import time
+from copy import deepcopy
 from numpy import *
+from numpy import linalg as la
 from TransformMatrix import *
 from rodrigues import *
+from itertools import permutations
 
-mapping = [-1, 6, 7, 8, 12, 13, 14, 16, 17, 18]
+mapping = [-1, 8, 6, 7, 17, 16, 15, 19, 21, 22]
 
+# TorsoX        6           6         PelvisBody        TorsoDummyX
+# TorsoY        7           7         TorsoDummyX       TorsoDummyY
+# TorsoZ        8           8         TorsoDummyY       TorsoDummyTransX
+# rShoulderX    15          15        TorsoDummyTransZ  rShoulderDummyX
+# rShoulderZ    16          16        rShoulderDummyX   rShoulderDummyZ
+# rShoulderY    17          17        rShoulderDummyZ   rHumerus
+# rArmTrans     18          18        rHumerus          rElbowDummy1
+# rElbowZ       19          19        rElbowDummy1      rRadius
+# rForearmTrans 20          20        rRadius           rWristDummy
+# rWristX       21          21        rWristDummy       rWristDummyX
+# rWristY       22          22        rWristDummyX      rWristDummyY
+# rWristZ       23          23        rWristDummyY      rHand
 
-class human():
+class Human():
 
     def __init__(self):
+
         self.env = Environment()
         self.env.SetViewer('qtcoin')
         self.env.SetDebugLevel(DebugLevel.Verbose)
@@ -50,10 +66,10 @@ class human():
         # self.env.Load("../ormodels/human_wpi_new.xml")
         # self.orEnv.Load("robots/pr2-beta-static.zae")
 
-        self.markers = numpy.genfromtxt('points.csv', delimiter=',')
+        self.markers = genfromtxt('points.csv', delimiter=',')
 
-        self.motion = numpy.genfromtxt('output.ik.csv', delimiter=',')
-        self.motion = numpy.delete(self.motion, 0, axis=0)
+        self.motion = genfromtxt('output.ik.csv', delimiter=',')
+        self.motion = delete(self.motion, 0, axis=0)
 
         # Print the array
         # print motion.shape
@@ -63,22 +79,73 @@ class human():
         self.human = self.env.GetRobots()[0]
         self.handles = []
 
+        self.offset_torso_shoulder = None
+        self.offset_shoulder_elbow = None
+        self.offset_elbow_wrist = None
+        self.torso_origin = None
+
+        # Set model size from file
+        self.set_model_size()
+
+        # Torso frame
+        # self.t_torso = self.human.GetJoint("TorsoX").GetHierarchyChildLink().GetTransform()
+        # print self.t_torso
+
+        self.t_torso = MakeTransform(rodrigues([0, 0, pi]), matrix(self.torso_origin))
+        # self.t_torso[0:3, 3] = self.torso_origin
+
         for j in self.human.GetJoints():
-            t_link = j.GetHierarchyChildLink().GetTransform()
-            self.handles.append(misc.DrawAxes(self.env, t_link, 0.3))
+            if j.GetName() == "TorsoX":  # j.GetName() == "rShoulderX" or
+                t_link = j.GetHierarchyChildLink().GetTransform()
+                self.handles.append(misc.DrawAxes(self.env, t_link, 0.3))
 
-    # def SetConfiguration(row):
+    def play_trajectory(self):
 
-    def PlayTrajectory(self):
+        traj = self.get_trajectory(self.motion)
 
-        traj = self.GetTrajectory(self.motion)
+        # data = traj.GetWaypoint(0)
+        # q = traj.GetConfigurationSpecification().ExtractJointValues(data,
+        #                                                             self.human,
+        #                                                             self.human.GetActiveDOFIndices())
+        # self.human.SetDOFValues(q)
+        # return
+
         self.human.GetController().SetPath(traj)
         self.human.WaitForController(0)
 
-    def PlayMarkers(self):
+    def set_model_size(self):
 
         # Remove two first columns
-        markers = numpy.delete(self.markers, s_[0:2], 1)
+        markers = deepcopy(self.markers)
+        markers = numpy.delete(markers, s_[0:2], 1)
+        markers /= 1000
+
+        (m,) = markers[0].shape
+        p = [markers[0][n:n+3] for n in range(0, m, 3)]
+
+        self.torso_origin = p[1]
+
+        p_shoulder_center = array([p[4][0], p[4][1], p[5][2]])
+        p_elbow_center = (p[6] + p[7])/2
+        p_wrist_center = (p[9] - p[8])/2 + p[8]
+
+        self.offset_torso_shoulder = - self.torso_origin + p_shoulder_center
+        self.offset_shoulder_elbow = la.norm(p_shoulder_center - p_elbow_center)
+        self.offset_elbow_wrist = la.norm(p_wrist_center - p_elbow_center)
+
+        print self.offset_torso_shoulder
+        print self.offset_shoulder_elbow
+        print self.offset_elbow_wrist
+
+        self.human.SetDOFValues(self.offset_torso_shoulder.tolist(), [9, 10, 11])
+        self.human.SetDOFValues([self.offset_shoulder_elbow], [18])
+        self.human.SetDOFValues([self.offset_elbow_wrist], [20])
+
+    def play_markers(self):
+
+        # Remove two first columns
+        markers = deepcopy(self.markers)
+        markers = numpy.delete(markers, s_[0:2], 1)
         markers /= 1000
 
         # time for playing
@@ -86,22 +153,41 @@ class human():
         alpha = 4  # Time scaling
 
         for i, points in enumerate(markers):
-            (m,) = points.shape
-            # p = [points[n:n+3] for n in range(0, m, 3)]
+
+            del self.handles[:]
+
+            (m,) = points.shape  # number of values in the marker set
+
             colors = []
             nb_points = len(range(0, m, 3))
             for n in linspace(0.0, 1.0, num=nb_points):
                 colors.append((float(n)*1, (1-float(n))*1, 0))
 
-            self.handles.append(self.env.plot3(points=points, pointsize=0.02, colors=array(colors), drawstyle=1))
+            inv_torso = la.inv(self.t_torso)
+            points_3d = [points[n:n+3] for n in range(0, m, 3)]
+
+            # print inv_torso
+
+            points_draw = []
+
+            for j, p in enumerate(points_3d):
+                points_3d[j] = array(array(inv_torso).dot(array(append(p, 1.0))))[0:3]
+
+            points_3d = array(points_3d)
+            points_3d = squeeze(points_3d)
+
+            # print points_3d
+            # print points.shape
+            # print points_3d.shape
+
+            self.handles.append(self.env.plot3(points=points_3d, pointsize=0.02, colors=array(colors), drawstyle=1))
             # , color=array((1, 0, 0)), drawstyle=1))
             dt = self.markers.item((i, 1)) - t  # self.markers(1, i) is time
             t = self.markers.item((i, 1))
+            # print t
             time.sleep(alpha*dt)
-            del self.handles[:]
 
-
-    def GetTrajectory(self, motion):
+    def get_trajectory(self, motion):
 
         config_spec = self.human.GetActiveConfigurationSpecification()
         g = config_spec.GetGroupFromName('joint_values')
@@ -130,19 +216,48 @@ class human():
 
 if __name__ == "__main__":
 
-    h = human()
+    h = Human()
+    # print "Press return to play trajectory."
+    sys.stdin.readline()
+
+
+    while True:
+        h.play_markers()
+        print "Press return to exit."
+        sys.stdin.readline()
+
+    h.human.SetDOFValues([90 * pi / 180], [16])  # Elevation
     print "Press return to play trajectory."
     sys.stdin.readline()
 
-    while True:
-        h.PlayMarkers()
-        #print "Press return to exit."
-        #sys.stdin.readline()
+    h.human.SetDOFValues([90 * pi / 180], [15])  # Plane of Elevation
+    print "Press return to play trajectory."
+    sys.stdin.readline()
 
-    # h.human.SetDOFValues([90 * pi / 180], [13])
+    # h.human.SetDOFValues([-30 * pi / 180], [17]) # In rotation
     # print "Press return to play trajectory."
     # sys.stdin.readline()
     #
-    # h.PlayTrajectory()
-    # print "Press return to exit."
+    # h.human.SetDOFValues([30 * pi / 180], [17]) # In rotation
+    # print "Press return to play trajectory."
     # sys.stdin.readline()
+
+    # h.human.SetDOFValues([-30 * pi / 180], [17]) # In rotation
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
+    #
+    # h.human.SetDOFValues([30 * pi / 180], [17]) # In rotation
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
+
+    while True:
+        h.play_trajectory()
+        print "Press return to exit."
+        sys.stdin.readline()
+
+    # for idx in list(permutations([12, 13, 14])):
+    #     mapping = [-1, 8, 6, 7, idx[0], idx[1], idx[2], 16, 17, 18]
+    #     h.play_trajectory()
+    #     print idx
+    #     print "Press return to exit."
+    #     sys.stdin.readline()
