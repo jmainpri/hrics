@@ -1,4 +1,5 @@
 #include "playMotion.hpp"
+#include <libmove3d/include/P3d-pkg.h>
 
 using std::cout;
 using std::endl;
@@ -140,15 +141,47 @@ void PlayMotion::play_mocap( std::string &filename )
             double x;
             double y;
             double z;
+            double color [4];
 
             convert_text_to_num<int>( id, matrix[row][col], std::dec );
             convert_text_to_num<double>( x, matrix[row][col+1], std::dec );
             convert_text_to_num<double>( y, matrix[row][col+2], std::dec );
             convert_text_to_num<double>( z, matrix[row][col+3], std::dec );
 
-            double color[4] = {1,0,0,1};
+//            double color[4] = {0,1,0,1};
 
-            move3d_draw_sphere(x, y, z, 0.05, color );
+//            if (id % 2 == 0)
+//            {
+//                color[0] = id;
+//                color[1] = 0;
+//                color[2] = 0;
+//                color[3] = 1;
+//            }
+//            else if(id % 3 == 0)
+//            {
+//                color[0] = 0;
+//                color[1] = id;
+//                color[2] = 0;
+//                color[3] = 1;
+//            }
+//            else
+//            {
+//                color[0] = 0;
+//                color[1] = 0;
+//                color[2] = id;
+//                color[3] = 1;
+//            }
+
+
+            color[3] = 1;
+
+            double scaled = double (id) / 10;
+
+            GroundColorMixGreenToRed( color, scaled );
+
+
+
+            move3d_draw_sphere(x, y, z, 0.025, color );
 
         }
 
