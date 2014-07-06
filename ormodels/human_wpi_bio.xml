@@ -728,7 +728,7 @@
         <body>rShoulderDummyX</body>
         <offsetfrom>rShoulderDummyX</offsetfrom>
 <!--        <anchor>-0.0112 -0.23982 0.428571</anchor>-->
-        <axis>0 1 0</axis>
+        <axis>0 -1 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
     <joint name="rShoulderZ" type="hinge">
@@ -736,7 +736,7 @@
         <body>rShoulderDummyZ</body>
         <offsetfrom>rShoulderDummyZ</offsetfrom>
 <!--        <anchor>-0.0112 -0.23982 0.428571</anchor>-->
-        <axis>1 0 0</axis>
+        <axis>-1 0 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
     <joint name="rShoulderY" type="hinge">
@@ -745,7 +745,7 @@
         <body>rHumerus</body>
         <offsetfrom>rHumerus</offsetfrom>
 <!--        <anchor>-0.0112 -0.23982 0.428571</anchor>-->
-        <axis>0 1 0</axis>
+        <axis>0 -1 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
 

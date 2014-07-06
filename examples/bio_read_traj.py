@@ -175,7 +175,7 @@ class Human():
         offset_torso[1] = p[2]
         offset_torso[2] = -p[1]
 
-        print "p ", p
+        # print "p ", p
         # print "offset_torso ", offset_torso
 
         # TODO FIX FRAME HERE
@@ -214,6 +214,8 @@ class Human():
             if self.traj is not None:
                 q_cur = self.traj.Sample(t)  # get configuration
                 self.human.SetDOFValues(q_cur[0:self.human.GetDOF()])
+                print "(plane of elevation, ", q_cur[16]*180/pi, " , elevation, ", q_cur[17]*180/pi, \
+                    " , axial rotation, ", q_cur[18]*180/pi, ")"
 
             # draws center of joints points
             self.set_model_size(i)
@@ -277,11 +279,12 @@ class Human():
         self.handles.append(self.env.plot3(p3, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
 
         #self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("TorsoZ").GetHierarchyChildLink().GetTransform(), 1))
-        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform(), 1))
+        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform(), 1))
+        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rShoulderZ").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.t_torso, 1))
         self.handles.append(misc.DrawAxes(self.env, eye(4), 2))
 
-        print "joint : ", self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform()[0:3, 3]
+        # print "joint : ", self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform()[0:3, 3]
 
         return dist
 
@@ -290,13 +293,14 @@ class Human():
         for i, dof in enumerate(q):
             if mapping[i] >= 0:
                 wp[mapping[i]] = dof * pi / 180
-            # if mapping[i] == 16:  #  axial rotation
-            #     wp[mapping[i]] += (90 * pi/180)
-            # if mapping[i] == 17:  #  elevation
-                # wp[mapping[i]] = - wp[mapping[i]]
-                # wp[mapping[i]] += (90 * pi/180)
-            # if mapping[i] == 18:  # plane of elevation
-            #     wp[mapping[i]] -= (90 * pi/180)
+
+            #if mapping[i] == 16:  #  axial rotation
+            #    wp[mapping[i]] += (90 * pi/180)
+            #if mapping[i] == 17:  #  elevation
+            #    wp[mapping[i]] = - wp[mapping[i]]
+            #    wp[mapping[i]] += (90 * pi/180)
+            # if mapping[i] == 16:  # plane of elevation
+            #      wp[mapping[i]] = - wp[mapping[i]]
                  # if offset[2] == 2:
                 #wp[mapping[i]] = - wp[mapping[i]]
             #     # wp[mapping[i]] -= (90 * pi/180)
