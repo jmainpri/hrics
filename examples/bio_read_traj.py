@@ -39,8 +39,7 @@ from TransformMatrix import *
 from rodrigues import *
 from itertools import permutations
 
-mapping = [-1, -1, -1, -1, 18, 17, 16, 20, 22, 23]
-offset = [-1, 0, 1]
+mapping = [-1, 8, 7, 6, 18, 17, 16, 20, 24, 23, 22]
 
 # TorsoX        6           6         PelvisBody        TorsoDummyX
 # TorsoY        7           7         TorsoDummyX       TorsoDummyY
@@ -74,7 +73,7 @@ class Human():
         self.markers = genfromtxt('points.csv', delimiter=',')
 
         self.motion = genfromtxt('outputik.csv', delimiter=',')
-        self.motion = delete(self.motion, 0, axis=0)
+        self.motion = delete(self.motion, 0, axis=0)  # Remove first row ...
 
         # Print the array
         # print motion.shape
@@ -128,24 +127,15 @@ class Human():
 
         return points_all
 
-
     def play_trajectory(self):
 
         traj = self.get_trajectory(self.motion)
-
-        # data = traj.GetWaypoint(0)
-        # q = traj.GetConfigurationSpecification().ExtractJointValues(data,
-        #                                                             self.human,
-        #                                                             self.human.GetActiveDOFIndices())
-        # self.human.SetDOFValues(q)
-        # return
-
         self.human.GetController().SetPath(traj)
         self.human.WaitForController(0)
 
     def set_model_size(self, frame_id=0):
 
-        # Remove two first columns
+        # Remove two first columns and set markers in meters
         markers = deepcopy(self.markers)
         markers = numpy.delete(markers, s_[0:2], 1)
         markers /= 1000
@@ -167,13 +157,20 @@ class Human():
         self.offset_shoulder_elbow = la.norm(p_shoulder_center - p_elbow_center)
         self.offset_elbow_wrist = la.norm(p_wrist_center - p_elbow_center)
 
-        inv_torso = la.inv(self.t_torso)
+        # Get shoulder center in the global frame
+        t_torso = self.t_torso
+        inv_torso = la.inv(t_torso)
+        offset_torso = array(array(inv_torso).dot(append(p_shoulder_center, 1)))[0:3]
 
-        p = array(array(inv_torso).dot(append(p_shoulder_center, 1)))[0:3]
-        offset_torso = [0]*3
-        offset_torso[0] = p[0]
-        offset_torso[1] = p[2]
-        offset_torso[2] = -p[1]
+        # offset_torso = [0]*3
+        # offset_torso[0] = p[0]
+        # offset_torso[1] = p[2]
+        # offset_torso[2] = -p[1]
+
+        # Get shoulder center in the torso frame after rotation
+        t_torso = self.human.GetJoint("TorsoZ").GetHierarchyChildLink().GetTransform()
+        inv_torso = la.inv(t_torso)
+        offset_torso = array(array(inv_torso).dot(append(offset_torso, 1)))[0:3]
 
         # print "p ", p
         # print "offset_torso ", offset_torso
@@ -187,8 +184,7 @@ class Human():
 
     def play_markers(self):
 
-        # time for playing
-        t = 0.0
+        t = 0.0  # Time for playing
         alpha = 4  # Time scaling
 
         points_all = self.get_markers_in_torso_frame()
@@ -200,19 +196,15 @@ class Human():
             for n in linspace(0.0, 1.0, num=nb_points):
                 colors.append((float(n)*1, (1-float(n))*1, 0))
 
-            # print points_3d
-            # print points.shape
-            # print points_3d.shape
-
             points_3d = squeeze(points)
 
             self.handles.append(self.env.plot3(points=points_3d, pointsize=0.02, colors=array(colors), drawstyle=1))
-            # , color=array((1, 0, 0)), drawstyle=1))
+
             dt = self.markers.item((i, 1)) - t  # self.markers(1, i) is time
             t = self.markers.item((i, 1))
 
-            if self.traj is not None:
-                q_cur = self.traj.Sample(t)  # get configuration
+            if self.traj is not None:  # Set robot to trajectory configuration if it exists
+                q_cur = self.traj.Sample(t)
                 self.human.SetDOFValues(q_cur[0:self.human.GetDOF()])
                 print "(plane of elevation, ", q_cur[16]*180/pi, " , elevation, ", q_cur[17]*180/pi, \
                     " , axial rotation, ", q_cur[18]*180/pi, ")"
@@ -223,49 +215,56 @@ class Human():
 
             sys.stdin.readline()
 
-            # print t
             time.sleep(alpha*dt)
 
             del self.handles[:]
 
     def compute_dist_to_points(self, frame_id=0):
 
+        # Remove two first columns and set markers in meters
         markers = deepcopy(self.markers)
         markers = numpy.delete(markers, s_[0:2], 1)
         markers /= 1000
+
+        # Get markers as 3D arrays
         (m,) = markers[frame_id].shape
         p = [markers[frame_id][n:n+3] for n in range(0, m, 3)]
 
-        dist = 0.0
-
+        # Get joint centers
         p_shoulder_center = array([p[4][0], p[4][1], p[5][2]])
         p_elbow_center = (p[6] + p[7])/2
         p_wrist_center = (p[9] - p[8])/2 + p[8]
 
+        # Get the points in the global frame
         inv_torso = la.inv(self.t_torso)
-
         p1 = array(array(inv_torso).dot(append(p_shoulder_center, 1)))[0:3]
         p2 = array(array(inv_torso).dot(append(p_elbow_center, 1)))[0:3]
         p3 = array(array(inv_torso).dot(append(p_wrist_center, 1)))[0:3]
+
+        dist = 0.0
 
         for j in self.human.GetJoints():
 
             p_link = j.GetHierarchyChildLink().GetTransform()[0:3, 3]
 
-            #if j.GetName() == "TorsoZ":
+            if j.GetName() == "TorsoZ":
                 # self.handles.append(self.env.plot3(p_link, pointsize=0.02, colors=array([0, 0, 0]), drawstyle=1))
-                # dist += la.norm(p_link - array(inv_torso).dot(append(p_shoulder_center, 1))[0:3])
+                dist = la.norm(p_link - array([0, 0, 0]))
+                print "dist torso : ", dist
                 # l = self.human.GetLink("TorsoDummyY")
                 # self.handles.append(misc.DrawAxes(self.env, j.GetHierarchyChildLink().GetTransform(), 1.0))
             if j.GetName() == "rShoulderX":
-                self.handles.append(self.env.plot3(p_link, pointsize=0.05, colors=array([0, 0, 0]), drawstyle=1))
-                #dist += la.norm(p_link - array(inv_torso).dot(append(p1, 1))[0:3])
+                # self.handles.append(self.env.plot3(p_link, pointsize=0.05, colors=array([0, 0, 0]), drawstyle=1))
+                dist = la.norm(p_link - p1)
+                print "dist shoulder : ", dist
             if j.GetName() == "rElbowZ":
                 self.handles.append(self.env.plot3(p_link, pointsize=0.02, colors=array([0, 0, 0]), drawstyle=1))
-                dist += la.norm(p_link - p2)
+                dist = la.norm(p_link - p2)
+                print "dist elbow : ", dist
             if j.GetName() == "rWristX":
                 self.handles.append(self.env.plot3(p_link, pointsize=0.02, colors=array([0, 0, 0]), drawstyle=1))
-                #dist += la.norm(p_link - array(inv_torso).dot(append(p3, 1))[0:3])
+                dist = la.norm(p_link - p3)
+                print "dist wrist : ", dist
             #if j.GetName() == "rShoulderZ":
             #    self.handles.append(misc.DrawAxes(self.env, j.GetHierarchyChildLink().GetTransform(), 0.3))
 
@@ -278,35 +277,34 @@ class Human():
         self.handles.append(self.env.plot3(p2, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
         self.handles.append(self.env.plot3(p3, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
 
-        #self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("TorsoZ").GetHierarchyChildLink().GetTransform(), 1))
+        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("TorsoY").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform(), 1))
-        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rShoulderZ").GetHierarchyChildLink().GetTransform(), 1))
+        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rShoulderY").GetHierarchyChildLink().GetTransform(), 1))
+        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rElbowZ").GetHierarchyChildLink().GetTransform(), 1))
+        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rWristY").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.t_torso, 1))
-        self.handles.append(misc.DrawAxes(self.env, eye(4), 2))
+        #self.handles.append(misc.DrawAxes(self.env, eye(4), 2))
 
         # print "joint : ", self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform()[0:3, 3]
 
         return dist
 
+    # Map the joint angles and set to radians
     def get_configuration(self, q):
         wp = self.human.GetDOFValues()
         for i, dof in enumerate(q):
             if mapping[i] >= 0:
                 wp[mapping[i]] = dof * pi / 180
-
-            #if mapping[i] == 16:  #  axial rotation
-            #    wp[mapping[i]] += (90 * pi/180)
-            #if mapping[i] == 17:  #  elevation
-            #    wp[mapping[i]] = - wp[mapping[i]]
-            #    wp[mapping[i]] += (90 * pi/180)
-            # if mapping[i] == 16:  # plane of elevation
-            #      wp[mapping[i]] = - wp[mapping[i]]
-                 # if offset[2] == 2:
-                #wp[mapping[i]] = - wp[mapping[i]]
-            #     # wp[mapping[i]] -= (90 * pi/180)
+            if mapping[i] == 16:
+                wp[mapping[i]] = -wp[mapping[i]]
+            if mapping[i] == 17:
+                wp[mapping[i]] = -wp[mapping[i]]
+            if mapping[i] == 18:
+                wp[mapping[i]] = -wp[mapping[i]]
 
         return wp
 
+    # Construct an OpenRave trajectory
     def get_trajectory(self, motion):
 
         config_spec = self.human.GetActiveConfigurationSpecification()
@@ -336,6 +334,39 @@ if __name__ == "__main__":
     # print "Press return to play trajectory."
     sys.stdin.readline()
 
+    # h.human.SetDOFValues([-90 * pi / 180], [16])  # Plane of Elevation
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
+
+    # h.human.SetDOFValues([90 * pi / 180], [17])  # Elevation
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
+
+    # h.human.SetDOFValues([90 * pi / 180], [16])  # Plane of Elevation
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
+
+    # h.human.SetDOFValues([-30 * pi / 180], [18])  # Axial Rotation
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
+
+    # h.human.SetDOFValues([30 * pi / 180], [18])  # In rotation
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
+    #
+    # h.human.SetDOFValues([-30 * pi / 180], [18])  # In rotation
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
+    #
+    # h.human.SetDOFValues([30 * pi / 180], [18])  # In rotation
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
+    #
+    # h.human.SetDOFValues([90 * pi / 180], [24])  # Wrist
+    # print "Press return to play trajectory."
+    # sys.stdin.readline()
+
+
     h.get_trajectory(h.motion)
 
     while True:
@@ -343,44 +374,20 @@ if __name__ == "__main__":
         print "Press return to exit."
         sys.stdin.readline()
 
-    # h.human.SetDOFValues([90 * pi / 180], [16])  # Elevation
-    # print "Press return to play trajectory."
-    # sys.stdin.readline()
-    #
-    # h.human.SetDOFValues([90 * pi / 180], [15])  # Plane of Elevation
-    # print "Press return to play trajectory."
-    # sys.stdin.readline()
-
-    # h.human.SetDOFValues([-30 * pi / 180], [17]) # In rotation
-    # print "Press return to play trajectory."
-    # sys.stdin.readline()
-    #
-    # h.human.SetDOFValues([30 * pi / 180], [17]) # In rotation
-    # print "Press return to play trajectory."
-    # sys.stdin.readline()
-
-    # h.human.SetDOFValues([-30 * pi / 180], [17]) # In rotation
-    # print "Press return to play trajectory."
-    # sys.stdin.readline()
-    #
-    # h.human.SetDOFValues([30 * pi / 180], [17]) # In rotation
-    # print "Press return to play trajectory."
-    # sys.stdin.readline()
-
     # while True:
     #     h.play_trajectory()
     #     print "Press return to exit."
     #     sys.stdin.readline()
 
-    for idx in list(permutations([16, 17, 18])):
-
-        mapping = [-1, 8, 6, 7, idx[0], idx[1], idx[2], 19, 21, 22]
-
-        for angles in list(permutations([1, -1, 0])):
-            # h.play_trajectory()
-            offset = angles
-            q = h.get_configuration(h.motion[0])
-            h.human.SetDOFValues(q)
-            print mapping
-            print offset
-            print h.compute_dist_to_points()
+    # for idx in list(permutations([16, 17, 18])):
+    #
+    #     mapping = [-1, 8, 6, 7, idx[0], idx[1], idx[2], 19, 21, 22]
+    #
+    #     for angles in list(permutations([1, -1, 0])):
+    #         # h.play_trajectory()
+    #         offset = angles
+    #         q = h.get_configuration(h.motion[0])
+    #         h.human.SetDOFValues(q)
+    #         print mapping
+    #         print offset
+    #         print h.compute_dist_to_points()

@@ -129,9 +129,9 @@
     </body>
 
     <body name="torso">
-        <offsetfrom>PelvisBody</offsetfrom>
-        <translation>0 0 0</translation>
-        <!--<rotationaxis>1 0 0 -90</rotationaxis>-->
+        <offsetfrom>TorsoDummyZ</offsetfrom>
+        <translation>0 -0.08 0</translation>
+        <rotationaxis>1 0 0 -90</rotationaxis>
 
         <geom type="cylinder">
             <translation>0 -.01 .10</translation>
@@ -231,6 +231,7 @@
             <radius>0.053</radius>
             <height>0.24</height>
             <diffuseColor>0.800 0.000 0.0100</diffuseColor>
+            <transparency>0.5</transparency>
         </geom>
     </body>
    
@@ -267,12 +268,14 @@
             <radius>0.053</radius>
             <height>0.281</height>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+            <transparency>0.5</transparency>
         </geom>
     </body>
 
     <body name="rWristDummy">
-        <offsetfrom>rRadius</offsetfrom>
+        <rotationaxis>0 1 0 90</rotationaxis>
         <translation>0 0 0</translation>
+        <offsetfrom>rRadius</offsetfrom>
         <geom type="sphere">
             <radius>0.02</radius>
             <transparency>1</transparency>
@@ -301,24 +304,27 @@
     
     <body name="rHand">
         <offsetfrom>rWristDummyY</offsetfrom>
-        <translation>0 0 0</translation>
-        <geom type="box">    
+        <rotationaxis>0 1 0 -90</rotationaxis>
+        <geom type="box">
             <translation> 0.006131 -0.06293 0.01241</translation>
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.068800 0.048000 0.027500</extents>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+            <transparency>0.5</transparency>
         </geom>
         <geom type="box">    
             <translation>0.006131 -0.167078 0.037292</translation>
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.045150 0.049350 0.015200</extents>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+            <transparency>0.5</transparency>
         </geom>
         <geom type="box">    
             <translation>0.06748 -0.092444 0.002815</translation>
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.044700 0.012400 0.015600</extents>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+            <transparency>0.5</transparency>
         </geom>
     </body>
     
@@ -644,7 +650,7 @@
         <body>TorsoDummyX</body>
         <offsetfrom>TorsoDummyX</offsetfrom>
 <!--        <anchor>0.037432 0 0.139749</anchor>-->
-        <axis>1 0 0</axis>
+        <axis>-1 0 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
     <joint name="TorsoY" type="hinge">
@@ -652,7 +658,7 @@
         <body>TorsoDummyY</body>
         <offsetfrom>TorsoDummyY</offsetfrom>
 <!--        <anchor>0.037432 0 0.139749</anchor>-->
-        <axis>0 0 1</axis>
+        <axis>0 0 -1</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
     <joint name="TorsoZ" type="hinge">
@@ -660,7 +666,7 @@
         <body>TorsoDummyZ</body>
         <offsetfrom>TorsoDummyZ</offsetfrom>
 <!--        <anchor>0.037432 0 0.139749</anchor>-->
-        <axis>0 1 0</axis>
+        <axis>0 -1 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
 
@@ -687,7 +693,7 @@
     </joint>
 
     <joint name="TorsoTrans" type="slider">
-    <body>PelvisBody</body>
+        <body>TorsoDummyZ</body>
         <body>torso</body>
         <offsetfrom>torso</offsetfrom>
         <axis>0 0 1</axis>
@@ -728,7 +734,7 @@
         <body>rShoulderDummyX</body>
         <offsetfrom>rShoulderDummyX</offsetfrom>
 <!--        <anchor>-0.0112 -0.23982 0.428571</anchor>-->
-        <axis>0 -1 0</axis>
+        <axis>0 1 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
     <joint name="rShoulderZ" type="hinge">
@@ -736,7 +742,7 @@
         <body>rShoulderDummyZ</body>
         <offsetfrom>rShoulderDummyZ</offsetfrom>
 <!--        <anchor>-0.0112 -0.23982 0.428571</anchor>-->
-        <axis>-1 0 0</axis>
+        <axis>1 0 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
     <joint name="rShoulderY" type="hinge">
@@ -745,7 +751,7 @@
         <body>rHumerus</body>
         <offsetfrom>rHumerus</offsetfrom>
 <!--        <anchor>-0.0112 -0.23982 0.428571</anchor>-->
-        <axis>0 -1 0</axis>
+        <axis>0 1 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
 
@@ -779,7 +785,7 @@
         <body>rWristDummyX</body>
         <offsetfrom>rWristDummyX</offsetfrom>
 <!--        <anchor>-0.004259 -0.697 0.43478</anchor>-->
-        <axis>1 0 0</axis>
+        <axis>0 0 1</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
     <joint name="rWristY" type="hinge">
@@ -787,7 +793,7 @@
         <body>rWristDummyY</body>
         <offsetfrom>rWristDummyY</offsetfrom>
 <!--        <anchor>-0.004259 -0.697 0.43478</anchor>-->
-        <axis>0 1 0</axis>
+        <axis>1 0 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
     <joint name="rWristZ" type="hinge">
@@ -795,7 +801,7 @@
         <body>rHand</body>
         <offsetfrom>rHand</offsetfrom>
 <!--        <anchor>-0.004259 -0.697 0.43478</anchor>-->
-        <axis>0 0 1</axis>
+        <axis>0 1 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
     
@@ -851,7 +857,7 @@
         <body>lWristDummyX</body>
         <offsetfrom>lWristDummyX</offsetfrom>
 <!--        <anchor>-0.004259 0.697 0.43478</anchor>-->
-        <axis>1 0 0</axis>
+        <axis>-1 0 0</axis>
         <limitsdeg>-90 90</limitsdeg>
     </joint>
 
@@ -860,7 +866,7 @@
         <body>lWristDummyY</body>
         <offsetfrom>lWristDummyY</offsetfrom>
 <!--        <anchor>-0.004259 0.697 0.43478</anchor>-->
-        <axis>0 1 0</axis>
+        <axis>0 -1 0</axis>
         <limitsdeg>-180 0</limitsdeg>
     </joint>
     <joint name="lWristZ" type="hinge">
@@ -868,7 +874,7 @@
         <body>lHand</body>
         <offsetfrom>lHand</offsetfrom>
 <!--        <anchor>-0.004259 0.697 0.43478</anchor>-->
-        <axis>0 0 1</axis>
+        <axis>0 0 -1</axis>
         <limitsdeg>-40 40</limitsdeg>
     </joint>
     
