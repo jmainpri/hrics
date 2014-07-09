@@ -211,9 +211,12 @@ bool KinectProblem::LoadTrajectoryFile(ostream& sout, istream& sinput)
 bool KinectProblem::DrawMocapFile(ostream& sout, istream& sinput)
 {
     cout << "file loaded" << endl;
-    string path;
-    sinput >> path;
-    _motion_player->play_mocap(path);
+    string m_path;
+    string o_path;
+
+    sinput >> m_path;
+    sinput >> o_path;
+    _motion_player->play_mocap(m_path, o_path);
 
     return true;
 }

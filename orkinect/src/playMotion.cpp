@@ -81,18 +81,16 @@ void PlayMotion::play_folder( std::string &folder )
     runControlled_folder();
 }
 
-void PlayMotion::play_mocap( std::string &filename )
+std::vector< std::vector<std::string> > PlayMotion::load_csv_to_matrix( std::string &filename )
 {
-    cout << "Loading Mocap Data from CSV" << endl;
+    cout << "Loading Data from CSV" << endl;
     cout << "file: " << filename.c_str() << endl;
 
     std::ifstream       file( filename.c_str() );
     std::vector< std::vector<std::string> >   matrix;
     std::vector< std::string >   row;
-    std::string                line;
-    std::string                cell;
-    timeval tim;
-    double last_config_time = 0.0;
+    std::string                 line;
+    std::string                  cell;
 
     while( file )           //Create matrix from csv
     {
@@ -111,22 +109,53 @@ void PlayMotion::play_mocap( std::string &filename )
 
     if( matrix.empty() ) {
         cout << "no data has been loaded" << endl;
+        return matrix;
+    }
+
+    cout << "File fully loaded!" << endl;
+    return matrix;
+
+}
+
+void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
+{
+    std::vector< std::vector<std::string> >   m_matrix;
+    std::vector< std::vector<std::string> >   o_matrix;
+    timeval tim;
+    double last_config_time = 0.0;
+
+    // Load marker data
+    m_matrix = load_csv_to_matrix(m_filename);
+    if( m_matrix.empty() ) {
+        cout << "no marker data has been loaded" << endl;
+        return;
+    }
+
+    // Load object data
+    o_matrix = load_csv_to_matrix(o_filename);
+    if( o_matrix.empty() ) {
+        cout << "no object data has been loaded" << endl;
         return;
     }
 
     cout << "File fully loaded!" << endl;
 
+    int o_size = o_matrix.size();
+    int m_size = m_matrix.size();
+
     // time sec, time nsec, # of markers, marker id, x, y, z,...
-    for ( int row = 0; row < matrix.size(); ++row)
+    for ( int row = 0; row < std::min(o_size, m_size); ++row)
     {
         double temp;
         int nb_markers;
+        int nb_objects;
 
-        convert_text_to_num<time_t>( tim.tv_sec, matrix[row][0], std::dec );
-        convert_text_to_num<double>( temp, matrix[row][1], std::dec );
-        tim.tv_usec = temp / 1000; //Convert from nsec to use
+        convert_text_to_num<time_t>( tim.tv_sec, m_matrix[row][0], std::dec );
+        convert_text_to_num<double>( temp, m_matrix[row][1], std::dec );
+        tim.tv_usec = temp / 1000; //Convert from nsec to usec
 
-        convert_text_to_num<int>( nb_markers, matrix[row][2], std::dec );
+        convert_text_to_num<int>( nb_markers, m_matrix[row][2], std::dec );
+        convert_text_to_num<int>( nb_objects, o_matrix[row][2], std::dec );
 
         double tu = tim.tv_sec+(tim.tv_usec/1000000.0);
         double dt = 0.0;
@@ -134,6 +163,7 @@ void PlayMotion::play_mocap( std::string &filename )
             dt = tu - last_config_time;
         last_config_time = tu;
 
+        // Load and draw markers
         for ( int col = 3; col <= nb_markers*4; col+=4  )
         {
 
@@ -143,43 +173,94 @@ void PlayMotion::play_mocap( std::string &filename )
             double z;
             double color [4];
 
-            convert_text_to_num<int>( id, matrix[row][col], std::dec );
-            convert_text_to_num<double>( x, matrix[row][col+1], std::dec );
-            convert_text_to_num<double>( y, matrix[row][col+2], std::dec );
-            convert_text_to_num<double>( z, matrix[row][col+3], std::dec );
-
-//            double color[4] = {0,1,0,1};
-
-//            if (id % 2 == 0)
-//            {
-//                color[0] = id;
-//                color[1] = 0;
-//                color[2] = 0;
-//                color[3] = 1;
-//            }
-//            else if(id % 3 == 0)
-//            {
-//                color[0] = 0;
-//                color[1] = id;
-//                color[2] = 0;
-//                color[3] = 1;
-//            }
-//            else
-//            {
-//                color[0] = 0;
-//                color[1] = 0;
-//                color[2] = id;
-//                color[3] = 1;
-//            }
+            convert_text_to_num<int>( id, m_matrix[row][col], std::dec );
+            convert_text_to_num<double>( x, m_matrix[row][col+1], std::dec );
+            convert_text_to_num<double>( y, m_matrix[row][col+2], std::dec );
+            convert_text_to_num<double>( z, m_matrix[row][col+3], std::dec );
 
 
             color[3] = 1;
 
-            double scaled = double (id) / 10;
+            double scaled = double (id) / double(nb_markers);
+
+//            cout << "id : " << id << endl;
 
             GroundColorMixGreenToRed( color, scaled );
+            move3d_draw_sphere(x, y, z, 0.025, color );
+
+        }
+
+        // Load and draw objects + frame
+        for ( int col = 3; col <= nb_objects*9; col+=9  )
+        {
+            double color [4];
+            std::string id;
+            bool occluded;
+            double x;
+            double y;
+            double z;
+            double r_x;
+            double r_y;
+            double r_z;
+            double r_w;
+
+            convert_text_to_num<std::string>( id, o_matrix[row][col], std::dec );
+            convert_text_to_num<bool>( occluded, o_matrix[row+1][col], std::dec );
+            convert_text_to_num<double>( x, o_matrix[row][col+2], std::dec );
+            convert_text_to_num<double>( y, o_matrix[row][col+3], std::dec );
+            convert_text_to_num<double>( z, o_matrix[row][col+4], std::dec );
+            convert_text_to_num<double>( r_x, o_matrix[row][col+5], std::dec );
+            convert_text_to_num<double>( r_y, o_matrix[row][col+6], std::dec );
+            convert_text_to_num<double>( r_z, o_matrix[row][col+7], std::dec );
+            convert_text_to_num<double>( r_w, o_matrix[row][col+8], std::dec );
 
 
+            OpenRAVE::RaveTransform<double> tf;
+            tf.trans.x = x;
+            tf.trans.y = y;
+            tf.trans.z = z;
+            tf.rot.x = r_x;
+            tf.rot.y = r_y;
+            tf.rot.z = r_z;
+            tf.rot.w = r_w;
+
+            OpenRAVE::RaveTransformMatrix<double> T(tf);
+
+            if ( id == "TouchTomorrow3" || id == "ArchieLeftHand")
+            {
+                OpenRAVE::RaveVector<double> x_dir;
+                OpenRAVE::RaveVector<double> y_dir;
+                OpenRAVE::RaveVector<double> z_dir;
+
+                x_dir.x = T.m[0]; y_dir.x = T.m[1]; z_dir.x = T.m[2];
+                x_dir.y = T.m[4]; y_dir.y = T.m[5]; z_dir.y = T.m[6];
+                x_dir.z = T.m[8]; y_dir.z = T.m[9]; z_dir.z = T.m[10];
+
+//                T.m[0] = - z_dir.x; T.m[1]  = 0; T.m[2] = 0; T.m[3] = x;
+//                T.m[4] = - z_dir.y; T.m[5]  = 0; T.m[6] = 0; T.m[7] = y;
+//                T.m[8] = - z_dir.z; T.m[9]  = 0; T.m[10] = 1; T.m[11] = z;
+//                T.m[12] =        0; T.m[13] = 0; T.m[14] = 0; T.m[15] = 1;
+                //Fix y
+                OpenRAVE::RaveVector<double> new_x = -z_dir;
+                new_x.z = 0;
+                new_x /= sqrt(new_x.lengthsqr3());
+                OpenRAVE::RaveVector<double> new_z(0,0,1);
+                OpenRAVE::RaveVector<double> new_y = new_x.cross(new_z);
+                new_y /= sqrt(new_y.lengthsqr3());
+
+                T.m[0]  = new_x.x; T.m[1]  = new_y.x; T.m[2]  = new_z.x;
+                T.m[4]  = new_x.y; T.m[5]  = new_y.y; T.m[6]  = new_z.y;
+                T.m[8]  = new_x.z; T.m[9]  = new_y.z; T.m[10] = new_z.z;
+
+                drawFrame(T);
+            }
+
+
+
+            color[0] = 1;
+            color[1] = 0;
+            color[2] = 0;
+            color[3] = 1;
 
             move3d_draw_sphere(x, y, z, 0.025, color );
 
@@ -187,9 +268,24 @@ void PlayMotion::play_mocap( std::string &filename )
 
         usleep(dt*1000000.0);
         move3d_draw_clear_handles();
+        graphptrs_.clear();
     }
+}
 
+void PlayMotion::drawFrame(OpenRAVE::RaveTransformMatrix<double> T)
+{
+    OpenRAVE::GraphHandlePtr fig1,fig2,fig3;
+    OpenRAVE::Vector right,up,dir, pos;
 
+    T.Extract( right, up, dir, pos );
+
+    fig1 = env_->drawarrow( pos, pos+0.5*right, 0.01, OpenRAVE::Vector(1,0,0,1));
+    fig2 = env_->drawarrow( pos, pos+0.5*up,    0.01, OpenRAVE::Vector(0,1,0,1));
+    fig3 = env_->drawarrow( pos, pos+0.5*dir,   0.01, OpenRAVE::Vector(0,0,1,1));
+
+    graphptrs_.push_back( fig1 );
+    graphptrs_.push_back( fig2 );
+    graphptrs_.push_back( fig3 );
 }
 
 void PlayMotion::runRealTime()

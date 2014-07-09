@@ -96,10 +96,15 @@ class kinect_subscriber():
         if len(self.files) > 1 :
             self.orEnv.Load("../ormodels/human_wpi_blue.xml")
 
-        self.orEnv.Load("../ormodels/env.xml")
+        #self.orEnv.Load("../ormodels/env.xml")
+
+        T_h = MakeTransform( eye(3), transpose(matrix([0,0,-10])))
+        human1 = self.orEnv.GetRobots()[0].SetTransform(array(T_h))
+        human2 = self.orEnv.GetRobots()[1].SetTransform(array(T_h))
 
         print "draw frame"
         T = MakeTransform( eye(3), transpose(matrix([0,0,0])))
+
         self.h = misc.DrawAxes( self.orEnv, matrix(T), 1 )
 
         print "try to create problem"
@@ -139,7 +144,9 @@ class kinect_subscriber():
         self.prob.SendCommand('SetPlayType 1')
 
         sleep(2)
-        self.prob.SendCommand('DrawMocapFile /home/rafi/workspace/hrics-or-plugins/examples/positions_fixed.csv')
+        #self.prob.SendCommand('DrawMocapFile /home/rafi/workspace/hrics-or-plugins/examples/positions_fixed.csv')
+        self.prob.SendCommand('DrawMocapFile /home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv')
+        #self.prob.SendCommand('DrawMocapFile //home/rafi/catkin_ws/src/vicon_logger/positions.csv')
         return
 
         if play_folder :
@@ -206,7 +213,8 @@ class kinect_subscriber():
 if __name__ == "__main__":
     print "main function"
     k = kinect_subscriber()
-    #sys.stdin.readline()
+    print "press return to run"
+    sys.stdin.readline()
     k.play(1)
     #    k.listen()
 
