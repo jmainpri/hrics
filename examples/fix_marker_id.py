@@ -1,15 +1,18 @@
 #!/usr/bin/python
 
+
+from TransformMatrix import *
 import numpy as np
 import os
 import collections
-import operator
 import time
-import random
+import math
 
 THRESHOLD = 0.0025
-N = 18
+# Experiment is 18 per human
+N_MARKERS = 18
 
+#Just for timing runs of the tracker.  Useless
 class Timer:
     def __enter__(self):
         self.start = time.clock()
@@ -21,14 +24,15 @@ class Timer:
 
 
 class Marker:
-    def __init__(self, id, x, y, z):
+    def __init__(self, id, x, y, z, name=''):
         self.id = id
         self.x = x
         self.y = y
         self.z = z
+        self.name = name
         self.array = np.array([self.x, self.y, self.z])
 
-    def are_similar(self, a_marker, threshold):
+    def is_same_marker(self, a_marker, threshold):
         if self.get_dist(a_marker) > threshold:
             return False
         else:
@@ -40,6 +44,22 @@ class Marker:
     def get_dist(self, other):
         diff = self.array - other.array
         return np.dot(diff, diff.conj())
+
+
+class Object:
+    def __init__(self, id, occluded, x, y, z, r_x, r_y, r_z, r_w):
+        self.id = id
+        self.occluded = occluded
+        self.x = x
+        self.y = y
+        self.z = z
+        self.r_x = r_x
+        self.r_y = r_y
+        self.r_z = r_z
+        self.r_w = r_w
+
+    def is_occluded(self):
+        return self.occluded
 
 
 class Frame:
@@ -74,8 +94,8 @@ class Frame:
             marker_string += str(marker.id) + ' '
         print marker_string
 
-    def same_indices(self, other):
-        if self.count != other.count or self.count != N:
+    def is_similar_frame(self, other):
+        if self.count != other.count or self.count != N_MARKERS:
             return False
 
         for i in range(self.count):
@@ -83,7 +103,7 @@ class Frame:
             if self.marker_list[i] is None:
                 return False
 
-            if not self.marker_list[i].are_similar(other.marker_list[i], THRESHOLD):
+            if not self.marker_list[i].is_same_marker(other.marker_list[i], THRESHOLD):
                 return False
 
         return True
@@ -147,7 +167,7 @@ class Frame:
         return [x for x, y in collections.Counter(indices).items() if y > 1]
 
     def get_new_config_by_distance(self, configs, prev_index):
-        print "i : ", prev_index+1
+        # print "i : ", prev_index+1
         prev = configs[prev_index]
 
         new_markers = [None]*prev.count
@@ -162,16 +182,13 @@ class Frame:
                 closest_dist = closest[1]
 
                 if closest_id < prev.count and shortest_found[closest_id] > closest_dist:
-                    new_markers[closest_id] = Marker(closest_id, marker.x, marker.y, marker.z)
+                    new_markers[closest_id] = Marker(closest_id, marker.x, marker.y, marker.z, prev.marker_list[closest_id].name)
                     shortest_found[closest_id] = closest_dist
                     break
 
         for i in range(0, prev.count):
             if new_markers[i] is None:  # Marker dropped!
                 new_markers[i] = prev.get_marker_by_id(i)
-            if new_markers[i] is None:
-                new_markers.pop(i)
-                #new_markers[i] = self.interpolate(configs, prev_index+1, i)
 
         # for i,marker in enumerate(new_markers):
         #     if marker == None:
@@ -181,6 +198,31 @@ class Frame:
         temp = Frame(self.sec, self.usec, len(new_markers), new_markers)
 
         return temp
+
+    def assign_marker_names(self, pelv_frame):
+        pt_list = []
+
+        pelv_frame = MakeTransform( np.matrix([ [-0.25657, 0.966526, 0], [-0.966526, -0.25657, 0], [0, 0, 1] ]), np.matrix( [1.93278, 1.34812, 1.07163] ) )
+        pelv_inv = np.linalg.inv(pelv_frame)
+
+
+        # Get a list of numpy arrays instead of markers
+        for marker in self.marker_list:
+            pt_list.append(marker.array)
+
+        # Put all points in the pelvis frame
+        for point in pt_list:
+            point = point * pelv_frame
+
+
+
+
+
+
+        # Re-arrange IDs by name.  This needs to be done in both matching configs
+
+    # def get_markers_in_torso_frame(self):
+    
 
 
 class Fixer:
@@ -215,7 +257,6 @@ class Fixer:
                 self.frames.append( Frame(sec, nsec, count, markers) )
             self.last_config = len(self.frames)
 
-
         print "# configs loaded : " + str(len(self.frames))
 
     def save_file(self):
@@ -227,13 +268,13 @@ class Fixer:
         outpath = name + '_fixed.'+type
 
         with open(outpath, 'w') as f:
-            for config in self.frames:
+            for frame in self.frames:
                 line_str = ""
-                line_str += str(config.sec) + ','
-                line_str += str(config.usec) + ','
-                line_str += str(config.count) + ','
+                line_str += str(frame.sec) + ','
+                line_str += str(frame.usec) + ','
+                line_str += str(frame.count) + ','
 
-                for marker in config.marker_list:
+                for marker in frame.marker_list:
                     line_str += str(marker.id) + ','
                     line_str += str(marker.x) + ','
                     line_str += str(marker.y) + ','
@@ -247,8 +288,8 @@ class Fixer:
         m_tot = np.array( [0, 0, 0] )
         m_count = 0.0
 
-        for config in self.frames:
-            for marker in config.marker_list:
+        for frame in self.frames:
+            for marker in frame.marker_list:
                 m_tot += marker.numpy()
                 m_count += 1
 
@@ -261,12 +302,18 @@ class Fixer:
         avg = Marker(0, point[0], point[1], point[2])
 
         print "Trying to filter markers ", threshold, "m within : ", point
-        for config in self.frames:
-            for marker in config.marker_list:
-                if avg.get_dist(marker) < threshold:
-                    config.marker_list.remove(marker)
-                    config.count -= 1
+        for frame in self.frames:
+
+            remove_list = []
+
+            for marker in frame.marker_list:
+                if math.sqrt(avg.get_dist(marker)) < threshold:
+                    remove_list.append(marker)
+                    frame.count -= 1
                     nb_removed += 1
+
+            for r_marker in remove_list:
+                frame.marker_list.remove(r_marker)
 
         print "Filtered ", nb_removed, ' markers'
 
@@ -274,11 +321,11 @@ class Fixer:
         nb_removed = 0
         origin = Marker(0,0,0,0)
 
-        for config in self.frames:
+        for frame in self.frames:
 
             remove_list = []
 
-            for marker in config.marker_list:
+            for marker in frame.marker_list:
                 x_dist = (origin.x - marker.x)
                 y_dist = (origin.y - marker.y)
                 dist = np.array([x_dist,y_dist, marker.z])
@@ -286,43 +333,56 @@ class Fixer:
                 if np.linalg.norm(dist) < 1:
                     # config.marker_list = config.marker_list.remove(marker)
                     remove_list.append(marker)
-                    config.count -= 1
+                    frame.count -= 1
                     nb_removed += 1
             for r_marker in remove_list:
-                config.marker_list.remove(r_marker)
+                frame.marker_list.remove(r_marker)
 
         print "Filtered ", nb_removed, ' markers'
-
-
 
     def filter_threshold_outside(self, point, threshold):
         nb_removed = 0
         avg = Marker(0, point[0], point[1], point[2])
 
         print "Trying to filter markers ", threshold, "m outside : ", point
-        for config in self.frames:
-            for marker in config.marker_list:
-                if avg.get_dist(marker) > threshold:
-                    config.marker_list.remove(marker)
-                    config.count -= 1
+        for frame in self.frames:
+
+            remove_list = []
+
+            for marker in frame.marker_list:
+                if math.sqrt(avg.get_dist(marker)) > threshold:
+                    remove_list.append(marker)
+                    frame.count -= 1
                     nb_removed += 1
+
+            for r_marker in remove_list:
+                frame.marker_list.remove(r_marker)
 
         print "Filtered ", nb_removed, ' markers'
 
-    def match_indices(self):
+    def track_indices(self):
         # Find the first agreeing Frames
+
+        found_agreeing_frames = False
+
         last = self.frames[0]
         for i in range( 1, self.last_config) :
             # print "len 1 : ", len(last.marker_list), "len 2 : ", len(self.frames[i].marker_list)
-            if last.same_indices( self.frames[i] ):
+            if last.is_similar_frame( self.frames[i] ):
+                print "Frames " + str(i-1) +' and ' + str(i) + ' have the same indices'
+
                 self.max_markers = last.count
                 self.first_config = i-1
-                print "Frames " + str(i-1) +' and ' + str(i) + ' have the same indices'
+                found_agreeing_frames = True
+
+                self.frames[self.first_config].assign_marker_names('poop')
                 break
 
             last = self.frames[i]
 
-
+        if not found_agreeing_frames:
+            print "Couldn't find two frames with the same # of similar markers.  Try a different N_MARKERS?"
+            return
 
         #Match the indices
         for i in range( self.first_config+1, self.last_config ):
@@ -331,14 +391,14 @@ class Fixer:
             current = self.frames[i]
 
             #  Nothing to fix
-            if prev.same_indices(current):
+            if prev.is_similar_frame(current):
                 continue
 
             new = current.get_new_config_by_distance( self.frames, i-1 ) #new config could have duplicates
             new.order_markers()
             self.frames[i] = new
 
-    def fix_ids(self):
+    def reorder_ids(self):
         for frame in self.frames:
             new_id = 0
             nb_markers = frame.count
@@ -346,40 +406,35 @@ class Fixer:
                 marker.id = new_id
                 new_id += 1
 
-
-
 if __name__ == '__main__':
-    # f = Fixer('/home/rafi/Desktop/positions.csv')
     f = Fixer('/home/rafi/logging_data/second/markers.csv')
 
     try:
         with Timer() as t:
             f.load_file()
-            # avg = f.get_average_position()
-            # f.filter_threshold_outside(avg, 2.5)
 
-            # pillar = np.array([0,0,0])
-            # f.filter_threshold_inside(pillar, 0.5)
+            avg = f.get_average_position()
+            f.filter_threshold_outside(avg, 2.0)
 
             f.filter_pillar()
             print "starting fixing ids"
-            f.fix_ids()
+            f.reorder_ids()
 
             current_time = time.clock()
             elapsed = current_time - t.start
 
             print "Trying to match indices.  Current time : ", elapsed
 
-            f.match_indices()
+            f.track_indices()
 
             current_time = time.clock()
             elapsed = current_time - t.start
 
-            print "Finished to match indices.  Current time : ", elapsed
+            print "Finished matching indices.  Current time : ", elapsed
 
             nb_diff = 0.0
             for i,frame in enumerate(f.frames):
-                if len(frame.marker_list) != N:
+                if len(frame.marker_list) != N_MARKERS:
                     # print i, ' ', len(frame.marker_list)
                     nb_diff += 1
             print "% different : " , nb_diff/f.last_config

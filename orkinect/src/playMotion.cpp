@@ -186,7 +186,7 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
 //            cout << "id : " << id << endl;
 
             GroundColorMixGreenToRed( color, scaled );
-            move3d_draw_sphere(x, y, z, 0.025, color );
+            move3d_draw_sphere(x, y, z, 0.01875, color );
 
         }
 
@@ -214,6 +214,9 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
             convert_text_to_num<double>( r_z, o_matrix[row][col+7], std::dec );
             convert_text_to_num<double>( r_w, o_matrix[row][col+8], std::dec );
 
+            if (occluded)
+                continue;
+
 
             OpenRAVE::RaveTransform<double> tf;
             tf.trans.x = x;
@@ -226,7 +229,8 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
 
             OpenRAVE::RaveTransformMatrix<double> T(tf);
 
-            if ( id == "TouchTomorrow3" || id == "ArchieLeftHand")
+//            if ( id == "TouchTomorrow3" || id == "ArchieLeftHand")
+            if ( id == "TouchTomorrow3" && row == 1)
             {
                 OpenRAVE::RaveVector<double> x_dir;
                 OpenRAVE::RaveVector<double> y_dir;
@@ -248,13 +252,21 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
                 OpenRAVE::RaveVector<double> new_y = new_x.cross(new_z);
                 new_y /= sqrt(new_y.lengthsqr3());
 
+                new_y = -new_y;
+
                 T.m[0]  = new_x.x; T.m[1]  = new_y.x; T.m[2]  = new_z.x;
                 T.m[4]  = new_x.y; T.m[5]  = new_y.y; T.m[6]  = new_z.y;
                 T.m[8]  = new_x.z; T.m[9]  = new_y.z; T.m[10] = new_z.z;
 
+                for (int k = 0; k < 12; k+=4)
+                {
+                    cout << T.m[k] << ", " << T.m[k+1] << ", " << T.m[k+2] << endl;
+                }
+                cout << T.trans << endl;
+
+
                 drawFrame(T);
             }
-
 
 
             color[0] = 1;
@@ -262,7 +274,7 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
             color[2] = 0;
             color[3] = 1;
 
-            move3d_draw_sphere(x, y, z, 0.025, color );
+            move3d_draw_sphere(x, y, z, 0.01875, color );
 
         }
 
