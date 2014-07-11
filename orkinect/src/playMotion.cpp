@@ -268,14 +268,12 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
                 drawFrame(T);
             }
 
-
             color[0] = 1;
             color[1] = 0;
             color[2] = 0;
             color[3] = 1;
 
             move3d_draw_sphere(x, y, z, 0.01875, color );
-
         }
 
         usleep(dt*1000000.0);

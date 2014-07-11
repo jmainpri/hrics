@@ -2,11 +2,13 @@
 
 
 from TransformMatrix import *
+from get_marker_names import *
 import numpy as np
 import os
 import collections
 import time
 import math
+
 
 THRESHOLD = 0.0025
 # Experiment is 18 per human
@@ -199,31 +201,44 @@ class Frame:
 
         return temp
 
-    def assign_marker_names(self, pelv_frame):
-        pt_list = []
-
-        pelv_frame = MakeTransform( np.matrix([ [-0.25657, 0.966526, 0], [-0.966526, -0.25657, 0], [0, 0, 1] ]), np.matrix( [1.93278, 1.34812, 1.07163] ) )
-        pelv_inv = np.linalg.inv(pelv_frame)
-
-
-        # Get a list of numpy arrays instead of markers
+    def set_marker_names_by_id(self):
         for marker in self.marker_list:
-            pt_list.append(marker.array)
-
-        # Put all points in the pelvis frame
-        for point in pt_list:
-            point = point * pelv_frame
-
-
-
-
-
-
-        # Re-arrange IDs by name.  This needs to be done in both matching configs
-
-    # def get_markers_in_torso_frame(self):
-    
-
+            if marker.id == 0:
+                marker.name = 'ChestFront'
+            if marker.id == 1:
+                marker.name = 'ChestBack'
+            if marker.id == 2:
+                marker.name = 'SternumFront'
+            if marker.id == 3:
+                marker.name = 'SternumBack'
+            if marker.id == 4:
+                marker.name = 'rShoulderFront'
+            if marker.id == 5:
+                marker.name = 'rShoulderBack'
+            if marker.id == 6:
+                marker.name = 'rElbowOuter'
+            if marker.id == 7:
+                marker.name = 'rElbowInner'
+            if marker.id == 8:
+                marker.name = 'rWristOuter'
+            if marker.id == 9:
+                marker.name = 'rWristInner'
+            if marker.id == 10:
+                marker.name = 'rPalm'
+            if marker.id == 11:
+                marker.name = 'lShoulderFront'
+            if marker.id == 12:
+                marker.name = 'lShoulderBack'
+            if marker.id == 13:
+                marker.name = 'lElbowOuter'
+            if marker.id == 14:
+                marker.name = 'lElbowInner'
+            if marker.id == 15:
+                marker.name = 'lWristOuter'
+            if marker.id == 16:
+                marker.name = 'lWristInner'
+            if marker.id == 17:
+                marker.name = 'lPalm'
 
 class Fixer:
 
@@ -375,7 +390,35 @@ class Fixer:
                 self.first_config = i-1
                 found_agreeing_frames = True
 
-                self.frames[self.first_config].assign_marker_names('poop')
+                # Build list of marker numpy arrays
+                points = []
+                for marker in last.marker_list:
+                    points.append(marker.array)
+
+                # Get pelv frame
+                pelv_frame = MakeTransform( np.matrix([ [-0.25657, 0.966526, 0], [-0.966526, -0.25657, 0], [0, 0, 1] ]), np.matrix( [1.93278, 1.34812, 1.07163] ) )
+
+                # Get marker name map
+                print "Getting marker name map"
+                namer = AssignNames(points, pelv_frame)
+                map = namer.assign_marker_names()
+
+                # Reorder markers according to map
+                print "Fixing marker ids according to map"
+                new_marker_list = []
+                for i, id in enumerate(map):
+                    new_marker_list.append(last.marker_list[id])
+                    new_marker_list[i].id = i
+
+                last.marker_list = new_marker_list
+
+                # Set marker names by id
+                print "Setting marker names"
+                last.set_marker_names_by_id()
+
+                for marker in last.marker_list:
+                    print marker.id, ' : ', marker.name
+
                 break
 
             last = self.frames[i]
