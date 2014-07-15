@@ -232,6 +232,11 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
 //            if ( id == "TouchTomorrow3" || id == "ArchieLeftHand")
             if ( id == "TouchTomorrow3" && row == 1)
             {
+
+                for (int i = 0; i < 12; i++)
+                    cout << T.m[i] << " ";
+                cout << endl;
+
                 OpenRAVE::RaveVector<double> x_dir;
                 OpenRAVE::RaveVector<double> y_dir;
                 OpenRAVE::RaveVector<double> z_dir;
@@ -239,6 +244,10 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
                 x_dir.x = T.m[0]; y_dir.x = T.m[1]; z_dir.x = T.m[2];
                 x_dir.y = T.m[4]; y_dir.y = T.m[5]; z_dir.y = T.m[6];
                 x_dir.z = T.m[8]; y_dir.z = T.m[9]; z_dir.z = T.m[10];
+
+                cout << "x_dir : " << x_dir << endl;
+                cout << "y_dir : " << y_dir << endl;
+                cout << "z_dir : " << z_dir << endl;
 
 //                T.m[0] = - z_dir.x; T.m[1]  = 0; T.m[2] = 0; T.m[3] = x;
 //                T.m[4] = - z_dir.y; T.m[5]  = 0; T.m[6] = 0; T.m[7] = y;

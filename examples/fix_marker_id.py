@@ -1,8 +1,12 @@
 #!/usr/bin/python
 
+# Rafi Hayne
 
+import openravepy
 from TransformMatrix import *
 from get_marker_names import *
+from transformation_helper import *
+import csv
 import numpy as np
 import os
 import collections
@@ -63,13 +67,48 @@ class Object:
     def is_occluded(self):
         return self.occluded
 
+    def get_rot_matrix(self):
+
+        mat =  MakeTransform( openravepy.rotationMatrixFromQuat(np.array([self.r_x, self.r_y, self.r_z, self.r_w])), np.transpose(np.matrix([self.x, self.y, self.z])))
+
+        x_dir = np.array(np.transpose(mat[:,0]).tolist()[0][:3])
+        y_dir = np.array(np.transpose(mat[:,1]).tolist()[0][:3])
+        z_dir = np.array(np.transpose(mat[:,2]).tolist()[0][:3])
+
+        print x_dir
+        print y_dir
+        print z_dir
+
+        new_x = -z_dir
+        new_x[2] = 0
+        new_x = new_x/np.linalg.norm(new_x)
+        new_z = np.array([0,0,1])
+
+        new_y = np.cross(new_x, new_z)
+        new_y = new_y/np.linalg.norm(new_y)
+        new_y = -new_y
+
+
+        mat[0][0,0] = new_x[0]
+        mat[0][0,1] = new_y[0]
+        mat[0][0,2] = new_z[0]
+        mat[1][0,0] = new_x[1]
+        mat[1][0,1] = new_y[1]
+        mat[1][0,2] = new_z[1]
+        mat[2][0,0] = new_x[2]
+        mat[2][0,1] = new_y[2]
+        mat[2][0,2] = new_z[2]
+
+        return mat
+
 
 class Frame:
-    def __init__(self, t_sec, t_usec, nb_markers, marker_list):
+    def __init__(self, t_sec, t_usec, nb_markers, marker_list, object_list):
         self.sec = t_sec
         self.usec = t_usec
         self.count = nb_markers
         self.marker_list = marker_list
+        self.object_list = object_list
 
     # Can not have any duplicate ids
     def order_markers(self):
@@ -197,7 +236,7 @@ class Frame:
         #         new_markers.pop(i)
 
         # print "frame : ", prev_index+1
-        temp = Frame(self.sec, self.usec, len(new_markers), new_markers)
+        temp = Frame(self.sec, self.usec, len(new_markers), new_markers, self.object_list)
 
         return temp
 
@@ -242,8 +281,9 @@ class Frame:
 
 class Fixer:
 
-    def __init__(self, filepath):
-        self.filepath = filepath
+    def __init__(self, m_filepath, o_filepath):
+        self.m_filepath = m_filepath
+        self.o_filepath = o_filepath
         self.frames = []
         self.max_markers = None
         self.first_config = 0
@@ -252,25 +292,108 @@ class Fixer:
     def load_file(self):
         print "Trying to open file"
 
-        with open(self.filepath, 'r') as f:
-            for line in f:
-                markers = []
+        marker_file = []
+        object_file = []
 
-                cell = line.split(',')
-                sec = float(cell[0])
-                nsec = float(cell[1])
-                count = int(cell[2])
+        with open(self.m_filepath, 'r') as m_file:
+            with open(self.o_filepath, 'r') as o_file:
 
-                for i in range(3, count*4, 4):
-                    id = int(cell[i])
-                    x = float(cell[i+1])
-                    y = float(cell[i+2])
-                    z = float(cell[i+3])
-                    marker = Marker(id, x, y, z)
-                    markers.append(marker)
+                marker_file = [row for row in csv.reader(m_file, delimiter=',')]
+                object_file = [row for row in csv.reader(o_file, delimiter=',')]
 
-                self.frames.append( Frame(sec, nsec, count, markers) )
-            self.last_config = len(self.frames)
+        nb_lines = min(len(marker_file), len(object_file))
+        self.last_config = nb_lines-1
+
+        for row in range(nb_lines):
+
+            markers = []
+            objects = []
+
+            m_cells = marker_file[row]
+            o_cells = object_file[row]
+
+            # Load Objects
+            count = int(o_cells[2])
+
+            for i in range(3, count*9, 9):
+                name = str(o_cells[i])
+                occluded = int(o_cells[i+1])
+                x = float(o_cells[i+2])
+                y = float(o_cells[i+3])
+                z = float(o_cells[i+4])
+                r_x = float(o_cells[i+5])
+                r_y = float(o_cells[i+6])
+                r_z = float(o_cells[i+7])
+                r_w = float(o_cells[i+8])
+
+                object = Object( name, occluded, x, y, z, r_x, r_y, r_z, r_w )
+                objects.append(object)
+
+            # Load Markers
+            sec = float(m_cells[0])
+            nsec = float(m_cells[1])
+            count = int(m_cells[2])
+
+            for i in range(3, count*4, 4):
+                id = int(m_cells[i])
+                x = float(m_cells[i+1])
+                y = float(m_cells[i+2])
+                z = float(m_cells[i+3])
+
+                marker = Marker(id, x, y, z)
+                markers.append(marker)
+
+
+            self.frames.append( Frame(sec, nsec, count, markers, objects) )
+
+        # with open(self.m_filepath, 'r') as m_file:
+        #     with open(self.o_filepath, 'r') as o_file:
+        #         marker_rows = m_file.readlines()
+        #         object_rows = o_file.readlines()
+        #
+        #
+        #         for line in m_file:
+        #             markers = []
+        #
+        #             cell = line.split(',')
+        #             sec = float(cell[0])
+        #             nsec = float(cell[1])
+        #             count = int(cell[2])
+        #
+        #             for i in range(3, count*4, 4):
+        #                 id = int(cell[i])
+        #                 x = float(cell[i+1])
+        #                 y = float(cell[i+2])
+        #                 z = float(cell[i+3])
+        #                 marker = Marker(id, x, y, z)
+        #                 markers.append(marker)
+        #
+        #         for line in o_file:
+        #             objects = []
+        #
+        #             cell = line.split(',')
+        #             sec = float(cell[0])
+        #             nsec = float(cell[1])
+        #             count = int(cell[2])
+        #
+        #             for i in range(3, count*9, 9):
+        #                 name = str(cell[i])
+        #                 occluded = int(cell[i+1])
+        #                 x = float(cell[i+2])
+        #                 y = float(cell[i+3])
+        #                 z = float(cell[i+4])
+        #                 r_x = float(cell[i+5])
+        #                 r_y = float(cell[i+6])
+        #                 r_z = float(cell[i+7])
+        #                 r_w = float(cell[i+8])
+        #
+        #                 object = Object( name, occluded, x, y, z, r_x, r_y, r_z, r_w )
+        #                 objects.append(object)
+        #
+        #
+        #
+        #             self.frames.append( Frame(sec, nsec, count, markers, objects) )
+        #         self.last_config = len(self.frames)
 
         print "# configs loaded : " + str(len(self.frames))
 
@@ -278,7 +401,7 @@ class Fixer:
         print "Trying to output new file"
 
         #  Get the out filename
-        dir, path = os.path.split(self.filepath)
+        dir, path = os.path.split(self.m_filepath)
         name, type = path.rsplit('.', 1)
         outpath = name + '_fixed.'+type
 
@@ -396,12 +519,18 @@ class Fixer:
                     points.append(marker.array)
 
                 # Get pelv frame
-                pelv_frame = MakeTransform( np.matrix([ [-0.25657, 0.966526, 0], [-0.966526, -0.25657, 0], [0, 0, 1] ]), np.matrix( [1.93278, 1.34812, 1.07163] ) )
+                pelv_frame = None
+                for object in last.object_list:
+                    if object.id == 'TouchTomorrow3':
+                        pelv_frame = object.get_rot_matrix()
 
                 # Get marker name map
                 print "Getting marker name map"
                 namer = AssignNames(points, pelv_frame)
                 map = namer.assign_marker_names()
+
+                print "Calculated map"
+                print map
 
                 # Reorder markers according to map
                 print "Fixing marker ids according to map"
@@ -449,8 +578,61 @@ class Fixer:
                 marker.id = new_id
                 new_id += 1
 
+    def smooth_markers(self, size):
+
+        if size%2 == 0:
+            print "Window size can't be even"
+            return
+
+        window = self.frames[:size]
+
+        for i in range(int(floor(size/2)), len(self.frames)-1):
+            for m, marker in enumerate(self.frames[i].marker_list):
+                avg = np.array([0.0,0.0,0.0])
+
+                for a_frame in window:
+                    avg += a_frame.marker_list[m].array
+
+                avg = avg/float(size)
+
+                marker.array = avg
+                marker.x = avg[0]
+                marker.y = avg[1]
+                marker.z = avg[2]
+
+            window = window[1:] + [self.frames[i+1]]
+
+
+    # def moving_average(self):
+    #
+    #     for f, frame in enumerate(self.frames):
+    #
+    #         new_markers = []
+    #
+    #         for m in range(len(frame.marker_list)):
+    #             marker = frame.marker_list[m]
+    #             avg = np.array([0,0,0])
+    #
+    #             for i in range(-2,3):
+    #                 index = f + i
+    #                 if index < 0:
+    #                     index = 0
+    #                 if index >= self.last_config:
+    #                     index = self.last_config-1
+    #
+    #
+    #                 # print "nb frames : ", len(self.frames), ' index : ', index, " marker : ", m, " nb markers : ", len(frame.marker_list)
+    #                 # print "m : ", m, " len marker list : ", len(self.frames[index].marker_list)
+    #
+    #                 avg += self.frames[index].marker_list[m].array
+    #             avg = avg/5
+    #             marker.array = avg
+    #             marker.x = avg[0]
+    #             marker.y = avg[1]
+    #             marker.z = avg[2]
+
 if __name__ == '__main__':
-    f = Fixer('/home/rafi/logging_data/second/markers.csv')
+    f = Fixer('/home/rafi/logging_data/second/markers.csv', '/home/rafi/logging_data/second/objects.csv')
 
     try:
         with Timer() as t:
@@ -474,6 +656,14 @@ if __name__ == '__main__':
             elapsed = current_time - t.start
 
             print "Finished matching indices.  Current time : ", elapsed
+
+            # print "Trying to smooth with a moving average"
+            # current_time = time.clock()
+            # elapsed = current_time - t.start
+            # f.moving_average()
+
+            # print "Trying to smooth markers"
+            # f.smooth_markers(7)
 
             nb_diff = 0.0
             for i,frame in enumerate(f.frames):
