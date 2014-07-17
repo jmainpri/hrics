@@ -42,6 +42,7 @@ from wiimote.msg import*
 import keystroke
 from time import sleep
 import segment_file
+import transformation_helper
 
 play_folder = False
 show_images = 1 # 0 to not show
@@ -83,12 +84,24 @@ class kinect_subscriber():
         print "draw frame"
         T = MakeTransform( eye(3), transpose(matrix([0,0,0])))
 
-        CalBlock = MakeTransform( rotationMatrixFromQuat(array([0.7188404833, 0.2970505392, -0.4412091838, 0.4476201435 ])), transpose(matrix([1.8211836689, 1.0781754454, 1.7937961156])))
-        TouchTomorrow3 =  MakeTransform( rotationMatrixFromQuat(array([0.1457896082, -0.4695454709, 0.8700436823, 0.0360059973])), transpose(matrix([1.9327413784, 1.3481940541, 1.0716016861])))
+        # Second Run
+        # CalBlock = MakeTransform( rotationMatrixFromQuat(array([0.7188404833, 0.2970505392, -0.4412091838, 0.4476201435 ])), transpose(matrix([1.8211836689, 1.0781754454, 1.7937961156])))
+        # TouchTomorrow3 =  MakeTransform( rotationMatrixFromQuat(array([0.1457896082, -0.4695454709, 0.8700436823, 0.0360059973])), transpose(matrix([1.9327413784, 1.3481940541, 1.0716016861])))
+
+
+        # Third Run
+        ArchieLeftHand = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([2.2630624073, 1.5024087108, 1.0334129255, 0.6551985404   ]) )), transpose(matrix([ -0.0308211559, 0.7527028352, -0.0565983288 ])) )
+        ArchieRightHand = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([2.0138498402, 1.5327076092, 1.7597781595, -0.0441252319])) ), transpose(matrix([-0.5430014612, -0.0600868744, 0.8364161312])) )
+        CalBlock = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([1.3887227848, 0.894679857, 1.7826058767, -0.2377743781]) )), transpose(matrix([-0.4547046476, -0.4457833838, 0.7334740645])) )
+        TouchTomorrow3 = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([1.4964491222, 0.6294067075, 1.046128491, 0.7399746771]) )), transpose(matrix([0.6593515387, -0.1282784114, 0.0351806021])) )
+
+
 
         self.h.append(misc.DrawAxes( self.orEnv, matrix(T), 1 ))
         # self.h.append(misc.DrawAxes( self.orEnv, matrix(CalBlock), 1 ))
         # self.h.append(misc.DrawAxes( self.orEnv, matrix(TouchTomorrow3), 1 ))
+        # self.h.append(misc.DrawAxes( self.orEnv, matrix(ArchieLeftHand), 1 ))
+        # self.h.append(misc.DrawAxes( self.orEnv, matrix(ArchieRightHand), 1 ))
 
         print "try to create problem"
         self.prob = RaveCreateProblem(self.orEnv,'Kinect')
@@ -124,8 +137,8 @@ class kinect_subscriber():
 
         self.prob.SendCommand('SetPlayType 1')
 
-        self.prob.SendCommand('DrawMocapFile /home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv /home/rafi/logging_data/second/objects.csv')
-        # self.prob.SendCommand('DrawMocapFile /home/rafi/logging_data/second/markers.csv /home/rafi/logging_data/second/objects.csv')
+        # self.prob.SendCommand('DrawMocapFile /home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv /home/rafi/logging_data/second/objects.csv')
+        self.prob.SendCommand('DrawMocapFile /home/rafi/logging_data/third/markers.csv /home/rafi/logging_data/third/objects.csv')
 
         return
 

@@ -5,7 +5,6 @@
 import openravepy
 from TransformMatrix import *
 from get_marker_names import *
-from transformation_helper import *
 import csv
 import numpy as np
 import os
@@ -16,7 +15,7 @@ import math
 
 THRESHOLD = 0.0025
 # Experiment is 18 per human
-N_MARKERS = 18
+N_MARKERS = 36
 
 #Just for timing runs of the tracker.  Useless
 class Timer:
@@ -68,16 +67,11 @@ class Object:
         return self.occluded
 
     def get_rot_matrix(self):
-
         mat =  MakeTransform( openravepy.rotationMatrixFromQuat(np.array([self.r_x, self.r_y, self.r_z, self.r_w])), np.transpose(np.matrix([self.x, self.y, self.z])))
 
         x_dir = np.array(np.transpose(mat[:,0]).tolist()[0][:3])
         y_dir = np.array(np.transpose(mat[:,1]).tolist()[0][:3])
         z_dir = np.array(np.transpose(mat[:,2]).tolist()[0][:3])
-
-        print x_dir
-        print y_dir
-        print z_dir
 
         new_x = -z_dir
         new_x[2] = 0
@@ -89,15 +83,15 @@ class Object:
         new_y = -new_y
 
 
-        mat[0][0,0] = new_x[0]
-        mat[0][0,1] = new_y[0]
-        mat[0][0,2] = new_z[0]
-        mat[1][0,0] = new_x[1]
-        mat[1][0,1] = new_y[1]
-        mat[1][0,2] = new_z[1]
-        mat[2][0,0] = new_x[2]
-        mat[2][0,1] = new_y[2]
-        mat[2][0,2] = new_z[2]
+        mat[0][0, 0] = new_x[0]
+        mat[0][0, 1] = new_y[0]
+        mat[0][0, 2] = new_z[0]
+        mat[1][0, 0] = new_x[1]
+        mat[1][0, 1] = new_y[1]
+        mat[1][0, 2] = new_z[1]
+        mat[2][0, 0] = new_x[2]
+        mat[2][0, 1] = new_y[2]
+        mat[2][0, 2] = new_z[2]
 
         return mat
 
@@ -279,6 +273,22 @@ class Frame:
             if marker.id == 17:
                 marker.name = 'lPalm'
 
+    def get_n_closest_markers(self, pelv_frame, n):
+
+        points = []
+        pelv_point = np.transpose(pelv_frame[:,3])
+        pelv_marker = Marker( 0, pelv_point[0,0], pelv_point[0,1], pelv_point[0,2]  )
+
+        closest = self.get_distances(pelv_marker)[:n]
+        # Put the markers back in order by id
+        closest.sort( key = lambda p: p[0], reverse=False )
+
+        for pair in closest:
+            points.append( self.marker_list[pair[0]].array )
+
+        return points
+
+
 class Fixer:
 
     def __init__(self, m_filepath, o_filepath):
@@ -302,7 +312,7 @@ class Fixer:
                 object_file = [row for row in csv.reader(o_file, delimiter=',')]
 
         nb_lines = min(len(marker_file), len(object_file))
-        self.last_config = nb_lines-1
+        self.last_config = nb_lines
 
         for row in range(nb_lines):
 
@@ -405,8 +415,10 @@ class Fixer:
         name, type = path.rsplit('.', 1)
         outpath = name + '_fixed.'+type
 
+
+        # TODO Should output a truncated objects file starting at first_config
         with open(outpath, 'w') as f:
-            for frame in self.frames:
+            for frame in self.frames[self.first_config:self.last_config]:
                 line_str = ""
                 line_str += str(frame.sec) + ','
                 line_str += str(frame.usec) + ','
@@ -513,40 +525,55 @@ class Fixer:
                 self.first_config = i-1
                 found_agreeing_frames = True
 
-                # Build list of marker numpy arrays
-                points = []
-                for marker in last.marker_list:
-                    points.append(marker.array)
-
                 # Get pelv frame
-                pelv_frame = None
+                pelv_frames = []
                 for object in last.object_list:
                     if object.id == 'TouchTomorrow3':
-                        pelv_frame = object.get_rot_matrix()
+                        pelv_frames.append(object.get_rot_matrix())
+
+                if pelv_frames is None:
+                    print "Couldn't find a pelvis frame!"
+                    sys.exit()
 
                 # Get marker name map
+                # Check if there are more than 1 humans
+                # If so isolate their markers and pass to the namer
+                # Get two maps
                 print "Getting marker name map"
-                namer = AssignNames(points, pelv_frame)
-                map = namer.assign_marker_names()
+                maps = []
+                for pelvis in pelv_frames:
 
-                print "Calculated map"
-                print map
+                    # Build list of marker numpy arrays
+                    points = last.get_n_closest_markers(pelvis, 18)
+
+                    namer = AssignNames(points, pelvis)
+                    maps.append(namer.assign_marker_names())
+
 
                 # Reorder markers according to map
-                print "Fixing marker ids according to map"
-                new_marker_list = []
-                for i, id in enumerate(map):
-                    new_marker_list.append(last.marker_list[id])
-                    new_marker_list[i].id = i
+                # Make into a function
+                # Should take in either one or two map lists
+
+                for map in maps:
+                    print map
+                    new_marker_list = []
+                    for i, id in enumerate(map):
+                        new_marker_list.append(last.marker_list[id])
+                        new_marker_list[i].id = i
 
                 last.marker_list = new_marker_list
+
+                # print "Fixing marker ids according to map"
+                # new_marker_list = []
+                # for i, id in enumerate(map):
+                #     new_marker_list.append(last.marker_list[id])
+                #     new_marker_list[i].id = i
+                #
+                # last.marker_list = new_marker_list
 
                 # Set marker names by id
                 print "Setting marker names"
                 last.set_marker_names_by_id()
-
-                for marker in last.marker_list:
-                    print marker.id, ' : ', marker.name
 
                 break
 
@@ -662,7 +689,7 @@ if __name__ == '__main__':
             # elapsed = current_time - t.start
             # f.moving_average()
 
-            # print "Trying to smooth markers"
+            print "Trying to smooth markers"
             # f.smooth_markers(7)
 
             nb_diff = 0.0
