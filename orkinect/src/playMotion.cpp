@@ -180,8 +180,9 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
 
 
             color[3] = 1;
-
-            double scaled = double (id) / double(nb_markers);
+            if (id >= 18)
+                id-=18;
+            double scaled = double (id) / double(nb_markers/2);
 
 //            cout << "id : " << id << endl;
 
@@ -230,7 +231,7 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
             OpenRAVE::RaveTransformMatrix<double> T(tf);
 
 //            if ( id == "TouchTomorrow3" || id == "ArchieLeftHand")
-            if ( id == "TouchTomorrow3" && row == 1)
+            if ( id == "TouchTomorrow3")
             {
 
                 for (int i = 0; i < 12; i++)
@@ -281,6 +282,39 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
                     cout << T.m[i] << " ";
                 cout << endl;
 
+                OpenRAVE::RaveVector<double> x_dir;
+                OpenRAVE::RaveVector<double> y_dir;
+                OpenRAVE::RaveVector<double> z_dir;
+
+                x_dir.x = T.m[0]; y_dir.x = T.m[1]; z_dir.x = T.m[2];
+                x_dir.y = T.m[4]; y_dir.y = T.m[5]; z_dir.y = T.m[6];
+                x_dir.z = T.m[8]; y_dir.z = T.m[9]; z_dir.z = T.m[10];
+
+
+//                T.m[0] = - z_dir.x; T.m[1]  = 0; T.m[2] = 0; T.m[3] = x;
+//                T.m[4] = - z_dir.y; T.m[5]  = 0; T.m[6] = 0; T.m[7] = y;
+//                T.m[8] = - z_dir.z; T.m[9]  = 0; T.m[10] = 1; T.m[11] = z;
+//                T.m[12] =        0; T.m[13] = 0; T.m[14] = 0; T.m[15] = 1;
+
+                OpenRAVE::RaveVector<double> new_x = -z_dir;
+                new_x.z = 0;
+                new_x /= sqrt(new_x.lengthsqr3());
+                OpenRAVE::RaveVector<double> new_z(0,0,1);
+                OpenRAVE::RaveVector<double> new_y = new_x.cross(new_z);
+                new_y /= sqrt(new_y.lengthsqr3());
+
+                new_y = -new_y;
+
+                T.m[0]  = new_x.x; T.m[1]  = new_y.x; T.m[2]  = new_z.x;
+                T.m[4]  = new_x.y; T.m[5]  = new_y.y; T.m[6]  = new_z.y;
+                T.m[8]  = new_x.z; T.m[9]  = new_y.z; T.m[10] = new_z.z;
+
+                for (int k = 0; k < 12; k+=4)
+                {
+                    cout << T.m[k] << ", " << T.m[k+1] << ", " << T.m[k+2] << endl;
+                }
+                cout << T.trans << endl;
+
                 drawFrame(T);
             }
 
@@ -291,8 +325,8 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
 
             move3d_draw_sphere(x, y, z, 0.01875, color );
         }
-        row = 0;
-        sleep(2);
+//        row = 0;
+//        sleep(2);
         usleep(dt*1000000.0);
         move3d_draw_clear_handles();
         graphptrs_.clear();

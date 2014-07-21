@@ -101,9 +101,9 @@ class kinect_subscriber():
         # H1 Head
         # self.h.append(misc.DrawAxes( self.orEnv, matrix(CalBlock), 1 ))
         # H1 Pelv
-        self.h.append(misc.DrawAxes( self.orEnv, matrix(TouchTomorrow3), 1 ))
+        # self.h.append(misc.DrawAxes( self.orEnv, matrix(TouchTomorrow3), 1 ))
         # H2 Pelv
-        self.h.append(misc.DrawAxes( self.orEnv, matrix(ArchieLeftHand), 1 ))
+        # self.h.append(misc.DrawAxes( self.orEnv, matrix(ArchieLeftHand), 1 ))
         # H2 Head
         # self.h.append(misc.DrawAxes( self.orEnv, matrix(ArchieRightHand), 1 ))
 
@@ -141,8 +141,8 @@ class kinect_subscriber():
 
         self.prob.SendCommand('SetPlayType 1')
 
-        #self.prob.SendCommand('DrawMocapFile /home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv /home/rafi/logging_data/third/objects.csv')
-        self.prob.SendCommand('DrawMocapFile /home/rafi/logging_data/third/markers.csv /home/rafi/logging_data/third/objects.csv')
+        self.prob.SendCommand('DrawMocapFile /home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv /home/rafi/logging_data/third/objects.csv')
+        # self.prob.SendCommand('DrawMocapFile /home/rafi/logging_data/third/markers.csv /home/rafi/logging_data/third/objects.csv')
 
         return
 
