@@ -22,6 +22,7 @@ NB_HUMAN    = 2
 class Timer:
     def __enter__(self):
         self.start = time.clock()
+        self.file_runtime = None
         return self
 
     def __exit__(self, *args):
@@ -396,6 +397,8 @@ class Fixer:
         name, type = path.rsplit('.', 1)
         outpath = name + '_fixed.'+type
 
+        print "Trying to normalize ids"
+        self.normalize_ids()
 
         # TODO Should output a truncated objects file starting at first_frame
         with open(outpath, 'w') as f:
@@ -568,9 +571,7 @@ class Fixer:
 
 
     def track_indices(self):
-
         if self.first_frame != None:
-
             prev = self.frames[self.first_frame]
             for i in range(self.first_frame+1, self.last_frame):
                 curr = self.frames[i]
@@ -583,18 +584,19 @@ class Fixer:
             frame.reorder_ids()
 
     def smooth_markers(self, size):
-
+        # TODO this function is broken.  clean up
         if size%2 == 0:
             print "Window size can't be even"
             return
 
         window = self.frames[:size]
 
-        for i in range(int(floor(size/2)), len(self.frames)-1):
+        for i in range(int(floor(size/2)), self.last_frame):
             for m, marker in enumerate(self.frames[i].marker_list):
                 avg = np.array([0.0,0.0,0.0])
 
                 for a_frame in window:
+                    print "m : ", m, "len frame : ", len(a_frame.marker_list)
                     avg += a_frame.marker_list[m].array
 
                 avg = avg/float(size)
@@ -605,6 +607,21 @@ class Fixer:
                 marker.z = avg[2]
 
             window = window[1:] + [self.frames[i+1]]
+
+    def normalize_ids(self):
+        for frame in self.frames:
+            for i, marker in enumerate(frame.marker_list):
+                marker.id = marker.id%18
+
+    def get_runtime(self):
+        print "len frames : ", len(self.frames), "last : ", self.last_frame
+
+        start = self.frames[self.first_frame].sec
+        end = self.frames[self.last_frame-1].sec
+
+        return end-start
+
+
 
 if __name__ == '__main__':
     f = Fixer('/home/rafi/logging_data/third/markers.csv', '/home/rafi/logging_data/third/objects_fixed.csv')
@@ -639,5 +656,10 @@ if __name__ == '__main__':
             # print "% different : " , nb_diff/f.last_frame
 
             f.save_file()
+
+            t.file_runtime = f.get_runtime()
     finally:
-        print 'Marker matching took %.03f sec.' % t.interval
+        if t.file_runtime:
+            print 'Marker matching took,', t.interval, ' sec, ', (t.interval/t.file_runtime)*100, '% of total runtime'
+        else:
+            print 'Marker matching took %.03f sec.' % t.interval

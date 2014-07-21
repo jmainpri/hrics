@@ -180,9 +180,7 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
 
 
             color[3] = 1;
-            if (id >= 18)
-                id-=18;
-            double scaled = double (id) / double(nb_markers/2);
+            double scaled = double (id) / double(18);
 
 //            cout << "id : " << id << endl;
 
@@ -234,9 +232,9 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
             if ( id == "TouchTomorrow3")
             {
 
-                for (int i = 0; i < 12; i++)
-                    cout << T.m[i] << " ";
-                cout << endl;
+//                for (int i = 0; i < 12; i++)
+//                    cout << T.m[i] << " ";
+//                cout << endl;
 
                 OpenRAVE::RaveVector<double> x_dir;
                 OpenRAVE::RaveVector<double> y_dir;
@@ -265,11 +263,11 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
                 T.m[4]  = new_x.y; T.m[5]  = new_y.y; T.m[6]  = new_z.y;
                 T.m[8]  = new_x.z; T.m[9]  = new_y.z; T.m[10] = new_z.z;
 
-                for (int k = 0; k < 12; k+=4)
-                {
-                    cout << T.m[k] << ", " << T.m[k+1] << ", " << T.m[k+2] << endl;
-                }
-                cout << T.trans << endl;
+//                for (int k = 0; k < 12; k+=4)
+//                {
+//                    cout << T.m[k] << ", " << T.m[k+1] << ", " << T.m[k+2] << endl;
+//                }
+//                cout << T.trans << endl;
 
 
                 drawFrame(T);
@@ -278,9 +276,9 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
             if ( id == "ArchieLeftHand")
             {
 
-                for (int i = 0; i < 12; i++)
-                    cout << T.m[i] << " ";
-                cout << endl;
+//                for (int i = 0; i < 12; i++)
+//                    cout << T.m[i] << " ";
+//                cout << endl;
 
                 OpenRAVE::RaveVector<double> x_dir;
                 OpenRAVE::RaveVector<double> y_dir;
@@ -309,11 +307,11 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
                 T.m[4]  = new_x.y; T.m[5]  = new_y.y; T.m[6]  = new_z.y;
                 T.m[8]  = new_x.z; T.m[9]  = new_y.z; T.m[10] = new_z.z;
 
-                for (int k = 0; k < 12; k+=4)
-                {
-                    cout << T.m[k] << ", " << T.m[k+1] << ", " << T.m[k+2] << endl;
-                }
-                cout << T.trans << endl;
+//                for (int k = 0; k < 12; k+=4)
+//                {
+//                    cout << T.m[k] << ", " << T.m[k+1] << ", " << T.m[k+2] << endl;
+//                }
+//                cout << T.trans << endl;
 
                 drawFrame(T);
             }
