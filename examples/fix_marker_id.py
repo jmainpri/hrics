@@ -38,6 +38,7 @@ class Marker:
         self.z = z
         self.name = name
         self.array = np.array([self.x, self.y, self.z])
+        self.times_dropped = 0
 
     def is_same_marker(self, a_marker, threshold):
         if self.get_dist(a_marker) > threshold:
@@ -208,22 +209,19 @@ class Frame:
                 closest_id = closest[0]
                 closest_dist = closest[1]
 
-                if closest_id < prev_frame.count and shortest_found[closest_id] > closest_dist:
+                if shortest_found[closest_id] > closest_dist and closest_dist < (THRESHOLD + THRESHOLD*prev_frame.marker_list[closest_id].times_dropped)  and closest_dist != 0:
                     new_markers[closest_id] = Marker(closest_id, marker.x, marker.y, marker.z, prev_frame.marker_list[closest_id].name)
+                    new_markers[closest_id].times_dropped = 0
                     shortest_found[closest_id] = closest_dist
                     break
 
         for i in range(0, prev_frame.count):
             if new_markers[i] is None:  # Marker dropped!
                 new_markers[i] = prev_frame.get_marker_by_id(i)
+                new_markers[i].times_dropped += 1
 
-        # for i,marker in enumerate(new_markers):
-        #     if marker == None:
-        #         new_markers.pop(i)
 
-        # print "frame : ", prev_index+1
         temp = Frame(self.sec, self.usec, len(new_markers), new_markers, self.object_list)
-
         return temp
 
     def set_marker_names_by_id(self):
@@ -316,6 +314,43 @@ class Frame:
     def reorder_ids(self):
         for i, marker in enumerate(self.marker_list):
             marker.id = i
+
+    # def check_marker_distances(self, prev):
+    #     for i in range(0, self.count, NB_MARKERS):
+    #         # ChestFront
+    #         if self.marker_list[i]
+
+
+
+
+
+
+
+
+
+
+
+
+    #         self.marker_list[i].name = 'ChestFront'
+    #         self.marker_list[i+1].name = 'ChestBack'
+    #         self.marker_list[i+2].name = 'SternumFront'
+    #         self.marker_list[i+3].name = 'SternumBack'
+    #         self.marker_list[i+4].name = 'rShoulderFront'
+    #         self.marker_list[i+5].name = 'rShoulderBack'
+    #         self.marker_list[i+6].name = 'rElbowOuter'
+    #         self.marker_list[i+7].name = 'rElbowInner'
+    #         self.marker_list[i+8].name = 'rWristOuter'
+    #         self.marker_list[i+9].name = 'rWristInner'
+    #         self.marker_list[i+10].name = 'rPalm'
+    #         self.marker_list[i+11].name = 'lShoulderFront'
+    #         self.marker_list[i+12].name = 'lShoulderBack'
+    #         self.marker_list[i+13].name = 'lElbowOuter'
+    #         self.marker_list[i+14].name = 'lElbowInner'
+    #         self.marker_list[i+15].name = 'lWristOuter'
+    #         self.marker_list[i+16].name = 'lWristInner'
+    #         self.marker_list[i+17].name = 'lPalm'
+
+
 
 
 class Fixer:
@@ -512,7 +547,6 @@ class Fixer:
         print "Filtered ", nb_removed, ' markers'
 
     def init_first_frame(self):
-        first = None
         # TODO Get # Human from objects
         # TODO Check if marker and object timestamps for first_frame match up
         # TODO Align object names with a humans. pelvis1, head1, pelvis2, head2 etc
