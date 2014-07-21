@@ -11,11 +11,12 @@ import os
 import collections
 import time
 import math
+import sys
+import copy
 
-
-THRESHOLD = 0.0025
-# Experiment is 18 per human
-N_MARKERS = 36
+THRESHOLD   = 0.0025
+NB_MARKERS  = 18
+NB_HUMAN    = 2
 
 #Just for timing runs of the tracker.  Useless
 class Timer:
@@ -69,29 +70,30 @@ class Object:
     def get_rot_matrix(self):
         mat =  MakeTransform( openravepy.rotationMatrixFromQuat(np.array([self.r_x, self.r_y, self.r_z, self.r_w])), np.transpose(np.matrix([self.x, self.y, self.z])))
 
-        x_dir = np.array(np.transpose(mat[:,0]).tolist()[0][:3])
-        y_dir = np.array(np.transpose(mat[:,1]).tolist()[0][:3])
-        z_dir = np.array(np.transpose(mat[:,2]).tolist()[0][:3])
+        if self.id is 'TouchTomorrow3':
+            x_dir = np.array(np.transpose(mat[:,0]).tolist()[0][:3])
+            y_dir = np.array(np.transpose(mat[:,1]).tolist()[0][:3])
+            z_dir = np.array(np.transpose(mat[:,2]).tolist()[0][:3])
 
-        new_x = -z_dir
-        new_x[2] = 0
-        new_x = new_x/np.linalg.norm(new_x)
-        new_z = np.array([0,0,1])
+            new_x = -z_dir
+            new_x[2] = 0
+            new_x = new_x/np.linalg.norm(new_x)
+            new_z = np.array([0,0,1])
 
-        new_y = np.cross(new_x, new_z)
-        new_y = new_y/np.linalg.norm(new_y)
-        new_y = -new_y
+            new_y = np.cross(new_x, new_z)
+            new_y = new_y/np.linalg.norm(new_y)
+            new_y = -new_y
 
 
-        mat[0][0, 0] = new_x[0]
-        mat[0][0, 1] = new_y[0]
-        mat[0][0, 2] = new_z[0]
-        mat[1][0, 0] = new_x[1]
-        mat[1][0, 1] = new_y[1]
-        mat[1][0, 2] = new_z[1]
-        mat[2][0, 0] = new_x[2]
-        mat[2][0, 1] = new_y[2]
-        mat[2][0, 2] = new_z[2]
+            mat[0][0, 0] = new_x[0]
+            mat[0][0, 1] = new_y[0]
+            mat[0][0, 2] = new_z[0]
+            mat[1][0, 0] = new_x[1]
+            mat[1][0, 1] = new_y[1]
+            mat[1][0, 2] = new_z[1]
+            mat[2][0, 0] = new_x[2]
+            mat[2][0, 1] = new_y[2]
+            mat[2][0, 2] = new_z[2]
 
         return mat
 
@@ -120,13 +122,19 @@ class Frame:
             if marker.id == id:
                 return marker
 
+
+        print "Couldn't find marker with id : ", id
         return None
 
     def print_marker_ids(self):
-        marker_string = ''
+        marker_string = '[ '
 
         for marker in self.marker_list:
-            marker_string += str(marker.id) + ' '
+            if marker is None:
+                marker_string += 'None' + ' '
+            else:
+                marker_string += str(marker.id) + ' '
+        marker_string += ']'
         print marker_string
 
     def is_similar_frame(self, other):
@@ -201,29 +209,31 @@ class Frame:
 
         return [x for x, y in collections.Counter(indices).items() if y > 1]
 
-    def get_new_config_by_distance(self, configs, prev_index):
+    def get_new_config_by_distance(self, prev_frame):
         # print "i : ", prev_index+1
-        prev = configs[prev_index]
+        new_markers = [None]*prev_frame.count
+        shortest_found = [float('inf')]*prev_frame.count
 
-        new_markers = [None]*prev.count
-        shortest_found = [float('inf')]*prev.count
+        # self.print_marker_ids()
 
         for i, marker in enumerate(self.marker_list):
 
-            dists = prev.get_distances(marker)
+            dists = prev_frame.get_distances(marker)
 
             for closest in dists:
                 closest_id = closest[0]
                 closest_dist = closest[1]
 
-                if closest_id < prev.count and shortest_found[closest_id] > closest_dist:
-                    new_markers[closest_id] = Marker(closest_id, marker.x, marker.y, marker.z, prev.marker_list[closest_id].name)
+                if closest_id < prev_frame.count and shortest_found[closest_id] > closest_dist:
+                    new_markers[closest_id] = Marker(closest_id, marker.x, marker.y, marker.z, prev_frame.marker_list[closest_id].name)
                     shortest_found[closest_id] = closest_dist
                     break
 
-        for i in range(0, prev.count):
+        for i in range(0, prev_frame.count):
             if new_markers[i] is None:  # Marker dropped!
-                new_markers[i] = prev.get_marker_by_id(i)
+                print "Dropped a marker"
+                prev_frame.print_marker_ids()
+                new_markers[i] = prev_frame.get_marker_by_id(i)
 
         # for i,marker in enumerate(new_markers):
         #     if marker == None:
@@ -273,18 +283,76 @@ class Frame:
             if marker.id == 17:
                 marker.name = 'lPalm'
 
+    def set_marker_names(self):
+        true_count = NB_MARKERS*NB_HUMAN
+        if (self.count is not true_count):
+            print "Something went wrong when setting marker names"
+            return
+
+        new_id = 0
+        for i in range(0, true_count, NB_MARKERS):
+            self.marker_list[i].name = 'ChestFront'
+            self.marker_list[i+1].name = 'ChestBack'
+            self.marker_list[i+2].name = 'SternumFront'
+            self.marker_list[i+3].name = 'SternumBack'
+            self.marker_list[i+4].name = 'rShoulderFront'
+            self.marker_list[i+5].name = 'rShoulderBack'
+            self.marker_list[i+6].name = 'rElbowOuter'
+            self.marker_list[i+7].name = 'rElbowInner'
+            self.marker_list[i+8].name = 'rWristOuter'
+            self.marker_list[i+9].name = 'rWristInner'
+            self.marker_list[i+10].name = 'rPalm'
+            self.marker_list[i+11].name = 'lShoulderFront'
+            self.marker_list[i+12].name = 'lShoulderBack'
+            self.marker_list[i+13].name = 'lElbowOuter'
+            self.marker_list[i+14].name = 'lElbowInner'
+            self.marker_list[i+15].name = 'lWristOuter'
+            self.marker_list[i+16].name = 'lWristInner'
+            self.marker_list[i+17].name = 'lPalm'
+
+
+    # def get_n_closest_markers(self, pelv_frame, n):
+    #     points = []
+    #     points_in_pelv = {}
+    #     temp_pelv = np.transpose(pelv_frame[:,3])
+    #     pelv_point = np.array([temp_pelv[0,0], temp_pelv[0,1], temp_pelv[0,2]])
+    #     # pelv_marker = Marker( 0, pelv_point[0,0], pelv_point[0,1], pelv_point[0,2]  )
+
+    #     # Get all points in the pelvis frame
+    #     inv = np.linalg.inv(pelv_frame)
+    #     for marker in self.marker_list:
+
+    #         point = np.array(np.array(inv).dot(np.array(append(marker.array, 1.0))))[0:3]
+    #         point[2] = pelv_point[2]  # Only consider closest in x and y
+
+    #         points_in_pelv[marker.id] = point
+
+    #     # Get their distance from the pelvis point
+    #     dist = {}
+    #     for key in points_in_pelv:
+    #         dist[key] = np.linalg.norm(points_in_pelv[key]-pelv_point)
+
+    #     dist_list = sorted(dist.items(), key=lambda(k, v): v)
+    #     # Get the first 18 points
+    #     for pair in dist_list[:n]:
+    #         points.append( ( pair[0] ,self.marker_list[pair[0]].array) )
+
+    #     return points
+
     def get_n_closest_markers(self, pelv_frame, n):
-
         points = []
-        pelv_point = np.transpose(pelv_frame[:,3])
-        pelv_marker = Marker( 0, pelv_point[0,0], pelv_point[0,1], pelv_point[0,2]  )
+        dist = {}
 
-        closest = self.get_distances(pelv_marker)[:n]
-        # Put the markers back in order by id
-        closest.sort( key = lambda p: p[0], reverse=False )
+        for marker in self.marker_list:
+            # Only consider distance in x and y
+            dist[marker.id] = sqrt( (marker.x-pelv[0])**2 + (marker.y-pelv[1])**2 )
 
-        for pair in closest:
-            points.append( self.marker_list[pair[0]].array )
+        dist_list = sorted(dist.items(), key=lambda(k, v): v)
+
+
+        # Return the first n points
+        for pair in dist_list[:n]:
+            points.append( ( pair[0] ,self.marker_list[pair[0]].array) )
 
         return points
 
@@ -296,8 +364,8 @@ class Fixer:
         self.o_filepath = o_filepath
         self.frames = []
         self.max_markers = None
-        self.first_config = 0
-        self.last_config = 0
+        self.first_frame = 0
+        self.last_frame = 0
 
     def load_file(self):
         print "Trying to open file"
@@ -312,7 +380,7 @@ class Fixer:
                 object_file = [row for row in csv.reader(o_file, delimiter=',')]
 
         nb_lines = min(len(marker_file), len(object_file))
-        self.last_config = nb_lines
+        self.last_frame = nb_lines
 
         for row in range(nb_lines):
 
@@ -356,55 +424,6 @@ class Fixer:
 
             self.frames.append( Frame(sec, nsec, count, markers, objects) )
 
-        # with open(self.m_filepath, 'r') as m_file:
-        #     with open(self.o_filepath, 'r') as o_file:
-        #         marker_rows = m_file.readlines()
-        #         object_rows = o_file.readlines()
-        #
-        #
-        #         for line in m_file:
-        #             markers = []
-        #
-        #             cell = line.split(',')
-        #             sec = float(cell[0])
-        #             nsec = float(cell[1])
-        #             count = int(cell[2])
-        #
-        #             for i in range(3, count*4, 4):
-        #                 id = int(cell[i])
-        #                 x = float(cell[i+1])
-        #                 y = float(cell[i+2])
-        #                 z = float(cell[i+3])
-        #                 marker = Marker(id, x, y, z)
-        #                 markers.append(marker)
-        #
-        #         for line in o_file:
-        #             objects = []
-        #
-        #             cell = line.split(',')
-        #             sec = float(cell[0])
-        #             nsec = float(cell[1])
-        #             count = int(cell[2])
-        #
-        #             for i in range(3, count*9, 9):
-        #                 name = str(cell[i])
-        #                 occluded = int(cell[i+1])
-        #                 x = float(cell[i+2])
-        #                 y = float(cell[i+3])
-        #                 z = float(cell[i+4])
-        #                 r_x = float(cell[i+5])
-        #                 r_y = float(cell[i+6])
-        #                 r_z = float(cell[i+7])
-        #                 r_w = float(cell[i+8])
-        #
-        #                 object = Object( name, occluded, x, y, z, r_x, r_y, r_z, r_w )
-        #                 objects.append(object)
-        #
-        #
-        #
-        #             self.frames.append( Frame(sec, nsec, count, markers, objects) )
-        #         self.last_config = len(self.frames)
-
         print "# configs loaded : " + str(len(self.frames))
 
     def save_file(self):
@@ -416,9 +435,9 @@ class Fixer:
         outpath = name + '_fixed.'+type
 
 
-        # TODO Should output a truncated objects file starting at first_config
+        # TODO Should output a truncated objects file starting at first_frame
         with open(outpath, 'w') as f:
-            for frame in self.frames[self.first_config:self.last_config]:
+            for frame in self.frames[self.first_frame:self.last_frame]:
                 line_str = ""
                 line_str += str(frame.sec) + ','
                 line_str += str(frame.usec) + ','
@@ -510,92 +529,124 @@ class Fixer:
 
         print "Filtered ", nb_removed, ' markers'
 
+    def filter_negative_x(self):
+        nb_removed = 0
+
+        for frame in self.frames:
+            remove_list = []
+
+            for marker in frame.marker_list:
+                if marker.x < 0.6:
+                    remove_list.append(marker)
+                    frame.count -= 1
+                    nb_removed += 1
+
+            for r_marker in remove_list:
+                frame.marker_list.remove(r_marker)
+
+        print "Filtered ", nb_removed, ' markers'
+
     def track_indices(self):
-        # Find the first agreeing Frames
 
-        found_agreeing_frames = False
+        # TODO Should read in the configs, figure out # of humans and align objects in pelvis, head, pelvis, head order
 
-        last = self.frames[0]
-        for i in range( 1, self.last_config) :
-            # print "len 1 : ", len(last.marker_list), "len 2 : ", len(self.frames[i].marker_list)
-            if last.is_similar_frame( self.frames[i] ):
-                print "Frames " + str(i-1) +' and ' + str(i) + ' have the same indices'
-
-                self.max_markers = last.count
-                self.first_config = i-1
-                found_agreeing_frames = True
-
-                # Get pelv frame
-                pelv_frames = []
-                for object in last.object_list:
-                    if object.id == 'TouchTomorrow3':
-                        pelv_frames.append(object.get_rot_matrix())
-
-                if pelv_frames is None:
-                    print "Couldn't find a pelvis frame!"
-                    sys.exit()
-
-                # Get marker name map
-                # Check if there are more than 1 humans
-                # If so isolate their markers and pass to the namer
-                # Get two maps
-                print "Getting marker name map"
-                maps = []
-                for pelvis in pelv_frames:
-
-                    # Build list of marker numpy arrays
-                    points = last.get_n_closest_markers(pelvis, 18)
-
-                    namer = AssignNames(points, pelvis)
-                    maps.append(namer.assign_marker_names())
-
-
-                # Reorder markers according to map
-                # Make into a function
-                # Should take in either one or two map lists
-
-                for map in maps:
-                    print map
-                    new_marker_list = []
-                    for i, id in enumerate(map):
-                        new_marker_list.append(last.marker_list[id])
-                        new_marker_list[i].id = i
-
-                last.marker_list = new_marker_list
-
-                # print "Fixing marker ids according to map"
-                # new_marker_list = []
-                # for i, id in enumerate(map):
-                #     new_marker_list.append(last.marker_list[id])
-                #     new_marker_list[i].id = i
-                #
-                # last.marker_list = new_marker_list
-
-                # Set marker names by id
-                print "Setting marker names"
-                last.set_marker_names_by_id()
-
+        first = None
+        # Find first config with num markers * num humans.
+        for i, frame in enumerate(self.frames):
+            if frame.count == ( NB_HUMAN * NB_MARKERS ):
+                print "Found good first frame at : ", i
+                self.first_frame = i
+                first = self.frames[i]
                 break
 
-            last = self.frames[i]
+        if first is None:
+            print "Couldn't find a frame with : ", NB_MARKERS, " * ", NB_HUMAN, " markers"
+            sys.exit()
 
-        if not found_agreeing_frames:
-            print "Couldn't find two frames with the same # of similar markers.  Try a different N_MARKERS?"
-            return
+        # TODO Check if marker and object timestamps for first_frame match up
 
-        #Match the indices
-        for i in range( self.first_config+1, self.last_config ):
-            # print "i : " + str(i) + " i-1: " + str(i-1)
-            prev = self.frames[i-1]
-            current = self.frames[i]
+        # Get the pevlis frame for each human
+        # 
+        # 
+        #   MOVE THIS INTO LOOP AND CHECK FOR OCCLUSION 
+        # 
+        # 
+        # 
 
-            #  Nothing to fix
-            if prev.is_similar_frame(current):
-                continue
+        pelv_frames = []
+        for object in first.object_list:
+            if 'Pelvis' in object.id:
+                pelv_frames.append(object.get_rot_matrix())
 
-            new = current.get_new_config_by_distance( self.frames, i-1 ) #new config could have duplicates
-            new.order_markers()
+        if len(pelv_frames) is not NB_HUMAN:
+            print "Did not find the right number of pelvis objects"
+            sys.exit()
+
+        # Get the marker map for each human 
+        print "Getting marker name map"
+        maps = []
+
+        # Need a more intelligent way to find first 18 markers.  This is a total hack
+        for pelvis in pelv_frames:
+            # Build list of marker numpy arrays
+            points = first.get_n_closest_markers(pelvis, NB_MARKERS)
+            # for point in points:
+            #     for a_point in available:
+            #         if a_point.id == point[0]:
+            #             available.remove(a_point)
+
+            maps.append(AssignNames(points, pelvis).assign_marker_names())
+
+        # Reorder markers according to map
+        new_marker_list = []
+        for map in maps:
+            print map
+            for id in map:
+                new_marker_list.append(first.marker_list[id])
+
+        print "Concatenated marker list"
+        first.marker_list = new_marker_list
+        first.print_marker_ids()
+
+
+        print "checking duplicates"
+        dupes = first.get_duplicate_ids()
+        if dupes:
+            for dupe in dupes:
+                print dupe
+            sys.exit()
+
+        # Now all markers are in the proper order, but names aren't set and ids are out of order
+        print "Assign marker names"
+        first.set_marker_names()
+
+        # Put all ids in ascending order
+        for i, marker in enumerate(first.marker_list):
+            marker.id = i
+
+        prev = first
+        for i in range(self.first_frame+1, self.last_frame):
+            curr = self.frames[i]
+            new = curr.get_new_config_by_distance(prev)
             self.frames[i] = new
+            prev = new
+
+
+
+        # for curr in self.frames[self.first_frame+1:self.last_frame]:
+        #     new = curr.get_new_config_by_distance(prev)
+        #     curr = new
+        #     prev = curr
+
+        # # Start fixing markers
+        # for i in range( self.first_frame+1, self.last_frame ):
+        #     # print "i : " + str(i) + " i-1: " + str(i-1)
+        #     prev = self.frames[i-1]
+        #     current = self.frames[i]
+
+        #     new = current.get_new_config_by_distance( self.frames, i-1 ) #new config could have duplicates
+        #     # new.order_markers()
+        #     self.frames[i] = new
 
     def reorder_ids(self):
         for frame in self.frames:
@@ -629,75 +680,34 @@ class Fixer:
 
             window = window[1:] + [self.frames[i+1]]
 
-
-    # def moving_average(self):
-    #
-    #     for f, frame in enumerate(self.frames):
-    #
-    #         new_markers = []
-    #
-    #         for m in range(len(frame.marker_list)):
-    #             marker = frame.marker_list[m]
-    #             avg = np.array([0,0,0])
-    #
-    #             for i in range(-2,3):
-    #                 index = f + i
-    #                 if index < 0:
-    #                     index = 0
-    #                 if index >= self.last_config:
-    #                     index = self.last_config-1
-    #
-    #
-    #                 # print "nb frames : ", len(self.frames), ' index : ', index, " marker : ", m, " nb markers : ", len(frame.marker_list)
-    #                 # print "m : ", m, " len marker list : ", len(self.frames[index].marker_list)
-    #
-    #                 avg += self.frames[index].marker_list[m].array
-    #             avg = avg/5
-    #             marker.array = avg
-    #             marker.x = avg[0]
-    #             marker.y = avg[1]
-    #             marker.z = avg[2]
-
 if __name__ == '__main__':
-    f = Fixer('/home/rafi/logging_data/second/markers.csv', '/home/rafi/logging_data/second/objects.csv')
+    f = Fixer('/home/rafi/logging_data/third/markers.csv', '/home/rafi/logging_data/third/objects_fixed.csv')
 
     try:
         with Timer() as t:
             f.load_file()
 
-            avg = f.get_average_position()
-            f.filter_threshold_outside(avg, 2.0)
+            # avg = f.get_average_position()
+            # f.filter_threshold_outside(avg, 1.8)
+
+            f.filter_negative_x()
 
             f.filter_pillar()
             print "starting fixing ids"
             f.reorder_ids()
 
-            current_time = time.clock()
-            elapsed = current_time - t.start
-
-            print "Trying to match indices.  Current time : ", elapsed
-
+            print "starting to track ids"
             f.track_indices()
 
-            current_time = time.clock()
-            elapsed = current_time - t.start
-
-            print "Finished matching indices.  Current time : ", elapsed
-
-            # print "Trying to smooth with a moving average"
-            # current_time = time.clock()
-            # elapsed = current_time - t.start
-            # f.moving_average()
-
-            print "Trying to smooth markers"
+            # print "Trying to smooth markers"
             # f.smooth_markers(7)
 
             nb_diff = 0.0
             for i,frame in enumerate(f.frames):
-                if len(frame.marker_list) != N_MARKERS:
+                if len(frame.marker_list) != NB_MARKERS:
                     # print i, ' ', len(frame.marker_list)
                     nb_diff += 1
-            print "% different : " , nb_diff/f.last_config
+            print "% different : " , nb_diff/f.last_frame
 
             f.save_file()
     finally:

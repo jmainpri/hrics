@@ -245,9 +245,6 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
                 x_dir.y = T.m[4]; y_dir.y = T.m[5]; z_dir.y = T.m[6];
                 x_dir.z = T.m[8]; y_dir.z = T.m[9]; z_dir.z = T.m[10];
 
-                cout << "x_dir : " << x_dir << endl;
-                cout << "y_dir : " << y_dir << endl;
-                cout << "z_dir : " << z_dir << endl;
 
 //                T.m[0] = - z_dir.x; T.m[1]  = 0; T.m[2] = 0; T.m[3] = x;
 //                T.m[4] = - z_dir.y; T.m[5]  = 0; T.m[6] = 0; T.m[7] = y;
@@ -277,6 +274,16 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
                 drawFrame(T);
             }
 
+            if ( id == "ArchieLeftHand")
+            {
+
+                for (int i = 0; i < 12; i++)
+                    cout << T.m[i] << " ";
+                cout << endl;
+
+                drawFrame(T);
+            }
+
             color[0] = 1;
             color[1] = 0;
             color[2] = 0;
@@ -284,7 +291,8 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
 
             move3d_draw_sphere(x, y, z, 0.01875, color );
         }
-
+        row = 0;
+        sleep(2);
         usleep(dt*1000000.0);
         move3d_draw_clear_handles();
         graphptrs_.clear();
