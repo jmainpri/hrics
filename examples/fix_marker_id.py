@@ -85,7 +85,6 @@ class Object:
         new_y = new_y/np.linalg.norm(new_y)
         new_y = -new_y
 
-
         mat[0][0, 0] = new_x[0]
         mat[0][0, 1] = new_y[0]
         mat[0][0, 2] = new_z[0]
@@ -122,7 +121,6 @@ class Frame:
         for marker in self.marker_list:
             if marker.id == id:
                 return marker
-
 
         print "Couldn't find marker with id : ", id
         return None
@@ -194,6 +192,11 @@ class Frame:
 
         return [x for x, y in collections.Counter(indices).items() if y > 1]
 
+    def get_threshold(self, id):
+        marker = self.marker_list[id]
+
+        return THRESHOLD + THRESHOLD*marker.times_dropped
+
     def get_new_config_by_distance(self, prev_frame):
         # print "i : ", prev_index+1
         new_markers = [None]*prev_frame.count
@@ -209,7 +212,7 @@ class Frame:
                 closest_id = closest[0]
                 closest_dist = closest[1]
 
-                if shortest_found[closest_id] > closest_dist and closest_dist < (THRESHOLD + THRESHOLD*prev_frame.marker_list[closest_id].times_dropped)  and closest_dist != 0:
+                if shortest_found[closest_id] > closest_dist and closest_dist < prev_frame.get_threshold(closest_id) and closest_dist != 0:
                     new_markers[closest_id] = Marker(closest_id, marker.x, marker.y, marker.z, prev_frame.marker_list[closest_id].name)
                     new_markers[closest_id].times_dropped = 0
                     shortest_found[closest_id] = closest_dist
@@ -315,43 +318,6 @@ class Frame:
         for i, marker in enumerate(self.marker_list):
             marker.id = i
 
-    # def check_marker_distances(self, prev):
-    #     for i in range(0, self.count, NB_MARKERS):
-    #         # ChestFront
-    #         if self.marker_list[i]
-
-
-
-
-
-
-
-
-
-
-
-
-    #         self.marker_list[i].name = 'ChestFront'
-    #         self.marker_list[i+1].name = 'ChestBack'
-    #         self.marker_list[i+2].name = 'SternumFront'
-    #         self.marker_list[i+3].name = 'SternumBack'
-    #         self.marker_list[i+4].name = 'rShoulderFront'
-    #         self.marker_list[i+5].name = 'rShoulderBack'
-    #         self.marker_list[i+6].name = 'rElbowOuter'
-    #         self.marker_list[i+7].name = 'rElbowInner'
-    #         self.marker_list[i+8].name = 'rWristOuter'
-    #         self.marker_list[i+9].name = 'rWristInner'
-    #         self.marker_list[i+10].name = 'rPalm'
-    #         self.marker_list[i+11].name = 'lShoulderFront'
-    #         self.marker_list[i+12].name = 'lShoulderBack'
-    #         self.marker_list[i+13].name = 'lElbowOuter'
-    #         self.marker_list[i+14].name = 'lElbowInner'
-    #         self.marker_list[i+15].name = 'lWristOuter'
-    #         self.marker_list[i+16].name = 'lWristInner'
-    #         self.marker_list[i+17].name = 'lPalm'
-
-
-
 
 class Fixer:
 
@@ -444,7 +410,7 @@ class Fixer:
                 line_str += str(frame.count) + ','
 
                 for marker in frame.marker_list:
-                    line_str += str(marker.id) + ','
+                    line_str += str(marker.name) + ','
                     line_str += str(marker.x) + ','
                     line_str += str(marker.y) + ','
                     line_str += str(marker.z) + ','
@@ -623,24 +589,39 @@ class Fixer:
             print "Window size can't be even"
             return
 
-        window = self.frames[:size]
+        window = self.frames[self.first_frame:self.first_frame+size]
 
-        for i in range(int(floor(size/2)), self.last_frame):
+        for i in range( self.first_frame + int(floor(size/2)), self.last_frame-int(floor(size/2))):
             for m, marker in enumerate(self.frames[i].marker_list):
                 avg = np.array([0.0,0.0,0.0])
 
                 for a_frame in window:
-                    print "m : ", m, "len frame : ", len(a_frame.marker_list)
+                    # print "frame : ", i, "m : ", m, "len frame : ", len(a_frame.marker_list)
                     avg += a_frame.marker_list[m].array
 
                 avg = avg/float(size)
 
-                marker.array = avg
-                marker.x = avg[0]
-                marker.y = avg[1]
-                marker.z = avg[2]
+                self.frames[i].marker_list[m].array = avg
+                self.frames[i].marker_list[m].x = avg[0]
+                self.frames[i].marker_list[m].y = avg[1]
+                self.frames[i].marker_list[m].z = avg[2]
 
             window = window[1:] + [self.frames[i+1]]
+
+    # def smooth_markers(self, size):
+    #     if size%2 == 0:
+    #         size+=1
+    #         print "Can't use an even window size.  Using : " size, ' instead'
+
+    #     start = self.first_frame
+
+    #     window = self.frames[start:start+size]
+    #     for frame in window:
+
+
+
+
+    #     window = window[1:] + [self.frames[i+1]]
 
     def normalize_ids(self):
         for frame in self.frames:
@@ -648,8 +629,6 @@ class Fixer:
                 marker.id = marker.id%18
 
     def get_runtime(self):
-        print "len frames : ", len(self.frames), "last : ", self.last_frame
-
         start = self.frames[self.first_frame].sec
         end = self.frames[self.last_frame-1].sec
 
@@ -679,8 +658,8 @@ if __name__ == '__main__':
             print "starting to track ids"
             f.track_indices()
 
-            # print "Trying to smooth markers"
-            # f.smooth_markers(7)
+            print "Trying to smooth markers"
+            f.smooth_markers(7)
 
             # nb_diff = 0.0
             # for i,frame in enumerate(f.frames[f.first_frame:f.last_frame]):

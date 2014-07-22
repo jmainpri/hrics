@@ -141,7 +141,7 @@ class kinect_subscriber():
 
         self.prob.SendCommand('SetPlayType 1')
 
-        self.prob.SendCommand('DrawMocapFile /home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv /home/rafi/logging_data/third/objects_fixed.csv')
+        self.prob.SendCommand('DrawMocapFile /home/rafi/workspace/hrics-or-plugins/examples/markers_smoothed.csv /home/rafi/logging_data/third/objects_fixed.csv')
         # self.prob.SendCommand('DrawMocapFile /home/rafi/logging_data/third/markers.csv /home/rafi/logging_data/third/objects.csv')
 
         return
