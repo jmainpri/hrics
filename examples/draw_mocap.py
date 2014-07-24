@@ -31,144 +31,247 @@
 from openravepy import *
 import os
 import sys
-from numpy import *
+import time
+import csv
+from copy import deepcopy
+import numpy as np
+from numpy import linalg as la
 from TransformMatrix import *
 from rodrigues import *
-import roslib; roslib.load_manifest('wiimote')
-import rospy
-from std_msgs.msg import *
-from sensor_msgs.msg import *
-from wiimote.msg import*
-import keystroke
-from time import sleep
-import segment_file
-import transformation_helper
+from subprocess import call
 
-play_folder = False
-show_images = 1 # 0 to not show
-#trajectories_directory = "/home/rafi/workspace/statFiles/recorded_motion/"
-#trajectories_directory = "/home/rafi/Desktop/classes/"
-#trajectories_directory = "/media/57f621de-c63b-4d30-84fc-da4ce0b1e1eb/home/rafihayne/workspace/statFiles/saved/8/"
-trajectories_directory = "/home/rafi/workspace/experiment/6/"
-#trajectories_files = ["temp.csv"] #One file for each human in the scene
-trajectories_files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.csv"]
+NB_MARKERS = 18
+NB_HUMAN = 1
 
-#in order to use the wiimote, create a wiimote subscriber object and call run.
+class DrawMarkers():
 
-class kinect_subscriber():
     def __init__(self):
-        self.orEnv = Environment()
-        self.prob = None
-        self.h = [None]
-        self.orEnv.SetViewer('qtcoin')
 
-        self.dir = trajectories_directory
-        self.files = trajectories_files
+        self.env = Environment()
+        self.env.SetViewer('qtcoin')
+        self.env.SetDebugLevel(DebugLevel.Verbose)
+        self.env.Reset()
+        self.env.Load("../ormodels/human_wpi_bio.xml")
 
-        self.split = [0,0]
+        self.human = self.env.GetRobots()[0]
+        self.handles = []
 
-        print "start"
-        self.orEnv.SetDebugLevel(DebugLevel.Verbose)
-        self.orEnv.Reset()
+        # Should store the marker set
+        self.frames = []
 
-        self.orEnv.Load("../ormodels/human_wpi_new.xml")
-        if len(self.files) > 1 :
-            self.orEnv.Load("../ormodels/human_wpi_blue.xml")
+    def load_file(self, m_filepath, o_filepath):
+        print "Trying to open file"
 
-        #self.orEnv.Load("../ormodels/env.xml")
+        marker_file = []
+        object_file = []
 
-        T_h = MakeTransform( eye(3), transpose(matrix([0,0,-10])))
-        human1 = self.orEnv.GetRobots()[0].SetTransform(array(T_h))
-        human2 = self.orEnv.GetRobots()[1].SetTransform(array(T_h))
+        with open(m_filepath, 'r') as m_file:
+            with open(o_filepath, 'r') as o_file:
 
-        print "draw frame"
-        T = MakeTransform( eye(3), transpose(matrix([0,0,0])))
+                marker_file = [row for row in csv.reader(m_file, delimiter=',')]
+                object_file = [row for row in csv.reader(o_file, delimiter=',')]
 
-        # Second Run
-        # CalBlock = MakeTransform( rotationMatrixFromQuat(array([0.7188404833, 0.2970505392, -0.4412091838, 0.4476201435 ])), transpose(matrix([1.8211836689, 1.0781754454, 1.7937961156])))
-        # TouchTomorrow3 =  MakeTransform( rotationMatrixFromQuat(array([0.1457896082, -0.4695454709, 0.8700436823, 0.0360059973])), transpose(matrix([1.9327413784, 1.3481940541, 1.0716016861])))
+        nb_lines = min(len(marker_file), len(object_file))
+        self.last_frame = nb_lines
+
+        for row in range(nb_lines):
+
+            markers = []
+            objects = []
+
+            m_cells = marker_file[row]
+            o_cells = object_file[row]
+
+            # Load Objects
+            count = int(o_cells[2])
+
+            for i in range(3, count*9, 9):
+                name = str(o_cells[i])
+                occluded = int(o_cells[i+1])
+                x = float(o_cells[i+2])
+                y = float(o_cells[i+3])
+                z = float(o_cells[i+4])
 
 
-        # Third Run
-        ArchieLeftHand = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([-0.0565983288, 0.6551985404, -0.0308211559, 0.7527028352]) )), transpose(matrix([ 2.2630624073, 1.5024087108, 1.0334129255 ])) )
-        ArchieRightHand = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([0.8364161312, -0.0441252319, -0.5430014612, -0.0600868744])) ), transpose(matrix([2.0138498402, 1.5327076092, 1.7597781595])) )
-        CalBlock = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([0.7334740645, -0.2377743781, -0.4547046476, -0.4457833838]) )), transpose(matrix([1.3887227848, 0.894679857, 1.7826058767])) )
-        TouchTomorrow3 = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([0.0351806021, 0.7399746771, 0.6593515387, -0.1282784114]) )), transpose(matrix([1.4964491222, 0.6294067075, 1.046128491])) )
+                object = Object( name, occluded, x, y, z)
+                objects.append(object)
+
+            # Load Markers
+            sec = float(m_cells[0])
+            nsec = float(m_cells[1])
+            count = int(m_cells[2])
+
+
+            nb_seen = 0
+            for i in range(3, count*4, 4):
+                id = nb_seen
+                name = str(m_cells[i])
+                x = float(m_cells[i+1])
+                y = float(m_cells[i+2])
+                z = float(m_cells[i+3])
+                nb_seen += 1
+
+                marker = Marker(id, x, y, z, name)
+                markers.append(marker)
+
+
+            self.frames.append( Frame(sec, nsec, count, markers, objects) )
+
+        print "# configs loaded : " + str(len(self.frames))
+
+    def draw_center_points(self):
+        # for frame in self.frames:
+        prev_time = self.frames[0].get_time()
+
+        for frame in self.frames:
+            curr_time = frame.get_time()
+            humans = []
+            humans_raw = []
+
+            for i in range(0, NB_MARKERS*NB_HUMAN, NB_MARKERS):
+                Chest = (frame.marker_list[i].array + frame.marker_list[i+1].array)/2
+                Sternum = (frame.marker_list[i+2].array + frame.marker_list[i+3].array)/2
+                rShoulder = (frame.marker_list[i+4].array + frame.marker_list[i+5].array)/2
+                rElbow = (frame.marker_list[i+6].array + frame.marker_list[i+7].array)/2
+                rWrist = (frame.marker_list[i+8].array + frame.marker_list[i+9].array)/2
+                rPalm = frame.marker_list[i+10].array
+                lShoulder = (frame.marker_list[i+11].array + frame.marker_list[i+12].array)/2
+                lElbow = (frame.marker_list[i+13].array + frame.marker_list[i+14].array)/2
+                lWrist = (frame.marker_list[i+15].array + frame.marker_list[i+16].array)/2
+                lPalm = frame.marker_list[i+17].array
+                Pelvis = frame.object_list[ (i/18)*2 ].array
+                Head = frame.object_list[ (i/18)*2 + 1 ].array
+
+                ChestFront_raw      = frame.marker_list[i].array
+                ChestBack_raw       = frame.marker_list[i+1].array
+                SternumFront_raw    = frame.marker_list[i+2].array
+                SternumBack_raw     = frame.marker_list[i+3].array
+                rShoulderFront_raw  = frame.marker_list[i+4].array
+                rShoulderBack_raw   = frame.marker_list[i+5].array
+                rElbowOuter_raw     = frame.marker_list[i+6].array
+                rElbowInner_raw     = frame.marker_list[i+7].array
+                rWristOuter_raw     = frame.marker_list[i+8].array
+                rWristInner_raw     = frame.marker_list[i+9].array
+                rPalm_raw           = frame.marker_list[i+10].array
+                lShoulderFront_raw  = frame.marker_list[i+11].array
+                lShoulderBack_raw   = frame.marker_list[i+12].array
+                lElbowOuter_raw     = frame.marker_list[i+13].array
+                lElbowInner_raw     = frame.marker_list[i+14].array
+                lWristOuter_raw     = frame.marker_list[i+15].array
+                lWristInner_raw     = frame.marker_list[i+16].array
+                lPalm_raw           = frame.marker_list[i+17].array
+
+                humans.append( np.array([Chest, Sternum, rShoulder, rElbow, rWrist, rPalm, lShoulder, lElbow, lWrist, lPalm, Pelvis, Head]) )
+                humans_raw.append( np.array([ChestFront_raw, ChestBack_raw, SternumFront_raw, SternumBack_raw, rShoulderFront_raw, rShoulderBack_raw,
+                                            rElbowOuter_raw, rElbowInner_raw, rWristOuter_raw, rWristInner_raw, rPalm_raw, lShoulderFront_raw, 
+                                            lShoulderBack_raw, lElbowOuter_raw, lElbowInner_raw, lWristOuter_raw, lWristInner_raw, lPalm_raw]) )
+
+            for human in humans:
+                self.draw_skeleton(human)
+
+            for human in humans_raw:
+                self.draw_points(human)
+
+
+            dt = curr_time - prev_time
+            prev_time = curr_time
+            time.sleep(dt)
+
+            del self.handles[:]
 
 
 
-        self.h.append(misc.DrawAxes( self.orEnv, matrix(T), 1 ))
-        # H1 Head
-        # self.h.append(misc.DrawAxes( self.orEnv, matrix(CalBlock), 1 ))
-        # H1 Pelv
-        # self.h.append(misc.DrawAxes( self.orEnv, matrix(TouchTomorrow3), 1 ))
-        # H2 Pelv
-        # self.h.append(misc.DrawAxes( self.orEnv, matrix(ArchieLeftHand), 1 ))
-        # H2 Head
-        # self.h.append(misc.DrawAxes( self.orEnv, matrix(ArchieRightHand), 1 ))
+    def draw_skeleton(self, point_list):
+        points = point_list
 
-        print "try to create problem"
-        self.prob = RaveCreateProblem(self.orEnv,'Kinect')
+        colors = []
+        nb_points = len(points)
+        for n in linspace(0.0, 1.0, num=nb_points):
+            colors.append((float(n)*1, (1-float(n))*1, 0))
 
-        print "try to init move3d"
-        self.prob.SendCommand('InitMove3D')
+        # Marker points
+        self.handles.append(self.env.plot3(points=point_list, pointsize=0.02, colors=array(colors), drawstyle=1))
 
-    def listen(self):
-        print "Trying to listen"
-        self.prob.SendCommand('SetCustomTracker 0')
-        self.prob.SendCommand('SetNumKinect 1')  # still need to call as 1 if using default tracker.
-        self.prob.SendCommand('EnableCamera ' + str(show_images))
+        # Connect shoulders
+        shoulders = np.array([point_list[2],point_list[6]])
+        self.handles.append(self.env.drawlinestrip(points=shoulders, linewidth=3.0))
 
-        print "Trying to set kinect frame"
-        #Dual Kinect Across Setup.
-        self.prob.SendCommand('UsePR2Frame 0')
+        # Connect head
+        head = np.array( [ point_list[1], point_list[11] ] )
+        self.handles.append(self.env.drawlinestrip(points=head, linewidth=3.0))
 
-        #Single Kinect
-        self.prob.SendCommand('SetKinectFrame 0 0.49 -1.02 1.32 90.0 7.0')
+        # Connect right arm
+        right_arm = np.array([point_list[2],point_list[3], point_list[4], point_list[5]])
+        self.handles.append(self.env.drawlinestrip(points=right_arm, linewidth=3.0))
 
-        print "Python: starting listener!"
-        self.prob.SendCommand('StartListening')
+        # Left Arm
+        left_arm = np.array( [point_list[6], point_list[7], point_list[8], point_list[9]] )
+        self.handles.append(self.env.drawlinestrip(points=left_arm, linewidth=3.0))
 
-    def play(self, controlled, play_folder=False ):
-        print "loading files"
+        # Pelvis
+        pelv = np.array( [point_list[2], point_list[10], point_list[6]] )
+        self.handles.append(self.env.drawlinestrip(points=pelv, linewidth=3.0))
 
-        if not play_folder :
-            self.loadFiles(self.dir, self.files)
+    def draw_points(self, point_list):
+        points = point_list
 
-        #self.prob.SendCommand('SetCustomTracker ' + str(len(self.files)-1) ) #FIX THIS ASAP.  MESSY kin prob enable camera
-        self.prob.SendCommand('SetCustomTracker 1');
-        self.prob.SendCommand('EnableCamera ' + str(show_images) + ' ' + trajectories_directory + 'images/' )
+        colors = []
+        nb_points = len(points)
+        for n in linspace(0.0, 1.0, num=nb_points):
+            colors.append((float(n)*1, (1-float(n))*1, 0))
 
-        self.prob.SendCommand('SetPlayType 1')
+        self.handles.append(self.env.plot3(points=point_list, pointsize=0.02, colors=array(colors), drawstyle=1))
 
-        self.prob.SendCommand('DrawMocapFile /home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv /home/rafi/logging_data/third/objects_fixed.csv')
-        # self.prob.SendCommand('DrawMocapFile /home/rafi/logging_data/third/markers.csv /home/rafi/logging_data/third/objects.csv')
 
-        return
+class Marker:
+    def __init__(self, id, x, y, z, name=''):
+        self.id = id
+        self.x = x
+        self.y = y
+        self.z = z
+        self.name = name
+        self.array = np.array([self.x, self.y, self.z])
 
-    def loadFiles(self, dir, files):
-        for file in files:
-            file.replace(' ', '\\ ')
-            print "Trying to load " + dir + file
-            self.prob.SendCommand( 'LoadTrajectoryFile '+ dir + file )
+    def numpy(self):
+        return self.array
 
-    def rec(self, state):
-        if state:
-            print "Recording Motion"
-            self.prob.SendCommand('SetButtonState 1')
+class Object:
+    def __init__(self, id, occluded, x, y, z):
+        self.id = id
+        self.occluded = occluded
+        self.x = x
+        self.y = y
+        self.z = z
+        self.array = np.array([self.x, self.y, self.z])
 
-        else:
-            self.prob.SendCommand('SetButtonState 0')
+    def is_occluded(self):
+        return self.occluded
 
+
+class Frame:
+    def __init__(self, t_sec, t_nsec, nb_markers, marker_list, object_list):
+        self.sec = t_sec
+        self.nsec = t_nsec
+        self.count = nb_markers
+        self.marker_list = marker_list
+        self.object_list = object_list
+
+    def get_marker_by_id(self, id):
+        for marker in self.marker_list:
+            if marker.id == id:
+                return marker
+
+        print "Couldn't find marker with id : ", id
+        return None
+
+    def get_time(self):
+        return self.sec + (self.nsec/1000000000)
 
 if __name__ == "__main__":
-    print "main function"
-    k = kinect_subscriber()
-    print "press return to run"
-    sys.stdin.readline()
-    k.play(1)
 
-    print "Press return to exit "
+    d = DrawMarkers()
+    # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_smoothed.csv', '/home/rafi/logging_data/third/objects.csv')
+    # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv', '/home/rafi/logging_data/fourth/objects_fixed.csv')
+    d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv', '/home/rafi/workspace/hrics-or-plugins/examples/objects_fixed_fixed.csv')
     sys.stdin.readline()
-    
-
+    d.draw_center_points()

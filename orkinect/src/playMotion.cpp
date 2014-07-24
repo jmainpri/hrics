@@ -14,6 +14,7 @@ bool convert_text_to_num(T& t,
   return !(iss >> f >> t).fail();
 }
 
+
 PlayMotion::PlayMotion( OpenRAVE::EnvironmentBasePtr env, const std::vector<HRICS::RecordMotion*>& recorders )
 {
     env_ = env;
@@ -168,16 +169,55 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
         {
 
             int id;
+            std::string name;
             double x;
             double y;
             double z;
             double color [4];
 
-            convert_text_to_num<int>( id, m_matrix[row][col], std::dec );
+            convert_text_to_num<std::string>( name, m_matrix[row][col], std::dec );
             convert_text_to_num<double>( x, m_matrix[row][col+1], std::dec );
             convert_text_to_num<double>( y, m_matrix[row][col+2], std::dec );
             convert_text_to_num<double>( z, m_matrix[row][col+3], std::dec );
 
+
+            id = 0;
+            if (name == "ChestFront")
+                id = 0;
+            if (name ==  "ChestBack")
+                id = 1;
+            if (name == "SternumFront")
+                id = 2;
+            if (name == "SternumBack")
+                id = 3;
+            if (name == "rShoulderFront")
+                id = 4;
+            if (name == "rShoulderBack")
+                id = 5;
+            if (name == "rElbowOuter")
+                id = 6;
+            if (name == "rElbowInner")
+                id = 7;
+            if (name == "rWristOuter")
+                id = 8;
+            if (name == "rWristInner")
+                id = 9;
+            if (name == "rPalm")
+                id = 10;
+            if (name == "lShoulderFront")
+                id = 11;
+            if (name == "lShoulderBack")
+                id = 12;
+            if (name == "lElbowOuter")
+                id = 13;
+            if (name == "lElbowInner")
+                id = 14;
+            if (name == "lWristOuter")
+                id = 15;
+            if (name ==  "lWristInner")
+                id = 16;
+            if (name == "lPalm")
+                id = 17;
 
             color[3] = 1;
             double scaled = double (id) / double(18);
@@ -188,6 +228,10 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
             move3d_draw_sphere(x, y, z, 0.01875, color );
 
         }
+
+
+
+
 
         // Load and draw objects + frame
         for ( int col = 3; col <= nb_objects*9; col+=9  )
@@ -323,6 +367,15 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
 
             move3d_draw_sphere(x, y, z, 0.01875, color );
         }
+
+
+
+
+
+
+
+
+
 //        row = 0;
 //        sleep(2);
         usleep(dt*1000000.0);
