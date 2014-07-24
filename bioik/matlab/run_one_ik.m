@@ -1,3 +1,4 @@
+function run_one_ik()
 % Shell program to run the motion analysis code for upper extremity
 % motion.  This program provides a loop so that all lines of the motion
 % data can be analyzed to generate a continuous series of joint motions.
