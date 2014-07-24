@@ -269,9 +269,15 @@ class Frame:
 
 if __name__ == "__main__":
 
+    marker_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/markers_fixed.csv'
+    object_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/objects_fixed.csv'
+
     d = DrawMarkers()
     # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_smoothed.csv', '/home/rafi/logging_data/third/objects.csv')
     # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv', '/home/rafi/logging_data/fourth/objects_fixed.csv')
-    d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv', '/home/rafi/workspace/hrics-or-plugins/examples/objects_fixed_fixed.csv')
+    # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv', '/home/rafi/workspace/hrics-or-plugins/examples/objects_fixed_fixed.csv')
+    d.load_file(marker_file, object_file)
+
+    print "press enter to continue"
     sys.stdin.readline()
     d.draw_center_points()

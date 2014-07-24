@@ -1,9 +1,9 @@
-TCP_IP = '127.0.0.1';
-TCP_PORT = 5005;
-
 while true
     
     clear % remove existing tcpip object
+    
+    TCP_IP = '127.0.0.1';
+    TCP_PORT = 5005;
 
     t=tcpip(TCP_IP, TCP_PORT, 'NetworkRole', 'server');
 
@@ -23,6 +23,7 @@ while true
         while get(t, 'BytesAvailable') > 0 % wait for new bytes available
             DataReceived = fscanf(t);
             nb_received = nb_received + 1;
+            run_one_ik
             fwrite(t, num2str(mod(nb_received,4))); % send acknowledge
         end
     end

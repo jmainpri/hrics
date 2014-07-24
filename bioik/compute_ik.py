@@ -148,13 +148,77 @@ class BioHumanIk():
         inv_torso = la.inv(t_torso)
         offset_torso = array(array(inv_torso).dot(append(offset_torso, 1)))[0:3]
 
+
         self.human.SetDOFValues([offset_torso[0]], [9])
         self.human.SetDOFValues([offset_torso[1]], [10])
         self.human.SetDOFValues([offset_torso[2]], [11])
         self.human.SetDOFValues([self.offset_shoulder_elbow], [19])
         self.human.SetDOFValues([self.offset_elbow_wrist], [21])
 
+    def compute_dist_to_points(self, frame_id=0):
+
+        # Get joint centers
+        p_shoulder_center = array([self.markers[4][0], self.markers[4][1], self.markers[5][2]])
+        p_elbow_center = (self.markers[6] + self.markers[7])/2
+        p_wrist_center = (self.markers[9] - self.markers[8])/2 + self.markers[8]
+
+        # Get the points in the global frame
+        inv_torso = la.inv(self.t_torso)
+        p1 = array(array(inv_torso).dot(append(p_shoulder_center, 1)))[0:3]
+        p2 = array(array(inv_torso).dot(append(p_elbow_center, 1)))[0:3]
+        p3 = array(array(inv_torso).dot(append(p_wrist_center, 1)))[0:3]
+
+        dist = 0.0
+
+        for j in self.human.GetJoints():
+
+            p_link = j.GetHierarchyChildLink().GetTransform()[0:3, 3]
+
+            if j.GetName() == "TorsoZ":
+                # self.handles.append(self.env.plot3(p_link, pointsize=0.02, colors=array([0, 0, 0]), drawstyle=1))
+                dist = la.norm(p_link - array([0, 0, 0]))
+                print "dist torso : ", dist
+                # l = self.human.GetLink("TorsoDummyY")
+                # self.handles.append(misc.DrawAxes(self.env, j.GetHierarchyChildLink().GetTransform(), 1.0))
+            if j.GetName() == "rShoulderX":
+                # self.handles.append(self.env.plot3(p_link, pointsize=0.05, colors=array([0, 0, 0]), drawstyle=1))
+                dist = la.norm(p_link - p1)
+                print "dist shoulder : ", dist
+            if j.GetName() == "rElbowZ":
+                self.handles.append(self.env.plot3(p_link, pointsize=0.02, colors=array([0, 0, 0]), drawstyle=1))
+                dist = la.norm(p_link - p2)
+                print "dist elbow : ", dist
+            if j.GetName() == "rWristX":
+                self.handles.append(self.env.plot3(p_link, pointsize=0.02, colors=array([0, 0, 0]), drawstyle=1))
+                dist = la.norm(p_link - p3)
+                print "dist wrist : ", dist
+            #if j.GetName() == "rShoulderZ":
+            #    self.handles.append(misc.DrawAxes(self.env, j.GetHierarchyChildLink().GetTransform(), 0.3))
+
+        # for j in self.human.GetJoints():
+        #     if j.GetName() == "TorsoX":  # j.GetName() == "rShoulderX" or
+        #         t_link = j.GetHierarchyChildLink().GetTransform()
+        #         self.handles.append(misc.DrawAxes(self.env, t_link, 0.3))
+
+        self.handles.append(self.env.plot3(p1, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
+        self.handles.append(self.env.plot3(p2, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
+        self.handles.append(self.env.plot3(p3, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
+
+        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("TorsoY").GetHierarchyChildLink().GetTransform(), 1))
+        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform(), 1))
+        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rShoulderY").GetHierarchyChildLink().GetTransform(), 1))
+        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rElbowZ").GetHierarchyChildLink().GetTransform(), 1))
+        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rWristY").GetHierarchyChildLink().GetTransform(), 1))
+        # self.handles.append(misc.DrawAxes(self.env, self.t_torso, 1))
+        #self.handles.append(misc.DrawAxes(self.env, eye(4), 2))
+
+        # print "joint : ", self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform()[0:3, 3]
+
+        return dist
+
     def draw_markers(self):
+
+        del self.handles[:]
 
         points = self.get_markers_in_torso_frame()
 
@@ -176,18 +240,28 @@ class BioHumanIk():
         self.set_model_size()
         # sys.stdin.readline()
 
-        del self.handles[:]
+        self.compute_dist_to_points()
+
+    def save_markers_to_file(self):
+
+        with open("./matlab/markers_tmp.csv", 'w') as m_file:
+
+            line_str = ""
+
+            for marker in self.markers:
+                line_str += str(marker[0]) + ','
+                line_str += str(marker[1]) + ','
+                line_str += str(marker[2]) + ','
+
+            line_str = line_str.rstrip(',')
+            line_str += '\n'
+            m_file.write(line_str)
 
     # Map the joint angles and set to radians
     def get_human_configuration(self):
 
-        # Save markers to file
-
-        # Call to ik
-        # call(["matlab", "-nodesktop -nojvm -nosplash -r matlab/run_one_ik.m"])
-
-        # motion = genfromtxt('./matlab/outputik.csv', delimiter=',')
-        # motion = delete(motion, 0, axis=0)  # Remove first row...
+        motion = genfromtxt('./matlab/outputik.csv', delimiter=',')
+        motion = delete(motion, 0, axis=0)  # Remove first row...
 
         for configuration in motion:  # motion should be one row. otherwise take the last element
             self.q = self.human.GetDOFValues()
@@ -207,35 +281,36 @@ if __name__ == "__main__":
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_IP, TCP_PORT))
 
-    if True:
+    # Load markers from file
+    raw_markers = genfromtxt('points.csv', delimiter=',')
+    raw_markers = delete(raw_markers, 0, axis=0)  # Remove first row
+    raw_markers = delete(raw_markers, s_[0:2], 1)  # Remove two columns
+    raw_markers /= 1000  # Set markers in meters
+    (m,) = raw_markers[0].shape  # number of values in the marker set
 
-        # Load markers from file
-        raw_markers = genfromtxt('points.csv', delimiter=',')
-        raw_markers = delete(raw_markers, 0, axis=0)  # Remove first row
-        raw_markers = delete(raw_markers, s_[0:2], 1)  # Remove two columns
+    h = BioHumanIk()
 
-        h = BioHumanIk()
+    nb_sent = 0
 
-        nb_sent = 0
+    for i in range(raw_markers.shape[0]):
 
-        for i in range(raw_markers.shape[0]):
+        markers = [raw_markers[i][n:n+3] for n in range(0, m, 3)]  # separate in 3d arrays
 
-            raw_markers[i] /= 1000  # Set markers in meters
-            (m,) = raw_markers[i].shape  # number of values in the marker set
-            markers = [raw_markers[i][n:n+3] for n in range(0, m, 3)]  # separate in 3d arrays
-
-            # h.set_markers(markers)
-            # h.set_model_size()
-            # h.draw_markers()
-            nb_sent += 1
-            s.send("r")
-            data = s.recv(1)
+        h.set_markers(markers)
+        h.save_markers_to_file()
 
         nb_sent += 1
-        s.send("c")
+        s.send("r")
         data = s.recv(1)
-        s.close()
-        print "close socket : ", nb_sent
 
-        print "press enter to exit"
-        sys.stdin.readline()
+        h.set_model_size()
+        h.draw_markers()
+
+    nb_sent += 1
+    s.send("c")
+    data = s.recv(1)
+    s.close()
+    print "close socket : ", nb_sent
+
+    print "press enter to exit"
+    sys.stdin.readline()

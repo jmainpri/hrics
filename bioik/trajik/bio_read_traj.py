@@ -66,7 +66,7 @@ class Human():
         self.env.SetViewer('qtcoin')
         self.env.SetDebugLevel(DebugLevel.Verbose)
         self.env.Reset()
-        self.env.Load("../ormodels/human_wpi_bio.xml")
+        self.env.Load("../../ormodels/human_wpi_bio.xml")
         # self.env.Load("../ormodels/human_wpi_new.xml")
         # self.orEnv.Load("robots/pr2-beta-static.zae")
 

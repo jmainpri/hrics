@@ -6,8 +6,7 @@ function run_one_ik()
 % Modified by Karen Troy 6/30/14 for Dmitry Berenson's lab
 clear all;
 
-current_path = pwd;
-current_path = [current_path '/matlab/'];
+current_path = [pwd '/'];
 addpath(current_path);
 
 tr_offsets=[0 0 0];
@@ -21,10 +20,11 @@ calibration_flag=0; %reset the flag so that the data files aren't treated as cal
 
 % Set input file name
 disp('load file');
-input_file = 'positions_fixed.csv';
+% input_file = 'positions_fixed.csv';
+input_file = 'markers_tmp.csv';
 pathname = current_path;
-[data_all] = readViconData( strcat( pathname, input_file ), 1 );
-
+% [data_all] = readViconData( strcat( pathname, input_file ), 1 );
+[data_all] = readMarkerData( strcat( pathname, input_file ) );
 
 % Perform IK
 disp('perform ik');
@@ -35,6 +35,6 @@ kinematics=[kinematics;outputdata];
 
 % Set out put file name
 disp('save to file');
-filename='outputik'
+filename='outputik';
 disp(['save to ' filename '.csv']);
 csvwrite( [filename '.csv'], kinematics );
