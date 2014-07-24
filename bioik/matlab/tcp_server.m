@@ -1,30 +1,29 @@
-% Create TCP/IP object 't'. Specify server machine and port number. 
-% t = tcpip('www.EXAMPLE_WEBSITE.com', 80); 
+TCP_IP = '127.0.0.1';
+TCP_PORT = 5005;
 
 while true
     
-    clear
-    
-    DataReceived = 'o';
-    nb_received = 0;
+    clear % remove existing tcpip object
 
-    t=tcpip('127.0.0.1', 5005, 'NetworkRole', 'server');
+    t=tcpip(TCP_IP, TCP_PORT, 'NetworkRole', 'server');
 
     % Set size of receiving buffer, if needed. 
     set(t, 'InputBufferSize', 1);
 
     % Open connection to the server. 
     fopen(t);
+    
+    DataReceived = 'o';
+    nb_received = 0;
 
     display('connected')
 
-    while ~strcmp( DataReceived, 'c')
-
-        while get(t, 'BytesAvailable') > 0
-%             t.BytesAvailable 
+    while ~strcmp( DataReceived, 'c') % wait for close message
+        
+        while get(t, 'BytesAvailable') > 0 % wait for new bytes available
             DataReceived = fscanf(t);
             nb_received = nb_received + 1;
-            fwrite(t, num2str(mod(nb_received,4)));
+            fwrite(t, num2str(mod(nb_received,4))); % send acknowledge
         end
     end
     
