@@ -148,7 +148,6 @@ class BioHumanIk():
         inv_torso = la.inv(t_torso)
         offset_torso = array(array(inv_torso).dot(append(offset_torso, 1)))[0:3]
 
-
         self.human.SetDOFValues([offset_torso[0]], [9])
         self.human.SetDOFValues([offset_torso[1]], [10])
         self.human.SetDOFValues([offset_torso[2]], [11])
@@ -249,9 +248,9 @@ class BioHumanIk():
             line_str = ""
 
             for marker in self.markers:
-                line_str += str(marker[0]) + ','
-                line_str += str(marker[1]) + ','
-                line_str += str(marker[2]) + ','
+                line_str += str(marker[0]*1000) + ','
+                line_str += str(marker[1]*1000) + ','
+                line_str += str(marker[2]*1000) + ','
 
             line_str = line_str.rstrip(',')
             line_str += '\n'

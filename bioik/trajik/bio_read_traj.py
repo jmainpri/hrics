@@ -291,7 +291,9 @@ class Human():
 
     # Map the joint angles and set to radians
     def get_configuration(self, q):
+
         wp = self.human.GetDOFValues()
+
         for i, dof in enumerate(q):
             if mapping[i] >= 0:
                 wp[mapping[i]] = dof * pi / 180

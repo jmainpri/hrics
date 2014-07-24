@@ -29,7 +29,7 @@ pathname = current_path;
 % Perform IK
 disp('perform ik');
 kinematics=0:10;
-mean_pos=data_all(1,:);
+mean_pos=data_all(1,:)
 Upper_extremity_kinematics_for_Dmitry;
 kinematics=[kinematics;outputdata];
 
