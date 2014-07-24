@@ -36,6 +36,7 @@ KinectProblem::KinectProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     RegisterCommand("enablecamera",boost::bind(&KinectProblem::EnableCamera, this,_1,_2),"Enable the camera to take live snapshots");
     RegisterCommand("usepr2frame",boost::bind(&KinectProblem::UsePR2Frame, this,_1,_2),"Enable use of the pr2 headframe as a transform");
     RegisterCommand("initmove3d",boost::bind(&KinectProblem::InitMove3D, this,_1,_2),"initializes move3d data structures");
+    RegisterCommand("drawmocapfile",boost::bind(&KinectProblem::DrawMocapFile, this,_1,_2),"draws a recorded mocap marker file");
 
     int argc = 0;
     char** argv;
@@ -203,6 +204,19 @@ bool KinectProblem::LoadTrajectoryFile(ostream& sout, istream& sinput)
     string path;
     sinput >> path;
     _filepaths.push_back( path );
+
+    return true;
+}
+
+bool KinectProblem::DrawMocapFile(ostream& sout, istream& sinput)
+{
+    cout << "file loaded" << endl;
+    string m_path;
+    string o_path;
+
+    sinput >> m_path;
+    sinput >> o_path;
+    _motion_player->play_mocap(m_path, o_path);
 
     return true;
 }
