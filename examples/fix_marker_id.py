@@ -16,7 +16,7 @@ import copy
 
 THRESHOLD   = 0.0025
 NB_MARKERS  = 18
-NB_HUMAN    = 2
+# NB_HUMAN    = 1
 
 #Just for timing runs of the tracker.  Useless
 class Timer:
@@ -99,9 +99,9 @@ class Object:
 
 
 class Frame:
-    def __init__(self, t_sec, t_usec, nb_markers, marker_list, object_list):
+    def __init__(self, t_sec, t_nsec, nb_markers, marker_list, object_list):
         self.sec = t_sec
-        self.usec = t_usec
+        self.nsec = t_nsec
         self.count = nb_markers
         self.marker_list = marker_list
         self.object_list = object_list
@@ -109,13 +109,6 @@ class Frame:
     # Can not have any duplicate ids
     def order_markers(self):
         self.marker_list.sort(key=lambda m: m.id, reverse=False)
-        # self.print_marker_ids()
-        # new_list = [None]*(self.count+1)
-        # for marker in self.marker_list:
-        #     print "id : ", marker.id, "  len : ", len(self.marker_list), ' count : ', self.count
-        #     new_list[marker.id] = marker
-        #
-        # self.marker_list = new_list
 
     def get_marker_by_id(self, id):
         for marker in self.marker_list:
@@ -124,6 +117,19 @@ class Frame:
 
         print "Couldn't find marker with id : ", id
         return None
+
+    def reorder_objects(self):
+        new_list = []
+        for i in range(NB_HUMAN):
+            new_list.append( self.get_object_by_id("Pelvis" + str(i)) )
+            new_list.append( self.get_object_by_id("Head" + str(i)) )
+
+        self.object_list = new_list
+
+    def get_object_by_id(self, id):
+        for obj in self.object_list:
+            if obj.id == id:
+                return obj
 
     def print_marker_ids(self):
         marker_string = '[ '
@@ -169,12 +175,6 @@ class Frame:
         return index_list
 
     def get_unused_id(self):
-        # unused = []
-        # for i in range(0, len(self.marker_list)):
-        #     unused.append(i)
-        # for marker in self.marker_list:
-        #     if marker.id in unused:
-        #         unused.remove(marker.id)
 
         unused = []
         for i, marker in enumerate(self.marker_list):
@@ -224,7 +224,7 @@ class Frame:
                 new_markers[i].times_dropped += 1
 
 
-        temp = Frame(self.sec, self.usec, len(new_markers), new_markers, self.object_list)
+        temp = Frame(self.sec, self.nsec, len(new_markers), new_markers, self.object_list)
         return temp
 
     def set_marker_names_by_id(self):
@@ -331,6 +331,7 @@ class Fixer:
 
     def load_file(self):
         print "Trying to open file"
+        global NB_HUMAN # TODO fix global to be class member
 
         marker_file = []
         object_file = []
@@ -354,6 +355,9 @@ class Fixer:
 
             # Load Objects
             count = int(o_cells[2])
+
+            # Assuming only using Pelv/Head objects per person and nothing else in the scene
+            NB_HUMAN = count/2
 
             for i in range(3, count*9, 9):
                 name = str(o_cells[i])
@@ -391,33 +395,55 @@ class Fixer:
     def save_file(self):
         print "Trying to output new file"
 
-        # TODO fix ids to be within range 0 - NB_MARKERS
-
         #  Get the out filename
         dir, path = os.path.split(self.m_filepath)
         name, type = path.rsplit('.', 1)
-        outpath = name + '_fixed.'+type
+        m_outpath = name + '_fixed.'+type
+
+        dir, path = os.path.split(self.o_filepath)
+        name, type = path.rsplit('.', 1)
+        o_outpath = name + '_fixed.'+type
 
         print "Trying to normalize ids"
         self.normalize_ids()
 
-        # TODO Should output a truncated objects file starting at first_frame
-        with open(outpath, 'w') as f:
-            for frame in self.frames[self.first_frame:self.last_frame]:
-                line_str = ""
-                line_str += str(frame.sec) + ','
-                line_str += str(frame.usec) + ','
-                line_str += str(frame.count) + ','
+        with open(m_outpath, 'w') as m_file:
+            with open(o_outpath, 'w') as o_file:
+                for frame in self.frames[self.first_frame:self.last_frame]:
+                    line_str = ""
+                    line_str += str(frame.sec) + ','
+                    line_str += str(frame.nsec) + ','
+                    line_str += str(frame.count) + ','
 
-                for marker in frame.marker_list:
-                    line_str += str(marker.name) + ','
-                    line_str += str(marker.x) + ','
-                    line_str += str(marker.y) + ','
-                    line_str += str(marker.z) + ','
+                    for marker in frame.marker_list:
+                        line_str += str(marker.name) + ','
+                        line_str += str(marker.x) + ','
+                        line_str += str(marker.y) + ','
+                        line_str += str(marker.z) + ','
 
-                line_str = line_str.rstrip(',')
-                line_str += '\n'
-                f.write(line_str)
+                    line_str = line_str.rstrip(',')
+                    line_str += '\n'
+                    m_file.write(line_str)
+
+                    line_str = ""
+                    line_str += str(frame.sec) + ','      #TODO should probalby use a different time stamp.  at least align frames by timestamp
+                    line_str += str(frame.nsec) + ','
+                    line_str += str(len(frame.object_list)) + ','
+
+                    for obj in frame.object_list:
+                        line_str += str(obj.id) + ','
+                        line_str += str(obj.occluded) + ','
+                        line_str += str(obj.x) + ','
+                        line_str += str(obj.y) + ','
+                        line_str += str(obj.z) + ','
+                        line_str += str(obj.r_x) + ','
+                        line_str += str(obj.r_y) + ','
+                        line_str += str(obj.r_z) + ','
+                        line_str += str(obj.r_w) + ','
+
+                    line_str = line_str.rstrip(',')
+                    line_str += '\n'
+                    o_file.write(line_str)
 
     def get_average_position(self):
         m_tot = np.array( [0, 0, 0] )
@@ -515,7 +541,6 @@ class Fixer:
     def init_first_frame(self):
         # TODO Get # Human from objects
         # TODO Check if marker and object timestamps for first_frame match up
-        # TODO Align object names with a humans. pelvis1, head1, pelvis2, head2 etc
 
         # Find first usable config
         for i, frame in enumerate(self.frames):
@@ -582,9 +607,9 @@ class Fixer:
     def reorder_ids(self):
         for frame in self.frames:
             frame.reorder_ids()
+            frame.reorder_objects()
 
     def smooth_markers(self, size):
-        # TODO this function is broken.  clean up
         if size%2 == 0:
             print "Window size can't be even"
             return
@@ -608,21 +633,6 @@ class Fixer:
 
             window = window[1:] + [self.frames[i+1]]
 
-    # def smooth_markers(self, size):
-    #     if size%2 == 0:
-    #         size+=1
-    #         print "Can't use an even window size.  Using : " size, ' instead'
-
-    #     start = self.first_frame
-
-    #     window = self.frames[start:start+size]
-    #     for frame in window:
-
-
-
-
-    #     window = window[1:] + [self.frames[i+1]]
-
     def normalize_ids(self):
         for frame in self.frames:
             for i, marker in enumerate(frame.marker_list):
@@ -637,19 +647,20 @@ class Fixer:
 
 
 if __name__ == '__main__':
-    f = Fixer('/home/rafi/logging_data/third/markers.csv', '/home/rafi/logging_data/third/objects_fixed.csv')
+    f = Fixer('/home/rafi/logging_data/second/markers.csv', '/home/rafi/logging_data/second/objects_fixed.csv')
 
     try:
         with Timer() as t:
             f.load_file()
 
+            # Filter bad markers
+
             # avg = f.get_average_position()
             # f.filter_threshold_outside(avg, 1.8)
-
             f.filter_negative_x()
-
             f.filter_pillar()
-            # print "starting fixing ids"
+
+            # Reorder marker ids to fill gaps
             f.reorder_ids()
 
             print "Try to find start frame"
@@ -659,7 +670,7 @@ if __name__ == '__main__':
             f.track_indices()
 
             print "Trying to smooth markers"
-            f.smooth_markers(7)
+            f.smooth_markers(5)
 
             # nb_diff = 0.0
             # for i,frame in enumerate(f.frames[f.first_frame:f.last_frame]):

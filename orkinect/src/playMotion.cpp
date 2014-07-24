@@ -14,6 +14,7 @@ bool convert_text_to_num(T& t,
   return !(iss >> f >> t).fail();
 }
 
+
 PlayMotion::PlayMotion( OpenRAVE::EnvironmentBasePtr env, const std::vector<HRICS::RecordMotion*>& recorders )
 {
     env_ = env;
@@ -228,6 +229,10 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
 
         }
 
+
+
+
+
         // Load and draw objects + frame
         for ( int col = 3; col <= nb_objects*9; col+=9  )
         {
@@ -362,6 +367,15 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
 
             move3d_draw_sphere(x, y, z, 0.01875, color );
         }
+
+
+
+
+
+
+
+
+
 //        row = 0;
 //        sleep(2);
         usleep(dt*1000000.0);

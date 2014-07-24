@@ -42,9 +42,9 @@ class Marker:
 
 
 class Frame:
-    def __init__(self, t_sec, t_usec, nb_markers, marker_list):
+    def __init__(self, t_sec, t_nsec, nb_markers, marker_list):
         self.sec = t_sec
-        self.usec = t_usec
+        self.nsec = t_nsec
         self.count = nb_markers
         self.marker_list = marker_list
 
