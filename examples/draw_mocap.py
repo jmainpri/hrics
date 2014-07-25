@@ -92,7 +92,6 @@ class DrawMarkers():
                 y = float(o_cells[i+3])
                 z = float(o_cells[i+4])
 
-
                 object = Object( name, occluded, x, y, z)
                 objects.append(object)
 
@@ -123,7 +122,11 @@ class DrawMarkers():
         # for frame in self.frames:
         prev_time = self.frames[0].get_time()
 
-        for frame in self.frames:
+        for i, frame in enumerate(self.frames):
+
+            sys.stdout.write("\r\x1b[K"+("frame " + str(i)).__str__())
+            sys.stdout.flush()
+
             curr_time = frame.get_time()
             humans = []
             humans_raw = []
@@ -269,8 +272,8 @@ class Frame:
 
 if __name__ == "__main__":
 
-    marker_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/markers_fixed.csv'
-    object_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/objects_fixed.csv'
+    marker_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/markers_fixed_cut.csv'
+    object_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/objects_fixed_cut.csv'
 
     d = DrawMarkers()
     # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_smoothed.csv', '/home/rafi/logging_data/third/objects.csv')

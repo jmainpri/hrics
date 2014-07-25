@@ -39,6 +39,7 @@ from numpy import linalg as la
 from TransformMatrix import *
 from rodrigues import *
 from subprocess import call
+import marker_utils
 
 mapping = [-1, 8, 7, 6, 18, 17, 16, 20, 24, 23, 22]
 
@@ -97,15 +98,14 @@ class BioHumanIk():
 
         # Set torso at origin of the scene
         self.offset_pelvis_torso = self.human.GetJoint("TorsoX").GetHierarchyChildLink().GetTransform()[0:3, 3]
-        # print self.offset_pelvis_torso
+        print self.offset_pelvis_torso
+        self.human.SetTransform(array(MakeTransform(eye(3), matrix(-self.offset_pelvis_torso))))
 
         self.offset_torso_shoulder = None
         self.offset_shoulder_elbow = None
         self.offset_elbow_wrist = None
         self.torso_origin = None
         self.t_torso = eye(4)
-
-        self.human.SetTransform(array(MakeTransform(eye(3), matrix(-self.offset_pelvis_torso))))
 
     # Marker array should be the size of the number of markers
     # the markers should be ordered as described in the reminder
@@ -124,10 +124,42 @@ class BioHumanIk():
 
         return points_3d
 
+    def set_pelvis(self, t_pelvis):
+
+        print "t_pelvis : ", t_pelvis
+        print "t_pelvis[3:7] ", t_pelvis[3:7]
+        print "t_pelvis[0:3] ", t_pelvis[0:3]
+
+        mat = MakeTransform(rotationMatrixFromQuat(array(t_pelvis[3:7])), matrix(t_pelvis[0:3]))
+
+        x_dir = array(transpose(mat[:, 0]).tolist()[0][:3])
+        y_dir = array(transpose(mat[:, 1]).tolist()[0][:3])
+        z_dir = array(transpose(mat[:, 2]).tolist()[0][:3])
+
+        new_x = -z_dir
+        new_x[2] = 0
+        new_x = new_x/la.norm(new_x)
+        new_z = array([0, 0, 1])
+
+        new_y = cross(new_x, new_z)
+        new_y = new_y/la.norm(new_y)
+        new_y = -new_y
+
+        mat[0][0, 0] = new_x[0]
+        mat[0][0, 1] = new_y[0]
+        mat[0][0, 2] = new_z[0]
+        mat[1][0, 0] = new_x[1]
+        mat[1][0, 1] = new_y[1]
+        mat[1][0, 2] = new_z[1]
+        mat[2][0, 0] = new_x[2]
+        mat[2][0, 1] = new_y[2]
+        mat[2][0, 2] = new_z[2]
+
+        self.t_torso = mat # * MakeTransform(rodrigues([0, pi, 0]), matrix([0, 0, 0]))
+
     def set_model_size(self):
 
-        self.torso_origin = (self.markers[0] + self.markers[1])/2
-        self.t_torso = MakeTransform(rodrigues([0, 0, pi]), matrix(self.torso_origin))
+        # self.t_torso = MakeTransform(rodrigues([0, pi/2, 0]), matrix(self.torso_origin))
 
         self.torso_origin = (self.markers[0] + (self.markers[1]))/2
         p_shoulder_center = array([self.markers[4][0], self.markers[4][1], self.markers[5][2]])
@@ -205,10 +237,10 @@ class BioHumanIk():
 
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("TorsoY").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform(), 1))
-        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rShoulderY").GetHierarchyChildLink().GetTransform(), 1))
+        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rShoulderY").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rElbowZ").GetHierarchyChildLink().GetTransform(), 1))
-        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rWristY").GetHierarchyChildLink().GetTransform(), 1))
-        # self.handles.append(misc.DrawAxes(self.env, self.t_torso, 1))
+        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rWristY").GetHierarchyChildLink().GetTransform(), 1))
+        self.handles.append(misc.DrawAxes(self.env, self.t_torso, 1))
         #self.handles.append(misc.DrawAxes(self.env, eye(4), 2))
 
         # print "joint : ", self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform()[0:3, 3]
@@ -281,21 +313,27 @@ if __name__ == "__main__":
     s.connect((TCP_IP, TCP_PORT))
 
     # Load markers from file
-    raw_markers = genfromtxt('points.csv', delimiter=',')
-    raw_markers = delete(raw_markers, 0, axis=0)  # Remove first row
-    raw_markers = delete(raw_markers, s_[0:2], 1)  # Remove two columns
-    raw_markers /= 1000  # Set markers in meters
-    (m,) = raw_markers[0].shape  # number of values in the marker set
+    # raw_markers = genfromtxt('data/points.csv', delimiter=',')
+    # raw_markers = delete(raw_markers, 0, axis=0)  # Remove first row
+    # raw_markers = delete(raw_markers, s_[0:2], 1)  # Remove two columns
+    # raw_markers /= 1000  # Set markers in meters
+    # (m,) = raw_markers[0].shape  # number of values in the marker set
+
+    marker_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/markers_fixed_cut.csv'
+    object_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/objects_fixed_cut.csv'
+    [frames_m, frames_o] = marker_utils.load_file(marker_file, object_file)
 
     h = BioHumanIk()
 
     nb_sent = 0
 
-    for i in range(raw_markers.shape[0]):
+    for i in range(len(frames_m)):
 
-        markers = [raw_markers[i][n:n+3] for n in range(0, m, 3)]  # separate in 3d arrays
+    # for i in range(raw_markers.shape[0]):
+        # markers = [raw_markers[i][n:n+3] for n in range(0, m, 3)]  # separate in 3d arrays
 
-        h.set_markers(markers)
+        h.set_pelvis(frames_o[0][0][0:7])
+        h.set_markers(frames_m[i][0:11])
         h.save_markers_to_file()
 
         nb_sent += 1
