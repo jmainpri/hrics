@@ -41,7 +41,7 @@ from rodrigues import *
 from subprocess import call
 
 NB_MARKERS = 18
-NB_HUMAN = 1
+NB_HUMAN = 1 #  TODO Read in from file like in fix_marker_id
 
 class DrawMarkers():
 
@@ -180,6 +180,29 @@ class DrawMarkers():
             del self.handles[:]
 
 
+    def draw_frames_raw(self):
+        # for frame in self.frames:
+        prev_time = self.frames[0].get_time()
+
+        for frame in self.frames:
+            curr_time = frame.get_time()
+
+            point_list = []
+
+            for m in frame.marker_list:
+                point_list.append(m.array)
+            for o in frame.object_list:
+                point_list.append(o.array)
+
+            self.draw_points(np.array(point_list))
+
+
+            dt = curr_time - prev_time
+            prev_time = curr_time
+            time.sleep(dt)
+
+            del self.handles[:]
+
 
     def draw_skeleton(self, point_list):
         points = point_list
@@ -272,6 +295,7 @@ if __name__ == "__main__":
     d = DrawMarkers()
     # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_smoothed.csv', '/home/rafi/logging_data/third/objects.csv')
     # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv', '/home/rafi/logging_data/fourth/objects_fixed.csv')
-    d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv', '/home/rafi/workspace/hrics-or-plugins/examples/objects_fixed_fixed.csv')
+    d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_test.csv', '/home/rafi/workspace/hrics-or-plugins/examples/objects_test.csv')
     sys.stdin.readline()
-    d.draw_center_points()
+    # d.draw_center_points()
+    d.draw_frames_raw()

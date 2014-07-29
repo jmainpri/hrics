@@ -13,22 +13,137 @@ import time
 import math
 import sys
 import copy
+import rospy
+from std_msgs.msg import *
+from lightweight_vicon_bridge.msg import *
+import subprocess
+import Queue
+import threading
+from openravepy import *
 
 THRESHOLD   = 0.0025
 NB_MARKERS  = 18
-NB_HUMAN    = 1
+NB_HUMAN    = 2
 
-#Just for timing runs of the tracker.  Useless
-class Timer:
-    def __enter__(self):
-        self.start = time.clock()
-        self.file_runtime = None
-        return self
+class Drawer():
 
-    def __exit__(self, *args):
-        self.end = time.clock()
-        self.interval = self.end - self.start
+    def __init__(self):
 
+        self.env = Environment()
+        self.env.SetViewer('qtcoin')
+        self.env.SetDebugLevel(DebugLevel.Verbose)
+        self.env.Reset()
+        self.env.Load("../ormodels/human_wpi_bio.xml")
+
+        self.human = self.env.GetRobots()[0]
+        self.handles = []
+
+    def draw_frame_skeleton(self, frame):
+            del self.handles[:]
+
+            humans = []
+            humans_raw = []
+
+            for i in range(0, NB_MARKERS*NB_HUMAN, NB_MARKERS):
+                Chest = (frame.marker_list[i].array + frame.marker_list[i+1].array)/2
+                Sternum = (frame.marker_list[i+2].array + frame.marker_list[i+3].array)/2
+                rShoulder = (frame.marker_list[i+4].array + frame.marker_list[i+5].array)/2
+                rElbow = (frame.marker_list[i+6].array + frame.marker_list[i+7].array)/2
+                rWrist = (frame.marker_list[i+8].array + frame.marker_list[i+9].array)/2
+                rPalm = frame.marker_list[i+10].array
+                lShoulder = (frame.marker_list[i+11].array + frame.marker_list[i+12].array)/2
+                lElbow = (frame.marker_list[i+13].array + frame.marker_list[i+14].array)/2
+                lWrist = (frame.marker_list[i+15].array + frame.marker_list[i+16].array)/2
+                lPalm = frame.marker_list[i+17].array
+                Pelvis = frame.object_list[ (i/18)*2 ].array
+                Head = frame.object_list[ (i/18)*2 + 1 ].array
+
+                ChestFront_raw      = frame.marker_list[i].array
+                ChestBack_raw       = frame.marker_list[i+1].array
+                SternumFront_raw    = frame.marker_list[i+2].array
+                SternumBack_raw     = frame.marker_list[i+3].array
+                rShoulderFront_raw  = frame.marker_list[i+4].array
+                rShoulderBack_raw   = frame.marker_list[i+5].array
+                rElbowOuter_raw     = frame.marker_list[i+6].array
+                rElbowInner_raw     = frame.marker_list[i+7].array
+                rWristOuter_raw     = frame.marker_list[i+8].array
+                rWristInner_raw     = frame.marker_list[i+9].array
+                rPalm_raw           = frame.marker_list[i+10].array
+                lShoulderFront_raw  = frame.marker_list[i+11].array
+                lShoulderBack_raw   = frame.marker_list[i+12].array
+                lElbowOuter_raw     = frame.marker_list[i+13].array
+                lElbowInner_raw     = frame.marker_list[i+14].array
+                lWristOuter_raw     = frame.marker_list[i+15].array
+                lWristInner_raw     = frame.marker_list[i+16].array
+                lPalm_raw           = frame.marker_list[i+17].array
+
+                humans.append( np.array([Chest, Sternum, rShoulder, rElbow, rWrist, rPalm, lShoulder, lElbow, lWrist, lPalm, Pelvis, Head]) )
+                humans_raw.append( np.array([ChestFront_raw, ChestBack_raw, SternumFront_raw, SternumBack_raw, rShoulderFront_raw, rShoulderBack_raw,
+                                            rElbowOuter_raw, rElbowInner_raw, rWristOuter_raw, rWristInner_raw, rPalm_raw, lShoulderFront_raw, 
+                                            lShoulderBack_raw, lElbowOuter_raw, lElbowInner_raw, lWristOuter_raw, lWristInner_raw, lPalm_raw]) )
+
+            for human in humans:
+                self.draw_skeleton(human)
+
+            for human in humans_raw:
+                self.draw_points(human)
+
+            
+
+
+    def draw_frame_raw(self, frame):
+        del self.handles[:]
+
+        point_list = []
+
+        for m in frame.marker_list:
+            point_list.append(m.array)
+        for o in frame.object_list:
+            point_list.append(o.array)
+
+        self.draw_points(np.array(point_list))
+
+
+    def draw_skeleton(self, point_list):
+        points = point_list
+
+        colors = []
+        nb_points = len(points)
+        for n in linspace(0.0, 1.0, num=nb_points):
+            colors.append((float(n)*1, (1-float(n))*1, 0))
+
+        # Marker points
+        self.handles.append(self.env.plot3(points=point_list, pointsize=0.02, colors=array(colors), drawstyle=1))
+
+        # Connect shoulders
+        shoulders = np.array([point_list[2],point_list[6]])
+        self.handles.append(self.env.drawlinestrip(points=shoulders, linewidth=3.0))
+
+        # Connect head
+        head = np.array( [ point_list[1], point_list[11] ] )
+        self.handles.append(self.env.drawlinestrip(points=head, linewidth=3.0))
+
+        # Connect right arm
+        right_arm = np.array([point_list[2],point_list[3], point_list[4], point_list[5]])
+        self.handles.append(self.env.drawlinestrip(points=right_arm, linewidth=3.0))
+
+        # Left Arm
+        left_arm = np.array( [point_list[6], point_list[7], point_list[8], point_list[9]] )
+        self.handles.append(self.env.drawlinestrip(points=left_arm, linewidth=3.0))
+
+        # Pelvis
+        pelv = np.array( [point_list[2], point_list[10], point_list[6]] )
+        self.handles.append(self.env.drawlinestrip(points=pelv, linewidth=3.0))
+
+    def draw_points(self, point_list):
+        points = point_list
+
+        colors = []
+        nb_points = len(points)
+        for n in linspace(0.0, 1.0, num=nb_points):
+            colors.append((float(n)*1, (1-float(n))*1, 0))
+
+        self.handles.append(self.env.plot3(points=point_list, pointsize=0.02, colors=array(colors), drawstyle=1))
 
 class Marker:
     def __init__(self, id, x, y, z, name=''):
@@ -65,6 +180,7 @@ class Object:
         self.r_y = r_y
         self.r_z = r_z
         self.r_w = r_w
+        self.array = np.array([self.x, self.y, self.z])
 
     def is_occluded(self):
         return self.occluded
@@ -165,24 +281,6 @@ class Frame:
             # dist[marker.id] = random.random()
             dist[marker.id] = marker.get_dist(other)
         return sorted(dist.items(), key=lambda(k, v): v)
-
-    def get_index_list_by_id(self, id):
-        index_list = []
-
-        for i,marker in enumerate(self.marker_list):
-            if marker.id == id:
-                index_list.append(i)
-
-        return index_list
-
-    def get_unused_id(self):
-
-        unused = []
-        for i, marker in enumerate(self.marker_list):
-            if marker == None:
-                unused.append(i)
-
-        return unused
 
     def get_duplicate_ids(self):
         indices = []
@@ -320,97 +418,125 @@ class Frame:
             marker.id = i
 
 
-class Fixer:
+class Tracker:
 
-    def __init__(self, m_filepath, o_filepath):
-        self.m_filepath = m_filepath
-        self.o_filepath = o_filepath
+    def __init__(self, marker_topic, object_topic):
+        self.bag = subprocess.Popen('rosbag play /home/rafi/logging_two/second/2014-07-24-17-11-06.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./') 
+        # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_two/fifth/2014-07-24-17-17-06.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./') 
+
         self.frames = []
-        self.max_markers = None
-        self.first_frame = None
         self.last_frame = None
+        self.mutex = threading.Lock()
 
-    def load_file(self):
-        print "Trying to open file"
-        global NB_HUMAN # TODO fix global to be class member
+        self.object_q = Queue.Queue()
+        self.marker_q = Queue.Queue()
 
-        marker_file = []
-        object_file = []
+        self.viewer = Drawer()
 
-        with open(self.m_filepath, 'r') as m_file:
-            with open(self.o_filepath, 'r') as o_file:
-
-                marker_file = [row for row in csv.reader(m_file, delimiter=',')]
-                object_file = [row for row in csv.reader(o_file, delimiter=',')]
-
-        nb_lines = min(len(marker_file), len(object_file))
-        self.last_frame = nb_lines
-
-        for row in range(nb_lines):
-
-            markers = []
-            objects = []
-
-            m_cells = marker_file[row]
-            o_cells = object_file[row]
-
-            # Load Objects
-            count = int(o_cells[2])
-
-            # Assuming only using Pelv/Head objects per person and nothing else in the scene
-            # NB_HUMAN = count/2
-
-            for i in range(3, count*9, 9):
-                name = str(o_cells[i])
-                occluded = int(o_cells[i+1])
-                x = float(o_cells[i+2])
-                y = float(o_cells[i+3])
-                z = float(o_cells[i+4])
-                r_x = float(o_cells[i+5])
-                r_y = float(o_cells[i+6])
-                r_z = float(o_cells[i+7])
-                r_w = float(o_cells[i+8])
-
-                object = Object( name, occluded, x, y, z, r_x, r_y, r_z, r_w )
-                objects.append(object)
-
-            # Load Markers
-            sec = float(m_cells[0])
-            nsec = float(m_cells[1])
-            count = int(m_cells[2])
-
-            for i in range(3, count*4, 4):
-                id = int(m_cells[i])
-                x = float(m_cells[i+1])
-                y = float(m_cells[i+2])
-                z = float(m_cells[i+3])
-
-                marker = Marker(id, x, y, z)
-                markers.append(marker)
+        if not (marker_topic and object_topic):
+            print "At least one topic needed to subscribe to"
+            exit(0)
+        if marker_topic:
+            self.marker_sub = rospy.Subscriber(marker_topic, MocapMarkerArray, self.marker_cb)
+        if object_topic:
+            self.object_sub = rospy.Subscriber(object_topic, MocapState, self.object_cb)
 
 
-            self.frames.append( Frame(sec, nsec, count, markers, objects) )
+        # t = threading.Thread(target = rospy.spin)
+        # t.start()
 
-        print "# configs loaded : " + str(len(self.frames))
+        rospy.spin()
+
+        # sleep_rate = rospy.Rate(100.0)
+        # while not rospy.is_shutdown():
+        #     sleep_rate.sleep()
+
+    def marker_cb(self, msg):
+        self.mutex.acquire()
+        self.marker_q.put(msg)
+        # print "Len m_q : ", self.marker_q.qsize()
+
+        if not self.object_q.empty():
+            self.make_frame()
+
+        self.mutex.release()
+
+        # if self.markers_updated and self.objects_updated:
+        #     self.make_frame()
+
+    def object_cb(self, msg):
+        
+        self.mutex.acquire()
+
+        self.object_q.put(msg)
+        # print "Len o_q : ", self.object_q.qsize()
+
+        # self.mutex.acquire()
+        if not self.marker_q.empty():
+            self.make_frame()
+
+        self.mutex.release()
+        # if self.markers_updated and self.objects_updated:
+        #     self.make_frame()
+
+    def make_frame(self):
+
+        marker_list = []
+        object_list = []
+        m_msg = self.marker_q.get()
+        o_msg = self.object_q.get()
+
+        sec = int(m_msg.header.stamp.secs)
+        nsec = float(m_msg.header.stamp.nsecs)
+        nb_markers = len(m_msg.markers)
+
+        for m in m_msg.markers:
+            marker_list.append( Marker( m.index, m.position.x, m.position.y, m.position.z ) )
+
+        for o in o_msg.tracked_objects:
+            segment = o.segments[0]
+
+            temp = Object( segment.name, int(segment.occluded), segment.transform.translation.x, segment.transform.translation.y, segment.transform.translation.z,
+                        segment.transform.rotation.x, segment.transform.rotation.y, segment.transform.rotation.z, segment.transform.rotation.w)
+
+            object_list.append(temp)
+
+
+        frame = Frame( sec, nsec, nb_markers, marker_list, object_list )
+        frame.reorder_objects()
+
+        if self.last_frame is None:
+            self.try_init(frame)
+            self.viewer.draw_frame_raw(frame)
+            # Draw frame raw
+        else:
+            frame = frame.get_new_config_by_distance(self.last_frame)
+            self.last_frame = frame
+            self.viewer.draw_frame_skeleton(frame)
+
+        self.frames.append(frame)
+
+        # print "Num frames : ", len(self.frames), " num obj : ", self.object_q.qsize(), " num mark : ", self.marker_q.qsize()
+
+        # if len(self.frames) == 7000:
+        #     self.save_file()
+
 
     def save_file(self):
         print "Trying to output new file"
 
         #  Get the out filename
-        dir, path = os.path.split(self.m_filepath)
-        name, type = path.rsplit('.', 1)
-        m_outpath = name + '_fixed.'+type
 
-        dir, path = os.path.split(self.o_filepath)
-        name, type = path.rsplit('.', 1)
-        o_outpath = name + '_fixed.'+type
+        m_outpath = 'markers_test.csv'
+
+        o_outpath = 'objects_test.csv'
 
         print "Trying to normalize ids"
         self.normalize_ids()
 
         with open(m_outpath, 'w') as m_file:
             with open(o_outpath, 'w') as o_file:
-                for frame in self.frames[self.first_frame:self.last_frame]:
+                for frame in self.frames[:]:
                     line_str = ""
                     line_str += str(frame.sec) + ','
                     line_str += str(frame.nsec) + ','
@@ -446,193 +572,51 @@ class Fixer:
                     line_str += '\n'
                     o_file.write(line_str)
 
-    def get_average_position(self):
-        m_tot = np.array( [0, 0, 0] )
-        m_count = 0.0
 
-        for frame in self.frames:
-            for marker in frame.marker_list:
-                m_tot += marker.numpy()
-                m_count += 1
+    def try_init(self, frame):
+        if frame.count == ( NB_HUMAN * NB_MARKERS):
+            pelv_frames = []
+            for object in frame.object_list:
+                if 'Pelvis' in object.id and not object.is_occluded():
+                    pelv_frames.append(object.get_rot_matrix())
 
-        print "trying to finding avg pos"
+            if len(pelv_frames) is not NB_HUMAN:
+                return
 
-        return m_tot/m_count
+            # Get the marker map for each human 
+            print "Getting marker name map"
+            maps = []
 
-    def filter_threshold_inside(self, point, threshold):
-        nb_removed = 0
-        avg = Marker(0, point[0], point[1], point[2])
+            for pelvis in pelv_frames:
+                points = frame.get_n_closest_markers(pelvis, NB_MARKERS)
+                maps.append(AssignNames(points, pelvis).assign_marker_names())
 
-        print "Trying to filter markers ", threshold, "m within : ", point
-        for frame in self.frames:
+            # Reorder markers according to map
+            new_marker_list = []
+            for map in maps:
+                print map                   
+                for id in map:
+                    new_marker_list.append(frame.marker_list[id])
 
-            remove_list = []
-
-            for marker in frame.marker_list:
-                if math.sqrt(avg.get_dist(marker)) < threshold:
-                    remove_list.append(marker)
-                    frame.count -= 1
-                    nb_removed += 1
-
-            for r_marker in remove_list:
-                frame.marker_list.remove(r_marker)
-
-        print "Filtered ", nb_removed, ' markers'
-
-    def filter_pillar(self):
-        nb_removed = 0
-        origin = Marker(0,0,0,0)
-
-        for frame in self.frames:
-
-            remove_list = []
-
-            for marker in frame.marker_list:
-                x_dist = (origin.x - marker.x)
-                y_dist = (origin.y - marker.y)
-                dist = np.array([x_dist,y_dist, marker.z])
-
-                if np.linalg.norm(dist) < 1:
-                    # config.marker_list = config.marker_list.remove(marker)
-                    remove_list.append(marker)
-                    frame.count -= 1
-                    nb_removed += 1
-            for r_marker in remove_list:
-                frame.marker_list.remove(r_marker)
-
-        print "Filtered ", nb_removed, ' markers'
-
-    def filter_threshold_outside(self, point, threshold):
-        nb_removed = 0
-        avg = Marker(0, point[0], point[1], point[2])
-
-        print "Trying to filter markers ", threshold, "m outside : ", point
-        for frame in self.frames:
-
-            remove_list = []
-
-            for marker in frame.marker_list:
-                if math.sqrt(avg.get_dist(marker)) > threshold:
-                    remove_list.append(marker)
-                    frame.count -= 1
-                    nb_removed += 1
-
-            for r_marker in remove_list:
-                frame.marker_list.remove(r_marker)
-
-        print "Filtered ", nb_removed, ' markers'
-
-    def filter_negative_x(self):
-        nb_removed = 0
-
-        for frame in self.frames:
-            remove_list = []
-
-            for marker in frame.marker_list:
-                if marker.x < 0.6:
-                    remove_list.append(marker)
-                    frame.count -= 1
-                    nb_removed += 1
-
-            for r_marker in remove_list:
-                frame.marker_list.remove(r_marker)
-
-        print "Filtered ", nb_removed, ' markers'
-
-    def init_first_frame(self):
-        # TODO Get # Human from objects
-        # TODO Check if marker and object timestamps for first_frame match up
-
-        # Find first usable config
-        for i, frame in enumerate(self.frames):
-            if frame.count == ( NB_HUMAN * NB_MARKERS):
-
-                pelv_frames = []
-                for object in frame.object_list:
-                    if 'Pelvis' in object.id and not object.is_occluded():
-                        pelv_frames.append(object.get_rot_matrix())
-
-                if len(pelv_frames) is not NB_HUMAN:
-                    continue
-
-                # Get the marker map for each human 
-                print "Getting marker name map"
-                maps = []
-
-                for pelvis in pelv_frames:
-                    points = frame.get_n_closest_markers(pelvis, NB_MARKERS)
-                    maps.append(AssignNames(points, pelvis).assign_marker_names())
-
-                # Reorder markers according to map
-                new_marker_list = []
-                for map in maps:
-                    print map                   
-                    for id in map:
-                        new_marker_list.append(frame.marker_list[id])
-
-                print "Concatenated marker list"
-                frame.marker_list = new_marker_list
-                frame.print_marker_ids()
-
-                if frame.get_duplicate_ids() or len(frame.marker_list) != frame.count:
-                    continue
-
-                else:
-                    self.first_frame = i
-                    break
-
-        if self.first_frame is not None:
-            frame = self.frames[self.first_frame]
-            # Now all markers are in the proper order, but names aren't set and ids are out of order
-            print "Assign marker names"
-            frame.set_marker_names()
-
-            # Put all ids in ascending order
-            frame.reorder_ids()
-            print "Successfully found good first frame : ", self.first_frame
+            print "Concatenated marker list"
+            frame.marker_list = new_marker_list
             frame.print_marker_ids()
 
-        else:
-            print "Couldn't find a usable first frame"
+            if frame.get_duplicate_ids() or len(frame.marker_list) != frame.count:
+                return
 
-
-    def track_indices(self):
-        if self.first_frame != None:
-            prev = self.frames[self.first_frame]
-            for i in range(self.first_frame+1, self.last_frame):
-                curr = self.frames[i]
-                new_frame = curr.get_new_config_by_distance(prev)
-                self.frames[i] = new_frame
-                prev = new_frame
+            else:
+                print "Found good calibration frame"
+                print "Setting marker names"
+                frame.set_marker_names()
+                frame.reorder_ids()
+                self.last_frame = frame
 
     def reorder_ids(self):
         for frame in self.frames:
             frame.reorder_ids()
             frame.reorder_objects()
 
-    def smooth_markers(self, size):
-        if size%2 == 0:
-            print "Window size can't be even"
-            return
-
-        window = self.frames[self.first_frame:self.first_frame+size]
-
-        for i in range( self.first_frame + int(floor(size/2)), self.last_frame-int(floor(size/2))):
-            for m, marker in enumerate(self.frames[i].marker_list):
-                avg = np.array([0.0,0.0,0.0])
-
-                for a_frame in window:
-                    # print "frame : ", i, "m : ", m, "len frame : ", len(a_frame.marker_list)
-                    avg += a_frame.marker_list[m].array
-
-                avg = avg/float(size)
-
-                self.frames[i].marker_list[m].array = avg
-                self.frames[i].marker_list[m].x = avg[0]
-                self.frames[i].marker_list[m].y = avg[1]
-                self.frames[i].marker_list[m].z = avg[2]
-
-            window = window[1:] + [self.frames[i+1]]
 
     def normalize_ids(self):
         for frame in self.frames:
@@ -645,47 +629,39 @@ class Fixer:
 
         return end-start
 
+    def on_shutdown(self):
+        print "killing bag process"
+        subprocess.Popen('kill ' + str(self.bag.pid), shell=True)
+        self.save_file()
+        print "done"
+
 
 
 if __name__ == '__main__':
-    # f = Fixer('/home/rafi/logging_data/second/markers.csv', '/home/rafi/logging_data/second/objects_fixed.csv')
-    f = Fixer('/home/rafi/logging_two/fifth/markers.csv', '/home/rafi/logging_two/fifth/objects.csv')
 
-    try:
-        with Timer() as t:
-            f.load_file()
 
-            # Filter bad markers
+    rospy.init_node('vicon_tracker')
+    marker_topic = rospy.get_param("~markers_topic", "mocap_markers")
+    object_topic = rospy.get_param("~objects_topic", "mocap_tracking" )
 
-            # avg = f.get_average_position()
-            # f.filter_threshold_outside(avg, 1.8)
-            # f.filter_negative_x()
-            # f.filter_pillar()
+    # Init tracker
+    t = Tracker(marker_topic, object_topic)
 
-            # Reorder marker ids to fill gaps
-            f.reorder_ids()
+    # print "Try to find start frame"
+    # t.init_first_frame()
 
-            print "Try to find start frame"
-            f.init_first_frame()
+    # print "starting to track ids"
+    # t.track_indices()
 
-            print "starting to track ids"
-            f.track_indices()
+    # print "Trying to smooth markers"
+    # t.smooth_markers(5)
 
-            print "Trying to smooth markers"
-            f.smooth_markers(5)
+    # # nb_diff = 0.0
+    # # for i,frame in enumerate(f.frames[f.first_frame:f.last_frame]):
+    # #     if len(frame.marker_list) != NB_MARKERS*NB_HUMAN:
+    # #         # print i, ' ', len(frame.marker_list)
+    # #         nb_diff += 1
+    # # print "% different : " , nb_diff/f.last_frame
 
-            # nb_diff = 0.0
-            # for i,frame in enumerate(f.frames[f.first_frame:f.last_frame]):
-            #     if len(frame.marker_list) != NB_MARKERS*NB_HUMAN:
-            #         # print i, ' ', len(frame.marker_list)
-            #         nb_diff += 1
-            # print "% different : " , nb_diff/f.last_frame
+    # t.save_file()
 
-            f.save_file()
-
-            t.file_runtime = f.get_runtime()
-    finally:
-        if t.file_runtime:
-            print 'Marker matching took,', t.interval, ' sec, ', (t.interval/t.file_runtime)*100, '% of total runtime'
-        else:
-            print 'Marker matching took %.03f sec.' % t.interval
