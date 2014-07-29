@@ -15,11 +15,11 @@ from numpy import linalg as la
 # 9 radial styloid
 # 10 2nd metacarpal head
 
-# ChestFront_raw      = frame.marker_list[i+0].array
-# ChestBack_raw       = frame.marker_list[i+1].array
-# SternumFront_raw    = frame.marker_list[i+2].array
-# SternumBack_raw     = frame.marker_list[i+3].array
-# rShoulderFront_raw  = frame.marker_list[i+4].array
+# ChestFront_raw      = frame.marker_list[i+0].array     -> 0
+# ChestBack_raw       = frame.marker_list[i+1].array     -> 1
+# SternumFront_raw    = frame.marker_list[i+2].array     -> 2
+# SternumBack_raw     = frame.marker_list[i+3].array     -> 3
+# rShoulderFront_raw  = frame.marker_list[i+4].array     -> 4
 # rShoulderBack_raw   = frame.marker_list[i+5].array
 # rElbowOuter_raw     = frame.marker_list[i+6].array
 # rElbowInner_raw     = frame.marker_list[i+7].array
@@ -34,6 +34,16 @@ from numpy import linalg as la
 # lWristOuter_raw     = frame.marker_list[i+15].array
 # lWristInner_raw     = frame.marker_list[i+16].array
 # lPalm_raw           = frame.marker_list[i+17].array
+
+
+def remap_to_matlab(in_markers):
+
+    out_markers = in_markers
+    tmp = out_markers[4]
+    out_markers[4] = in_markers[5]
+    out_markers[5] = tmp
+
+    return out_markers
 
 
 def load_file(m_filepath, o_filepath):

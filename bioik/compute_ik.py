@@ -90,22 +90,21 @@ class BioHumanIk():
         self.env.Load("../ormodels/human_wpi_bio.xml")
 
         self.human = self.env.GetRobots()[0]
+
+        # Get pelvis torso offset and set human to position
+        self.offset_pelvis_torso_init = self.human.GetJoint("TorsoX").GetHierarchyChildLink().GetTransform()[0:3, 3]
+
         self.handles = []
 
         # Should store the marker set
         self.markers = None
         self.q = None
 
-        # Set torso at origin of the scene
-        self.offset_pelvis_torso = self.human.GetJoint("TorsoX").GetHierarchyChildLink().GetTransform()[0:3, 3]
-        print self.offset_pelvis_torso
-        self.human.SetTransform(array(MakeTransform(eye(3), matrix(-self.offset_pelvis_torso))))
-
         self.offset_torso_shoulder = None
         self.offset_shoulder_elbow = None
         self.offset_elbow_wrist = None
-        self.torso_origin = None
-        self.t_torso = eye(4)
+        self.t_torso = None
+        self.t_pelvis = None
 
     # Marker array should be the size of the number of markers
     # the markers should be ordered as described in the reminder
@@ -113,9 +112,10 @@ class BioHumanIk():
 
         self.markers = markers
 
-    def get_markers_in_torso_frame(self):
+    def get_markers_in_pelvis_frame(self):
 
-        inv_torso = la.inv(self.t_torso)
+        inv_torso = la.inv(self.t_pelvis)
+
         points_3d = len(self.markers)*[array([0, 0, 0])]
 
         for i, p in enumerate(self.markers):
@@ -125,6 +125,8 @@ class BioHumanIk():
         return points_3d
 
     def set_pelvis(self, t_pelvis):
+
+        # Get pelvis frame in world
 
         print "t_pelvis : ", t_pelvis
         print "t_pelvis[3:7] ", t_pelvis[3:7]
@@ -138,11 +140,11 @@ class BioHumanIk():
 
         new_x = -z_dir
         new_x[2] = 0
-        new_x = new_x/la.norm(new_x)
+        new_x /= la.norm(new_x)
         new_z = array([0, 0, 1])
 
         new_y = cross(new_x, new_z)
-        new_y = new_y/la.norm(new_y)
+        new_y /= la.norm(new_y)
         new_y = -new_y
 
         mat[0][0, 0] = new_x[0]
@@ -155,34 +157,90 @@ class BioHumanIk():
         mat[2][0, 1] = new_y[2]
         mat[2][0, 2] = new_z[2]
 
-        self.t_torso = mat # * MakeTransform(rodrigues([0, pi, 0]), matrix([0, 0, 0]))
+        self.t_pelvis = mat
+
+        # Compute the offset between the truck and the pelvis
+        # the offset_pelvis_torso_init is hard coded and the human model
+
+        xyphoid_t8 = self.markers[0] - self.markers[1]
+        trunk_center = self.markers[0] - 0.5*xyphoid_t8
+
+        inv_pelvis = la.inv(self.t_pelvis)
+        trunk_center = array(array(inv_pelvis).dot(append(trunk_center, 1)))[0:3]
+
+        self.offset_pelvis_torso = trunk_center
+        self.offset_pelvis_torso -= self.offset_pelvis_torso_init
+
+        print "offset_pelvis_torso : ", self.offset_pelvis_torso
 
     def set_model_size(self):
 
         # self.t_torso = MakeTransform(rodrigues([0, pi/2, 0]), matrix(self.torso_origin))
 
-        self.torso_origin = (self.markers[0] + (self.markers[1]))/2
+        torso_origin = (self.markers[0] + self.markers[1])/2
         p_shoulder_center = array([self.markers[4][0], self.markers[4][1], self.markers[5][2]])
         p_elbow_center = (self.markers[6] + self.markers[7])/2
         p_wrist_center = (self.markers[9] - self.markers[8])/2 + self.markers[8]
 
-        self.offset_torso_shoulder = p_shoulder_center - self.torso_origin
+        self.offset_torso_shoulder = p_shoulder_center - torso_origin
         self.offset_shoulder_elbow = la.norm(p_shoulder_center - p_elbow_center)
         self.offset_elbow_wrist = la.norm(p_wrist_center - p_elbow_center)
 
         # Get shoulder center in the global frame
-        t_torso = self.t_torso
+        inv_pelvis = la.inv(self.t_pelvis)
+
+        xyphoid_t8 = self.markers[0] - self.markers[1]
+        trunk_center = self.markers[0] - 0.5*xyphoid_t8
+        c7_sternal = self.markers[2] - self.markers[3]
+        c7s_midpt = self.markers[3] + 0.5*c7_sternal
+
+        mat = MakeTransform(eye(3), matrix(trunk_center))
+
+        new_y = array(transpose(mat[:, 0]).tolist()[0][:3])
+        new_x = array(transpose(mat[:, 1]).tolist()[0][:3])
+        new_z = array(transpose(mat[:, 2]).tolist()[0][:3])
+
+        new_y = c7s_midpt - trunk_center
+        new_z = cross(new_y, xyphoid_t8)
+        new_x = cross(new_y, new_z)
+
+        new_x /= la.norm(new_x)
+        new_y /= la.norm(new_y)
+        new_z /= la.norm(new_z)
+
+        mat[0][0, 0] = new_x[0]
+        mat[0][0, 1] = new_y[0]
+        mat[0][0, 2] = new_z[0]
+        mat[1][0, 0] = new_x[1]
+        mat[1][0, 1] = new_y[1]
+        mat[1][0, 2] = new_z[1]
+        mat[2][0, 0] = new_x[2]
+        mat[2][0, 1] = new_y[2]
+        mat[2][0, 2] = new_z[2]
+
+        # self.handles.append(misc.DrawAxes(self.env, inv_pelvis * mat, 1))
+
+        # Get shoulder center in the torso frame before rotation
+        t_torso = mat
         inv_torso = la.inv(t_torso)
         offset_torso = array(array(inv_torso).dot(append(p_shoulder_center, 1)))[0:3]
 
-        # Get shoulder center in the torso frame after rotation
-        t_torso = self.human.GetJoint("TorsoZ").GetHierarchyChildLink().GetTransform()
-        inv_torso = la.inv(t_torso)
-        offset_torso = array(array(inv_torso).dot(append(offset_torso, 1)))[0:3]
+        # Place the human according the torso and pelvis frame
+        # future notes, when placing the human according to the pelvis frame
+        # the torso offset should be applied
+        self.human.SetTransform(array(MakeTransform(eye(3), matrix(self.offset_pelvis_torso))))
 
-        self.human.SetDOFValues([offset_torso[0]], [9])
+        # Get shoulder center in the torso frame after rotation
+        # t_torso = self.human.GetJoint("TorsoZ").GetHierarchyChildLink().GetTransform()
+        # inv_torso = la.inv(t_torso)
+        # offset_torso = array(array(inv_torso).dot(append(offset_torso, 1)))[0:3]
+
+        print "offset_torso : ", offset_torso
+
+        # Set elbow size
+        self.human.SetDOFValues([-offset_torso[0]], [9])
         self.human.SetDOFValues([offset_torso[1]], [10])
-        self.human.SetDOFValues([offset_torso[2]], [11])
+        self.human.SetDOFValues([-offset_torso[2]], [11])
         self.human.SetDOFValues([self.offset_shoulder_elbow], [19])
         self.human.SetDOFValues([self.offset_elbow_wrist], [21])
 
@@ -194,7 +252,7 @@ class BioHumanIk():
         p_wrist_center = (self.markers[9] - self.markers[8])/2 + self.markers[8]
 
         # Get the points in the global frame
-        inv_torso = la.inv(self.t_torso)
+        inv_torso = la.inv(self.t_pelvis)
         p1 = array(array(inv_torso).dot(append(p_shoulder_center, 1)))[0:3]
         p2 = array(array(inv_torso).dot(append(p_elbow_center, 1)))[0:3]
         p3 = array(array(inv_torso).dot(append(p_wrist_center, 1)))[0:3]
@@ -235,13 +293,14 @@ class BioHumanIk():
         self.handles.append(self.env.plot3(p2, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
         self.handles.append(self.env.plot3(p3, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
 
-        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("TorsoY").GetHierarchyChildLink().GetTransform(), 1))
+        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("TorsoZ").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rShoulderY").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rElbowZ").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rWristY").GetHierarchyChildLink().GetTransform(), 1))
-        self.handles.append(misc.DrawAxes(self.env, self.t_torso, 1))
-        #self.handles.append(misc.DrawAxes(self.env, eye(4), 2))
+        # self.handles.append(misc.DrawAxes(self.env, self.t_torso, 1))
+        # self.handles.append(misc.DrawAxes(self.env, self.t_pelvis, 2))
+        # self.handles.append(misc.DrawAxes(self.env, eye(4), 2))
 
         # print "joint : ", self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform()[0:3, 3]
 
@@ -251,7 +310,7 @@ class BioHumanIk():
 
         del self.handles[:]
 
-        points = self.get_markers_in_torso_frame()
+        points = self.get_markers_in_pelvis_frame()
 
         colors = []
         nb_points = len(points)
@@ -279,7 +338,13 @@ class BioHumanIk():
 
             line_str = ""
 
+            t_trans = MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
+            inv_torso = la.inv(self.t_pelvis * t_trans)
+
             for marker in self.markers:
+
+                marker = array(array(inv_torso).dot(append(marker, 1)))[0:3]
+
                 line_str += str(marker[0]*1000) + ','
                 line_str += str(marker[1]*1000) + ','
                 line_str += str(marker[2]*1000) + ','
@@ -332,15 +397,15 @@ if __name__ == "__main__":
     # for i in range(raw_markers.shape[0]):
         # markers = [raw_markers[i][n:n+3] for n in range(0, m, 3)]  # separate in 3d arrays
 
-        h.set_pelvis(frames_o[0][0][0:7])
         h.set_markers(frames_m[i][0:11])
+        h.set_pelvis(frames_o[i][0][0:7])
+        h.set_model_size()
         h.save_markers_to_file()
 
         nb_sent += 1
         s.send("r")
         data = s.recv(1)
 
-        h.set_model_size()
         h.draw_markers()
 
     nb_sent += 1

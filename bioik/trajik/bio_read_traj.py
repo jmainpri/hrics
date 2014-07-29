@@ -182,6 +182,39 @@ class Human():
         self.human.SetDOFValues([self.offset_shoulder_elbow], [19])
         self.human.SetDOFValues([self.offset_elbow_wrist], [21])
 
+
+        # TEST
+        # xyphoid_t8 = p[0] - p[1]
+        # trunk_center = p[0] - 0.5*xyphoid_t8
+        # c7_sternal = p[2] - p[3]
+        # c7s_midpt = p[3] + 0.5*c7_sternal
+        #
+        # mat = MakeTransform(eye(3), matrix(trunk_center))
+        #
+        # new_y = array(transpose(mat[:, 0]).tolist()[0][:3])
+        # new_x = array(transpose(mat[:, 1]).tolist()[0][:3])
+        # new_z = array(transpose(mat[:, 2]).tolist()[0][:3])
+        #
+        # new_y = c7s_midpt - trunk_center
+        # new_z = cross(new_y, xyphoid_t8)
+        # new_x = cross(new_y, new_z)
+        #
+        # new_x /= la.norm(new_x)
+        # new_y /= la.norm(new_y)
+        # new_z /= la.norm(new_z)
+        #
+        # mat[0][0, 0] = new_x[0]
+        # mat[0][0, 1] = new_y[0]
+        # mat[0][0, 2] = new_z[0]
+        # mat[1][0, 0] = new_x[1]
+        # mat[1][0, 1] = new_y[1]
+        # mat[1][0, 2] = new_z[1]
+        # mat[2][0, 0] = new_x[2]
+        # mat[2][0, 1] = new_y[2]
+        # mat[2][0, 2] = new_z[2]
+        #
+        # self.handles.append(misc.DrawAxes(self.env, la.inv(self.t_torso) * mat, 1))
+
     def play_markers(self):
 
         t = 0.0  # Time for playing
@@ -282,7 +315,7 @@ class Human():
         self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rShoulderY").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rElbowZ").GetHierarchyChildLink().GetTransform(), 1))
         self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rWristY").GetHierarchyChildLink().GetTransform(), 1))
-        # self.handles.append(misc.DrawAxes(self.env, self.t_torso, 1))
+        self.handles.append(misc.DrawAxes(self.env, self.t_torso, 1))
         #self.handles.append(misc.DrawAxes(self.env, eye(4), 2))
 
         # print "joint : ", self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform()[0:3, 3]

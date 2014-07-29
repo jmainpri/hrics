@@ -209,7 +209,8 @@ hand_origin=mean_pos(33:35); % hand origin at 2nd metacarpal for now.
 % to get trunk kinematics we need to reference the trunk global frame,
 % which is the matrix [0 1 0; 0 0 1; 1 0 0]
 globalE=[-1 0 0; 0 0 1; 0 1 0]; %this is simply a reflection of how our subjects were positioned relative to global
-% globalE=[1 0 0; 0 1 0; 0 0 1];
+% globalE=[1 0 0; 0 0 1; 0 -1 0]; % change for points defined in pelvis frame
+% globalE=[0 1 0; 0 0 1; 1 0 0];
 glob_inv=inv(globalE);
 trunk_about_glob=trunkE*glob_inv;
 trunk_about_glob=normalize(trunk_about_glob);
@@ -234,6 +235,7 @@ UA_about_trunk=normalize(UA_about_trunk);
 % Method 1: euler angles (ISB recommendation)
 
 [sh_a,sh_b]=rtocarda(UA_about_trunk,2,1,2);
+
 %disp('SHOULDER')
 %disp('exernal rotation,  elevation angle, plane of elevation')
 %disp(sh_a)
