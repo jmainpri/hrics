@@ -426,7 +426,7 @@ class Tracker:
 
         self.frames = []
         self.last_frame = None
-        self.mutex = threading.Lock()
+        self.lock = threading.Lock()
 
         self.object_q = Queue.Queue()
         self.marker_q = Queue.Queue()
@@ -452,30 +452,30 @@ class Tracker:
         #     sleep_rate.sleep()
 
     def marker_cb(self, msg):
-        self.mutex.acquire()
+        self.lock.acquire()
         self.marker_q.put(msg)
         # print "Len m_q : ", self.marker_q.qsize()
 
         if not self.object_q.empty():
             self.make_frame()
 
-        self.mutex.release()
+        self.lock.release()
 
         # if self.markers_updated and self.objects_updated:
         #     self.make_frame()
 
     def object_cb(self, msg):
         
-        self.mutex.acquire()
+        self.lock.acquire()
 
         self.object_q.put(msg)
         # print "Len o_q : ", self.object_q.qsize()
 
-        # self.mutex.acquire()
+        # self.lock.acquire()
         if not self.marker_q.empty():
             self.make_frame()
 
-        self.mutex.release()
+        self.lock.release()
         # if self.markers_updated and self.objects_updated:
         #     self.make_frame()
 
@@ -644,24 +644,5 @@ if __name__ == '__main__':
     marker_topic = rospy.get_param("~markers_topic", "mocap_markers")
     object_topic = rospy.get_param("~objects_topic", "mocap_tracking" )
 
-    # Init tracker
     t = Tracker(marker_topic, object_topic)
-
-    # print "Try to find start frame"
-    # t.init_first_frame()
-
-    # print "starting to track ids"
-    # t.track_indices()
-
-    # print "Trying to smooth markers"
-    # t.smooth_markers(5)
-
-    # # nb_diff = 0.0
-    # # for i,frame in enumerate(f.frames[f.first_frame:f.last_frame]):
-    # #     if len(frame.marker_list) != NB_MARKERS*NB_HUMAN:
-    # #         # print i, ' ', len(frame.marker_list)
-    # #         nb_diff += 1
-    # # print "% different : " , nb_diff/f.last_frame
-
-    # t.save_file()
 
