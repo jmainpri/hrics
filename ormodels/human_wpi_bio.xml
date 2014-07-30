@@ -184,6 +184,7 @@
             <translation>0.034094 0.004925 0.088688</translation>
             <radius>0.13</radius>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+            <transparency>0.5</transparency>
         </geom>
     </body>
     
@@ -358,6 +359,7 @@
             <radius>0.053</radius>
             <height>0.2475</height>
             <diffuseColor>0.800 0.000 0.0100</diffuseColor>
+            <transparency>0.8</transparency>
         </geom>
     </body>
 
@@ -379,6 +381,7 @@
             <radius>0.053</radius>
             <height>0.281</height>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+            <transparency>0.8</transparency>
         </geom>
     </body>
 
@@ -388,6 +391,7 @@
         <geom type="sphere">
             <radius>0.02</radius>
             <transparency>1</transparency>
+            <transparency>0.8</transparency>
         </geom>
     </body>    
     <body name="lWristDummyY">
@@ -396,6 +400,7 @@
         <geom type="sphere">
             <radius>0.02</radius>
             <transparency>1</transparency>
+            <transparency>0.8</transparency>
         </geom>
     </body>
     
@@ -407,18 +412,21 @@
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.068800 0.048000 0.027500</extents>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+            <transparency>0.8</transparency>
         </geom>
         <geom type="box">    
             <translation>0.006131 0.160954 0.037292</translation>
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.045150 0.049350 0.015200</extents>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+            <transparency>0.8</transparency>
         </geom>
         <geom type="box">    
             <translation>0.06748 0.08632 0.002815</translation>
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.044700 0.012400 0.015600</extents>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
+            <transparency>0.8</transparency>
         </geom>
     </body>
 

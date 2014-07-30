@@ -253,7 +253,6 @@ class BioHumanIk():
         t_offset = MakeTransform(eye(3), matrix(self.offset_pelvis_torso))
         self.human.SetTransform(array(self.t_pelvis * t_offset))
 
-
         # Set elbow size
         self.human.SetDOFValues([-offset_torso[0]], [9])
         self.human.SetDOFValues([offset_torso[1]], [10])
@@ -323,6 +322,7 @@ class BioHumanIk():
         # self.handles.append(misc.DrawAxes(self.env, inv_pelvis * self.t_torso, 1))
         # self.handles.append(misc.DrawAxes(self.env, self.t_pelvis, 2))
         # self.handles.append(misc.DrawAxes(self.env, eye(4), 2))
+        self.handles.append(misc.DrawAxes(self.env, self.t_pelvis, 2))
 
         # print "joint : ", self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform()[0:3, 3]
 
