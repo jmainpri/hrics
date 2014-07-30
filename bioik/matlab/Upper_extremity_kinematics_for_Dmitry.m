@@ -214,6 +214,7 @@ globalE=[-1 0 0; 0 0 1; 0 1 0]; %this is simply a reflection of how our subjects
 glob_inv=inv(globalE);
 trunk_about_glob=trunkE*glob_inv;
 trunk_about_glob=normalize(trunk_about_glob);
+trunk_about_glob
 % % Method 1: find euler angles
 [tr_a,tr_b]=rtocarda(trunk_about_glob,1,3,2);
 if calibration_flag==1
