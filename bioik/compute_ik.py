@@ -427,17 +427,28 @@ class BioHumanIk():
         # new_x = array(transpose(mat[:, 1]).tolist()[0][:3])
         # new_z = array(transpose(mat[:, 2]).tolist()[0][:3])
 
-        y = matrix(eye(3))
+        y = eye(3)
 
-        y[:, 0] = x[:, 0] / la.norm(x[:, 0])
-        y[:, 1] = x[:, 1] / la.norm(x[:, 1])
-        y[:, 2] = x[:, 2] / la.norm(x[:, 2])
+        print "x : ", x
+        print "x[:, 0] : ", transpose(x[:, 0])
+        print "x[:, 1] : ", transpose(x[:, 1])
+        print "x[:, 2] : ", transpose(x[:, 2])
+
+        y[:, 0] = transpose(x[:, 0]) / la.norm(x[:, 0])
+        y[:, 1] = transpose(x[:, 1]) / la.norm(x[:, 1])
+        y[:, 2] = transpose(x[:, 2]) / la.norm(x[:, 2])
+
+        # print "y : ", y
+
+        # exit(0)
 
         return y
 
     def compute_ik(self):
 
         markers = self.get_markers_in_pelvis_frame_2()
+
+        print markers
 
         # 0 -> 3-5 xyphoid process
         # 1 -> 6-8 T8
@@ -474,26 +485,33 @@ class BioHumanIk():
         trunkX = cross(trunkY, trunkZ)
         trunkX *= - 1.0
         trunkZ *= - 1.0
-        trunkE = self.normalize(matrix([trunkX, trunkY, trunkZ]))
+        # trunkX /= la.norm(trunkX)
+        # trunkY /= la.norm(trunkY)
+        # trunkZ /= la.norm(trunkZ)
+        # trunkE = matrix([trunkX, trunkY, trunkZ])
+        print "trunkX : ", trunkX
+        print "trunkY : ", trunkY
+        print "trunkZ : ", trunkZ
+        trunkE = self.normalize(transpose(matrix([trunkX, trunkY, trunkZ])))
 
         shoulderX = acromion-c7s_midpt
         shoulderZ = cross(shoulderX, trunkY)
         shoulderY = cross(shoulderZ, shoulderX)
-        shouldE = self.normalize(matrix([shoulderX, shoulderY, shoulderZ]))
+        shouldE = self.normalize(transpose(matrix([shoulderX, shoulderY, shoulderZ])))
 
         UAZ = - elb_axis / la.norm(elb_axis)
         UAX = cross(UAY, UAZ)
-        UAE = self.normalize(matrix([UAX, UAY, UAZ]))
+        UAE = self.normalize(transpose(matrix([UAX, UAY, UAZ])))
 
         LAY = LApY
         LAX = cross(LAY, wrist_axis)
         LAZ = cross(LAX, LAY)
-        LAE = self.normalize(matrix([LAX, LAY, LAZ]))
+        LAE = self.normalize(transpose(matrix([LAX, LAY, LAZ])))
 
         handY = wrist_center-markers[10]
         handX = cross(handY, wrist_axis)
         handZ = cross(handX, handY)
-        handE = self.normalize(matrix([handX, handY, handZ]))
+        handE = self.normalize(transpose(matrix([handX, handY, handZ])))
 
         # Global frame
         globalE = matrix([[-1, 0, 0], [0, 0, 1], [0, 1, 0]])
@@ -501,12 +519,8 @@ class BioHumanIk():
         # globalE=[1 0 0; 0 0 1; 0 -1 0]; # change for points defined in pelvis frame
         # globalE=[0 1 0; 0 0 1; 1 0 0]
 
-
-
         trunk_about_glob = trunkE * la.inv(globalE)
         trunk_about_glob = self.normalize(trunk_about_glob)
-
-        print "trunk_about_glob : " , trunk_about_glob
 
         # # Method 1: find euler angles
         [tr_a, tr_b] = self.rtocarda(trunk_about_glob, 1, 3, 2)
