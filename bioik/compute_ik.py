@@ -28,21 +28,23 @@
 #   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # -*- coding: utf-8 -*-
 
+# http://openrave.org/docs/latest_stable/command_line_tools/
+# openrave-robot.py ../ormodels/human_wpi_bio.xml --info=joints
+# on that page you can find more examples on how to use openrave-robot.py.
+
 from openravepy import *
 import os
 import sys
 import time
-import socket
 from copy import deepcopy
 from numpy import *
 from numpy import linalg as la
 from TransformMatrix import *
 from rodrigues import *
-from subprocess import call
 import marker_utils
-from math import *
+from math_utils import *
 
-mapping = [-1, 6, 7, 8, 18, 17, 16, 20, 22, 23, 24]
+mapping = [-1, 6, 7, 8, 16, 17, 18, 20, 21, 22, 24, 25, 26]
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5005
@@ -51,19 +53,26 @@ TCP_PORT = 5005
 # -------------------------------------------------------------------------
 # TorsoX        6           6         PelvisBody        TorsoDummyX
 # TorsoY        7           7         TorsoDummyX       TorsoDummyY
-# TorsoZ        8           8         TorsoDummyY       TorsoDummyTransX
-# xTorsoTrans   9           9         TorsoDummyTransX  TorsoDummyZ
+# TorsoZ        8           8         TorsoDummyY       TorsoDummyZ
+# xTorsoTrans   9           9         TorsoDummyZ       TorsoDummyTransX
 # yTorsoTrans   10          10        TorsoDummyTransX  TorsoDummyTransY
 # zTorsoTrans   11          11        TorsoDummyTransY  TorsoDummyTransZ
+# TorsoTrans    12          12        TorsoDummyZ       torso
+# HeadZ         13          13        torso             HeadDummyZ
+# HeadY         14          14        HeadDummyZ        HeadDummyY
+# HeadX         15          15        HeadDummyY        head
 # rShoulderX    16          16        TorsoDummyTransZ  rShoulderDummyX
 # rShoulderZ    17          17        rShoulderDummyX   rShoulderDummyZ
 # rShoulderY    18          18        rShoulderDummyZ   rHumerus
 # rArmTrans     19          19        rHumerus          rElbowDummy1
-# rElbowZ       20          20        rElbowDummy1      rRadius
-# rForearmTrans 21          21        rRadius           rWristDummy
-# rWristX       22          22        rWristDummy       rWristDummyX
-# rWristY       23          23        rWristDummyX      rWristDummyY
-# rWristZ       24          24        rWristDummyY      rHand
+# rElbowX       20          20        rElbowDummy1      rElbowDummy2
+# rElbowY       21          21        rElbowDummy2      rElbowDummy3
+# rElbowZ       22          22        rElbowDummy3      rRadius
+# rForearmTrans 23          23        rRadius           rWristDummy
+# rWristX       24          24        rWristDummy       rWristDummyX
+# rWristY       25          25        rWristDummyX      rWristDummyY
+# rWristZ       26          26        rWristDummyY      rHand
+
 
 # Reminder of marker order
 # -------------------------------------------------------------------------
@@ -107,6 +116,7 @@ class BioHumanIk():
         self.offset_elbow_wrist = None
         self.t_torso = None
         self.t_pelvis = None
+        self.t_trans = None
 
     # Marker array should be the size of the number of markers
     # the markers should be ordered as described in the reminder
@@ -129,15 +139,15 @@ class BioHumanIk():
 
         # Construct frame centered at torso with orientation
         # set by the pelvis frame, add rotation offset for matlab code
-        t_trans = deepcopy(self.t_pelvis)
-        t_trans[0:3, 3] = deepcopy(self.t_torso[0:3, 3])
-        t_trans = t_trans * MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
-        t_trans = la.inv(t_trans)
+        self.t_trans = deepcopy(self.t_pelvis)
+        self.t_trans[0:3, 3] = deepcopy(self.t_torso[0:3, 3])
+        self.t_trans = self.t_trans * MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
+        ivnv_t_trans = la.inv(self.t_trans)
 
         points_3d = len(self.markers)*[array([0, 0, 0])]
 
         for i, p in enumerate(self.markers):
-            points_3d[i] = array(array(t_trans).dot(array(append(p, 1.0))))[0:3]
+            points_3d[i] = array(array(ivnv_t_trans).dot(array(append(p, 1.0))))[0:3]
             points_3d[i] *= 1000
 
         return points_3d
@@ -258,7 +268,7 @@ class BioHumanIk():
         self.human.SetDOFValues([offset_torso[1]], [10])
         self.human.SetDOFValues([-offset_torso[2]], [11])
         self.human.SetDOFValues([self.offset_shoulder_elbow], [19])
-        self.human.SetDOFValues([self.offset_elbow_wrist], [21])
+        self.human.SetDOFValues([self.offset_elbow_wrist], [23])
 
     def compute_dist_to_points(self, frame_id=0):
 
@@ -314,17 +324,23 @@ class BioHumanIk():
         self.handles.append(self.env.plot3(p2, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
         self.handles.append(self.env.plot3(p3, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
 
-        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("TorsoZ").GetHierarchyChildLink().GetTransform(), 1))
+        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("TorsoZ").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rShoulderY").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rElbowZ").GetHierarchyChildLink().GetTransform(), 1))
-        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rWristY").GetHierarchyChildLink().GetTransform(), 1))
+        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rWristY").GetHierarchyChildLink().GetTransform(), 1))
+        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rArmTrans").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, inv_pelvis * self.t_torso, 1))
         # self.handles.append(misc.DrawAxes(self.env, self.t_pelvis, 2))
         # self.handles.append(misc.DrawAxes(self.env, eye(4), 2))
-        self.handles.append(misc.DrawAxes(self.env, self.t_pelvis, 2))
+        # self.handles.append(misc.DrawAxes(self.env, self.t_pelvis, 2))
 
         # print "joint : ", self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform()[0:3, 3]
+
+        # self.handles.append(misc.DrawAxes(self.env, self.trunkE, .3))
+        # self.handles.append(misc.DrawAxes(self.env, self.UAE, .3))
+        # self.handles.append(misc.DrawAxes(self.env, self.LAE, .3))
+        self.handles.append(misc.DrawAxes(self.env, self.handE, .3))
 
         return dist
 
@@ -375,107 +391,26 @@ class BioHumanIk():
             self.q = self.human.GetDOFValues()
 
             for i, dof in enumerate(configuration):
+
                 if mapping[i] >= 0:
                     self.q[mapping[i]] = dof * pi / 180
-                if mapping[i] == 16:
-                    self.q[mapping[i]] = -self.q[mapping[i]]
-                if mapping[i] == 17:
-                    self.q[mapping[i]] = -self.q[mapping[i]]
-                if mapping[i] == 18:
-                    self.q[mapping[i]] = -self.q[mapping[i]]
-                if mapping[i] == 22:
-                    self.q[mapping[i]] = -self.q[mapping[i]]
-                if mapping[i] == 23:
-                    self.q[mapping[i]] = -self.q[mapping[i]]
-                if mapping[i] == 24:
-                    self.q[mapping[i]] = -self.q[mapping[i]]
+
+                # if mapping[i] == 16:
+                #     self.q[mapping[i]] = -self.q[mapping[i]]
+                # if mapping[i] == 17:
+                #     self.q[mapping[i]] = -self.q[mapping[i]]
+                # if mapping[i] == 18:
+                #     self.q[mapping[i]] = -self.q[mapping[i]]
+
+                # rElbowX       20          20        rElbowDummy1      rElbowDummy2
+                # rElbowY       21          21        rElbowDummy2      rElbowDummy3
+                # rElbowZ       22          22        rElbowDummy3      rRadius
+                # rForearmTrans 23          23        rRadius           rWristDummy
+                # rWristX       24          24        rWristDummy       rWristDummyX
+                # rWristY       25          25        rWristDummyX      rWristDummyY
+                # rWristZ       26          26        rWristDummyY      rHand
+
         return self.q
-
-    def rtocarda( self, R, i, j, k):
-
-        #RTOCARDA (Spacelib): Rotation  matrix  to Cardan or Eulerian angles.
-        #
-        # Extracts the Cardan (or Euler) angles from a rotation matrix.
-        # The  parameters  i, j, k  specify   the   sequence   of  the rotation axes
-        # (their value must be the constant (X,Y or Z).
-        # j must be different from i and k, k could be equal to i.
-        # The two solutions are stored in the  three-element vectors q1 and q2.
-        # RTOCARDA performs the inverse operation than CARDATOR.
-        # Usage:
-        #
-        #			[q1,q2]=rtocarda(R,i,j,k)
-        #
-        # Related functions : MTOCARDA
-        #
-        # (c) G.Legnani, C. Moiola 1998; adapted from: G.Legnani and R.Adamini 1993
-        #___________________________________________________________________________
-
-        #spheader
-        #disp('got this far')
-        # if ( i<X | i>Z | j<X | j>Z | k<X | k>Z | i==j | j==k )
-        # 	error('Error in RTOCARDA: Illegal rotation axis ')
-        # end
-
-        a = array([0.0, 0.0, 0.0])
-        b = array([0.0, 0.0, 0.0])
-
-        # print "R : ", R
-
-        if (j-i+3) % 3 == 1:
-            sig = 1  # ciclic
-        else:
-            sig = -1  # anti ciclic
-
-        if i != k:  # Cardanic Convention
-
-            i -= 1
-            j -= 1
-            k -= 1
-
-            a[0] = atan2(-sig*R[j, k], R[k, k])
-            a[1] = asin(sig*R[i, k])
-            a[2] = atan2(-sig*R[i, j], R[i, i])
-
-            b[0] = atan2(sig*R[j, k], -R[k, k])
-            b[1] = ((pi-asin(sig*R[i, k]) + pi) % 2*pi)-pi
-            b[2] = atan2(sig*R[i, j], -R[i, i])
-
-        else:  # Euleriana Convention
-
-            l = 6-i-j
-
-            i -= 1
-            j -= 1
-            k -= 1
-            l -= 1
-
-            a[0] = atan2(R[j, i], -sig*R[l, i])
-            a[1] = acos(R[i, i])
-            a[2] = atan2(R[i, j], sig*R[i, l])
-
-            b[0] = atan2(-R[j, i], sig*R[l, i])
-            b[1] = -acos(R[i, i])
-            b[2] = atan2(-R[i, j], -sig*R[i, l])
-
-        # report in degrees instead of radians
-        a = a * 180/pi
-        b = b * 180/pi
-
-        # print "a : ", a
-        # print "b : ", b
-
-        return [a, b]
-
-    def normalize(self, x):
-
-        y = eye(3)
-
-        y[0, :] = x[0, :] / la.norm(x[0, :])
-        y[1, :] = x[1, :] / la.norm(x[1, :])
-        y[2, :] = x[2, :] / la.norm(x[2, :])
-
-        # important to export as matrix
-        return matrix(y)
 
     def compute_ik(self):
 
@@ -504,8 +439,8 @@ class BioHumanIk():
 
         # SHOULDER
         fixedz = markers[4][2]  # - 10  # 10 -> 1 cm
-        acromion = [markers[4][0], markers[4][1], fixedz]
-        gleno_center = [acromion[0], acromion[1], markers[5][2]]  # Shoulder center
+        acromion = array([markers[4][0], markers[4][1], fixedz])
+        gleno_center = array([acromion[0], acromion[1], markers[5][2]])  # Shoulder center
 
         # ELBOW
         elb_axis = markers[6] - markers[7]
@@ -525,7 +460,7 @@ class BioHumanIk():
         trunkX = cross(trunkY, trunkZ)
         trunkX *= - 1.0
         trunkZ *= - 1.0
-        trunkE = self.normalize(matrix([trunkX, trunkY, trunkZ]))
+        trunkE = normalize(transpose(matrix([trunkX, trunkY, trunkZ])))
 
         # shoulderX = acromion-c7s_midpt
         # shoulderZ = cross(shoulderX, trunkY)
@@ -533,20 +468,25 @@ class BioHumanIk():
         # shouldE = self.normalize(matrix([shoulderX, shoulderY, shoulderZ]))
 
         # UAZ_offset = array([-0.1601, -0.1286, 0.0411])
-        UAZ = - elb_axis / la.norm(elb_axis)  # - UAZ_offset
+        UAZ = - elb_axis  # / la.norm(elb_axis)  # - UAZ_offset
         UAY = gleno_center - elb_center
         UAX = cross(UAY, UAZ)
-        UAE = self.normalize(matrix([UAX, UAY, UAZ]))
+        UAE = normalize(transpose(matrix([UAX, UAY, UAZ])))
 
         LAY = LApY
         LAX = cross(LAY, wrist_axis)
         LAZ = cross(LAX, LAY)
-        LAE = self.normalize(matrix([LAX, LAY, LAZ]))
+        LAE = normalize(transpose(matrix([LAX, LAY, LAZ])))
 
         handY = wrist_center - hand_origin
         handX = cross(handY, wrist_axis)
         handZ = cross(handX, handY)
-        handE = self.normalize(matrix([handX, handY, handZ]))
+        handE = normalize(transpose(matrix([handX, handY, handZ])))
+
+        self.trunkE = self.t_trans * MakeTransform(trunkE, matrix(trunk_center/1000))
+        self.UAE = self.t_trans * MakeTransform(UAE, matrix(gleno_center/1000))
+        self.LAE = self.t_trans * MakeTransform(LAE, matrix(elb_center/1000))
+        self.handE = self.t_trans * MakeTransform(handE, matrix(wrist_center/1000))
 
         # --------------------------------------------------------------------
         # Global frame
@@ -559,42 +499,56 @@ class BioHumanIk():
         # Get eulers angles
 
         # Method 1: find euler angles
-        trunk_about_glob = trunkE * la.inv(globalE)
-        trunk_about_glob = self.normalize(trunk_about_glob)
-        [tr_a, tr_b] = self.rtocarda(trunk_about_glob, 1, 3, 2)
+        trunk_about_glob = la.inv(globalE) * trunkE
+        trunk_about_glob = normalize(trunk_about_glob)
+        # [tr_a, tr_b] = rtocarda(trunk_about_glob, 1, 3, 2)
+        tr_a = euler_from_matrix(trunk_about_glob, 'rxzy')
+        tr_a = tr_a * 180/math.pi
 
         # calculate euler angles for the shoulder
         # normalize to ensure each has a length of one.
         # Method 1: euler angles (ISB recommendation)
-        UA_about_trunk = UAE * la.inv(trunkE)
-        UA_about_trunk = self.normalize(UA_about_trunk)
-        [sh_a, sh_b] = self.rtocarda(UA_about_trunk, 2, 1, 2)
+        UA_about_trunk = la.inv(trunkE) * UAE
+        UA_about_trunk = normalize(UA_about_trunk)
+        # [sh_a, sh_b] = rtocarda(UA_about_trunk, 2, 1, 2)
+        sh_a = euler_from_matrix(UA_about_trunk, 'ryxy')
+        sh_a = sh_a * 180/math.pi
+        # print "sh_a : ", sh_a
+        # sh_a = -sh_a
 
-        LA_about_UA = LAE * la.inv(UAE)
-        LA_about_UA = self.normalize(LA_about_UA)
-        [elb_a, elb_b] = self.rtocarda(LA_about_UA, 3, 1, 2)
-        LAY /= la.norm(LAY)
-        UAY /= la.norm(UAY)
-        elbowdot = LAY.dot(UAY)
-        elb_a[0] = acos(elbowdot)*180/pi
+        LA_about_UA = la.inv(UAE) * LAE
+        LA_about_UA = normalize(LA_about_UA)
+        # [elb_a, elb_b] = rtocarda(LA_about_UA, 3, 1, 2)
+        elb_a = euler_from_matrix(LA_about_UA, 'rzxy')
+        elb_a = elb_a * 180/math.pi
+
+        # print "elb_a", elb_a
+
+        # LAY /= la.norm(LAY)
+        # UAY /= la.norm(UAY)
+        # elbowdot = LAY.dot(UAY)
+        # elb_a[0] = acos(elbowdot)*180/pi
+        # elb_a[0] = elb_a[1]
 
         # calculate euler angles for the wrist
-        hand_about_LA = handE * la.inv(LAE)
-        hand_about_LA = self.normalize(hand_about_LA)
-        [wrist_a, wrist_b] = self.rtocarda(hand_about_LA, 3, 1, 2)
+        hand_about_LA = la.inv(LAE) * handE
+        hand_about_LA = normalize(hand_about_LA)
+        # [wrist_a, wrist_b] = rtocarda(hand_about_LA, 3, 1, 2)
+        wrist_a = euler_from_matrix(hand_about_LA, 'rzxy')
+        wrist_a = wrist_a * 180/math.pi
 
         # wrist has problems with euler angle discontinuities.
-        if wrist_a[0] <= -90:
-            wrist_a[0] = wrist_a[0]+180
-            wrist_a[2] = wrist_a[2]+180
+        # if wrist_a[0] <= -90:
+        #     wrist_a[0] = wrist_a[0]+180
+        #     wrist_a[2] = wrist_a[2]+180
+        #
+        # if wrist_a[0] >= 180:
+        #     wrist_a[0] = wrist_a[0]-180
+        #     wrist_a[2] = wrist_a[2]-180
 
-        if wrist_a[0] >= 180:
-            wrist_a[0] = wrist_a[0]-180
-            wrist_a[2] = wrist_a[2]-180
+        # wrist_a(1:2) = wrist_a(1:2)  # default wrist offset is 18.5
 
-        # wrist_a(1:2) = wrist_a(1:2)  #default wrist offset is 18.5
-
-        q = array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        q = array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         q[0] = 0
         q[1] = tr_a[0]
         q[2] = tr_a[1]
@@ -603,9 +557,11 @@ class BioHumanIk():
         q[5] = sh_a[1]
         q[6] = sh_a[2]
         q[7] = elb_a[0]
-        q[8] = wrist_a[0]
-        q[9] = wrist_a[1]
-        q[10] = wrist_a[2]
+        q[8] = elb_a[1]
+        q[9] = elb_a[2]
+        q[10] = wrist_a[0]
+        q[11] = wrist_a[1]
+        q[12] = wrist_a[2]
         return q
 
 if __name__ == "__main__":
