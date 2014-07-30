@@ -381,7 +381,6 @@ class BioHumanIk():
             sig = -1  # anti ciclic
 
         if i != k:  # Cardanic Convention
-            #disp('yes!')
 
             i -= 1
             j -= 1
@@ -429,14 +428,14 @@ class BioHumanIk():
 
         y = eye(3)
 
-        print "x : ", x
-        print "x[:, 0] : ", transpose(x[:, 0])
-        print "x[:, 1] : ", transpose(x[:, 1])
-        print "x[:, 2] : ", transpose(x[:, 2])
+        # print "x : ", x
+        # print "x[0, :] : ", x[0, :]
+        # print "x[1, :] : ", x[1, :]
+        # print "x[2, :] : ", x[2, :]
 
-        y[:, 0] = transpose(x[:, 0]) / la.norm(x[:, 0])
-        y[:, 1] = transpose(x[:, 1]) / la.norm(x[:, 1])
-        y[:, 2] = transpose(x[:, 2]) / la.norm(x[:, 2])
+        y[0, :] = x[0, :] / la.norm(x[0, :])
+        y[1, :] = x[1, :] / la.norm(x[1, :])
+        y[2, :] = x[2, :] / la.norm(x[2, :])
 
         # print "y : ", y
 
@@ -473,7 +472,6 @@ class BioHumanIk():
         gleno_center = [acromion[0], acromion[1], markers[5][2]]
         elb_axis = -markers[7] + markers[6]
         elb_center = markers[7] + 0.5*elb_axis
-        UAY = gleno_center-elb_center
         wrist_axis = -markers[8] + markers[9]
         wrist_center = markers[8] + 0.5*wrist_axis
         UlnStylPro = markers[8] + 10 * wrist_axis / la.norm(wrist_axis)
@@ -492,29 +490,30 @@ class BioHumanIk():
         print "trunkX : ", trunkX
         print "trunkY : ", trunkY
         print "trunkZ : ", trunkZ
-        trunkE = self.normalize(transpose(matrix([trunkX, trunkY, trunkZ])))
+        trunkE = self.normalize(matrix([trunkX, trunkY, trunkZ]))
 
-        shoulderX = acromion-c7s_midpt
-        shoulderZ = cross(shoulderX, trunkY)
-        shoulderY = cross(shoulderZ, shoulderX)
-        shouldE = self.normalize(transpose(matrix([shoulderX, shoulderY, shoulderZ])))
+        # shoulderX = acromion-c7s_midpt
+        # shoulderZ = cross(shoulderX, trunkY)
+        # shoulderY = cross(shoulderZ, shoulderX)
+        # shouldE = self.normalize(matrix([shoulderX, shoulderY, shoulderZ]))
 
         UAZ = - elb_axis / la.norm(elb_axis)
+        UAY = gleno_center-elb_center
         UAX = cross(UAY, UAZ)
-        UAE = self.normalize(transpose(matrix([UAX, UAY, UAZ])))
+        UAE = self.normalize(matrix([UAX, UAY, UAZ]))
 
         LAY = LApY
         LAX = cross(LAY, wrist_axis)
         LAZ = cross(LAX, LAY)
-        LAE = self.normalize(transpose(matrix([LAX, LAY, LAZ])))
+        LAE = self.normalize(matrix([LAX, LAY, LAZ]))
 
         handY = wrist_center-markers[10]
         handX = cross(handY, wrist_axis)
         handZ = cross(handX, handY)
-        handE = self.normalize(transpose(matrix([handX, handY, handZ])))
+        handE = self.normalize(matrix([handX, handY, handZ]))
 
         # Global frame
-        globalE = matrix([[-1, 0, 0], [0, 0, 1], [0, 1, 0]])
+        globalE = matrix([[-1.0, 0.0, 0.0], [0.0, 0.0, 1], [0.0, 1.0, 0.0]])
         # this is simply a reflection of how our subjects were positioned relative to global
         # globalE=[1 0 0; 0 0 1; 0 -1 0]; # change for points defined in pelvis frame
         # globalE=[0 1 0; 0 0 1; 1 0 0]
@@ -529,6 +528,9 @@ class BioHumanIk():
         # normalize to ensure each has a length of one.
         UA_about_trunk = UAE * la.inv(trunkE)
         UA_about_trunk = self.normalize(UA_about_trunk)
+
+        print "UA_about_trunk"
+        print UA_about_trunk
         # Method 1: euler angles (ISB recommendation)
         [sh_a, sh_b] = self.rtocarda(UA_about_trunk, 2, 1, 2)
 
@@ -556,22 +558,19 @@ class BioHumanIk():
 
         # wrist_a(1:2) = wrist_a(1:2)  #default wrist offset is 18.5
 
-        config = array([0]*10)
-        config[0] = tr_a[0]
-        config[1] = tr_a[1]
-        config[2] = tr_a[2]
-        config[3] = sh_a[0]
-        config[4] = sh_a[1]
-        config[5] = sh_a[2]
-        config[6] = elb_a[0]
-        config[7] = wrist_a[0]
-        config[8] = wrist_a[1]
-        config[9] = wrist_a[2]
-
-        print "tr_a : ", tr_a
-        # print "tr_b : ", tr_b
-
-        return config
+        q = array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        q[0] = 0
+        q[1] = tr_a[0]
+        q[2] = tr_a[1]
+        q[3] = tr_a[2]
+        q[4] = sh_a[0]
+        q[5] = sh_a[1]
+        q[6] = sh_a[2]
+        q[7] = elb_a[0]
+        # q[8] = wrist_a[0]
+        # q[9] = wrist_a[1]
+        # q[10] = wrist_a[2]
+        return q
 
 
     def draw_markers(self, config=None):
@@ -608,6 +607,8 @@ class BioHumanIk():
             motion = delete(motion, 0, axis=0)  # Remove first row...
         else:
             motion = [config]
+
+        print "motion : ", motion
 
         for configuration in motion:  # motion should be one row. otherwise take the last element
 
