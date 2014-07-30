@@ -424,18 +424,12 @@ class BioHumanIk():
 
         y = eye(3)
 
-        print "x : ", x
-        print "x[0, :] : ", x[0, :]
-        print "x[1, :] : ", x[1, :]
-        print "x[2, :] : ", x[2, :]
-
         y[0, :] = x[0, :] / la.norm(x[0, :])
         y[1, :] = x[1, :] / la.norm(x[1, :])
         y[2, :] = x[2, :] / la.norm(x[2, :])
 
-        print "y : ", y
-
-        return y
+        # important to export as matrix
+        return matrix(y)
 
     def compute_ik(self):
 
@@ -457,11 +451,11 @@ class BioHumanIk():
 
         # Get joint centers
         trunk_origin = markers[1]
-        xyphoid_T8 = markers[0]-markers[1]
-        trunk_center = markers[0]-0.5*xyphoid_T8
-        C7_sternal = markers[2]-markers[3]
-        c7s_midpt = markers[3]+0.5*C7_sternal
-        fixedz = markers[4][2]-10  # 10 -> 1 cm
+        xyphoid_T8 = markers[0] - markers[1]
+        trunk_center = markers[0] - 0.5*xyphoid_T8
+        C7_sternal = markers[2] - markers[3]
+        c7s_midpt = markers[3] + 0.5*C7_sternal
+        fixedz = markers[4][2] - 10  # 10 -> 1 cm
         acromion = [markers[4][0], markers[4][1], fixedz]
         gleno_center = [acromion[0], acromion[1], markers[5][2]]
         elb_axis = -markers[7] + markers[6]
@@ -477,13 +471,6 @@ class BioHumanIk():
         trunkX = cross(trunkY, trunkZ)
         trunkX *= - 1.0
         trunkZ *= - 1.0
-        # trunkX /= la.norm(trunkX)
-        # trunkY /= la.norm(trunkY)
-        # trunkZ /= la.norm(trunkZ)
-        # trunkE = matrix([trunkX, trunkY, trunkZ])
-        print "trunkX : ", trunkX
-        print "trunkY : ", trunkY
-        print "trunkZ : ", trunkZ
         trunkE = self.normalize(matrix([trunkX, trunkY, trunkZ]))
 
         # shoulderX = acromion-c7s_midpt
@@ -491,19 +478,12 @@ class BioHumanIk():
         # shoulderY = cross(shoulderZ, shoulderX)
         # shouldE = self.normalize(matrix([shoulderX, shoulderY, shoulderZ]))
 
-        UAZ_offset = array([-0.1601, -0.1286, 0.0411])
+        # UAZ_offset = array([-0.1601, -0.1286, 0.0411])
 
-        UAZ = - elb_axis / la.norm(elb_axis) - UAZ_offset
+        UAZ = - elb_axis / la.norm(elb_axis)  # - UAZ_offset
         UAY = gleno_center-elb_center
         UAX = cross(UAY, UAZ)
-
-        print "UAX : ", UAX
-        print "UAY : ", UAY
-        print "UAZ : ", UAZ
-
         UAE = self.normalize(matrix([UAX, UAY, UAZ]))
-
-        exit(0)
 
         LAY = LApY
         LAX = cross(LAY, wrist_axis)
@@ -534,12 +514,6 @@ class BioHumanIk():
 
         # Method 1: euler angles (ISB recommendation)
         [sh_a, sh_b] = self.rtocarda(UA_about_trunk, 2, 1, 2)
-
-        print "UA_about_trunk"
-        print UA_about_trunk
-        print "sh_a"
-        print sh_a
-
 
         LA_about_UA = LAE * la.inv(UAE)
         LA_about_UA = self.normalize(LA_about_UA)
