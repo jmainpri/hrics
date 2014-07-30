@@ -42,7 +42,7 @@ from subprocess import call
 import marker_utils
 from math import *
 
-mapping = [-1, 6, 7, 8, 18, 17, 16, 20, 24, 23, 22]
+mapping = [-1, 6, 7, 8, 18, 17, 16, 20, 22, 23, 24]
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5005
@@ -450,22 +450,30 @@ class BioHumanIk():
         # 10 -> 33-35 2nd metacarpal head
 
         # Get joint centers
+
+        # TORSO
         trunk_origin = markers[1]
         xyphoid_T8 = markers[0] - markers[1]
         trunk_center = markers[0] - 0.5*xyphoid_T8
         C7_sternal = markers[2] - markers[3]
         c7s_midpt = markers[3] + 0.5*C7_sternal
         fixedz = markers[4][2] - 10  # 10 -> 1 cm
+
+        # SHOULDER AND ELBOW
         acromion = [markers[4][0], markers[4][1], fixedz]
         gleno_center = [acromion[0], acromion[1], markers[5][2]]
         elb_axis = -markers[7] + markers[6]
         elb_center = markers[7] + 0.5*elb_axis
+
+        # HAND
         wrist_axis = -markers[8] + markers[9]
-        wrist_center = markers[8] + 0.5*wrist_axis
+        wrist_center = markers[8] + 0.5 * wrist_axis
         UlnStylPro = markers[8] + 10 * wrist_axis / la.norm(wrist_axis)
         LApY = elb_center-UlnStylPro
-        hand_origin = markers[10]
+        hand_origin = markers[10] # - array([0.0, 0.0, 40.0])
 
+        # --------------------------------------------------------------------
+        # Define matrices
         trunkY = c7s_midpt-trunk_center
         trunkZ = cross(trunkY, xyphoid_T8)
         trunkX = cross(trunkY, trunkZ)
@@ -479,7 +487,6 @@ class BioHumanIk():
         # shouldE = self.normalize(matrix([shoulderX, shoulderY, shoulderZ]))
 
         # UAZ_offset = array([-0.1601, -0.1286, 0.0411])
-
         UAZ = - elb_axis / la.norm(elb_axis)  # - UAZ_offset
         UAY = gleno_center-elb_center
         UAX = cross(UAY, UAZ)
@@ -490,29 +497,31 @@ class BioHumanIk():
         LAZ = cross(LAX, LAY)
         LAE = self.normalize(matrix([LAX, LAY, LAZ]))
 
-        handY = wrist_center-markers[10]
+        handY = wrist_center-hand_origin
         handX = cross(handY, wrist_axis)
         handZ = cross(handX, handY)
         handE = self.normalize(matrix([handX, handY, handZ]))
 
+        # --------------------------------------------------------------------
         # Global frame
         globalE = matrix([[-1.0, 0.0, 0.0], [0.0, 0.0, 1], [0.0, 1.0, 0.0]])
         # this is simply a reflection of how our subjects were positioned relative to global
         # globalE=[1 0 0; 0 0 1; 0 -1 0]; # change for points defined in pelvis frame
         # globalE=[0 1 0; 0 0 1; 1 0 0]
 
+        # --------------------------------------------------------------------
+        # Get eulers angles
+
+        # Method 1: find euler angles
         trunk_about_glob = trunkE * la.inv(globalE)
         trunk_about_glob = self.normalize(trunk_about_glob)
-
-        # # Method 1: find euler angles
         [tr_a, tr_b] = self.rtocarda(trunk_about_glob, 1, 3, 2)
 
         # calculate euler angles for the shoulder
         # normalize to ensure each has a length of one.
+        # Method 1: euler angles (ISB recommendation)
         UA_about_trunk = UAE * la.inv(trunkE)
         UA_about_trunk = self.normalize(UA_about_trunk)
-
-        # Method 1: euler angles (ISB recommendation)
         [sh_a, sh_b] = self.rtocarda(UA_about_trunk, 2, 1, 2)
 
         LA_about_UA = LAE * la.inv(UAE)
@@ -548,9 +557,9 @@ class BioHumanIk():
         q[5] = sh_a[1]
         q[6] = sh_a[2]
         q[7] = elb_a[0]
-        # q[8] = wrist_a[0]
-        # q[9] = wrist_a[1]
-        # q[10] = wrist_a[2]
+        q[8] = wrist_a[0]
+        q[9] = wrist_a[1]
+        q[10] = wrist_a[2]
         return q
 
 
@@ -604,6 +613,12 @@ class BioHumanIk():
                     self.q[mapping[i]] = -self.q[mapping[i]]
                 if mapping[i] == 18:
                     self.q[mapping[i]] = -self.q[mapping[i]]
+                if mapping[i] == 22:
+                    self.q[mapping[i]] = -self.q[mapping[i]]
+                if mapping[i] == 23:
+                    self.q[mapping[i]] = -self.q[mapping[i]]
+                if mapping[i] == 24:
+                    self.q[mapping[i]] = -self.q[mapping[i]]
         return self.q
 
 if __name__ == "__main__":
@@ -630,8 +645,10 @@ if __name__ == "__main__":
         config = h.compute_ik()
         h.draw_markers(config)
 
-        print "Press return to next."
-        sys.stdin.readline()
+        time.sleep(0.01)
+
+        # print "Press return to next."
+        # sys.stdin.readline()
 
     print "press enter to exit"
     sys.stdin.readline()

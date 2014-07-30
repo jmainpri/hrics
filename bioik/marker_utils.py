@@ -39,9 +39,14 @@ from numpy import linalg as la
 def remap_to_matlab(in_markers):
 
     out_markers = in_markers
+
     tmp = out_markers[6]
     out_markers[6] = in_markers[7]
     out_markers[7] = tmp
+
+    tmp = out_markers[9]
+    out_markers[9] = in_markers[8]
+    out_markers[8] = tmp
 
     return out_markers
 
