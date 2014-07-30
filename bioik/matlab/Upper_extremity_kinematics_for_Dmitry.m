@@ -151,7 +151,7 @@ else
     UAZ_offset=[-0.1601   -0.1286    0.0411]; %this is just the offset from one subject.  seems fairly typical.
 end
 
-UAZ=-elb_axis/mag3(elb_axis)-UAZ_offset; % now for non-calibration files we can just
+UAZ=-elb_axis/mag3(elb_axis) -UAZ_offset; % now for non-calibration files we can just
 % use the elbow axis, but we correct for it using this offset, since this
 % is the more reliable measure of the true elbow axis of bending.
 UAX=cross(UAY,UAZ);

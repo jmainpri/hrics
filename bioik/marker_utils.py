@@ -39,9 +39,9 @@ from numpy import linalg as la
 def remap_to_matlab(in_markers):
 
     out_markers = in_markers
-    tmp = out_markers[4]
-    out_markers[4] = in_markers[5]
-    out_markers[5] = tmp
+    tmp = out_markers[6]
+    out_markers[6] = in_markers[7]
+    out_markers[7] = tmp
 
     return out_markers
 
@@ -104,6 +104,9 @@ def load_file(m_filepath, o_filepath):
 
         frames_m.append(markers)
         frames_o.append(objects)
+
+    for frames in frames_m:
+        frames = remap_to_matlab(frames)
 
     print "# configs loaded : " + str(len(frames_m))
     return [frames_m, frames_o]
