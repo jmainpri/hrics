@@ -645,7 +645,33 @@ class Fixer:
 
         return end-start
 
+    def calc_stats(self):
+        max_dist = float('-inf')
+        two_count = 0
+        three_count = 0
+        five_count = 0
 
+        for i in range(0, self.last_frame-1):
+            curr = self.frames[i]
+            next = sself.frames[i+1]
+
+            dists = curr.get_dist_between_frames(next)
+            for dist in dists:
+                if dist > max_dist:
+                    max_dist = dist
+
+                if dist >= 0.05:
+                    five_count += 1
+                    continue
+                if dist >= 0.03:
+                    three_count += 1
+                    continue
+                if dist >= 0.02:
+                    two_count += 1
+                    continue
+
+        print "# of deltas > 2cm : ", two_count, " > 3cm : ", three_count, " > 5cm : ", five_count
+        print "Max distance : ", max_dist
 
 if __name__ == '__main__':
     # f = Fixer('/home/rafi/logging_data/second/markers.csv', '/home/rafi/logging_data/second/objects_fixed.csv')
