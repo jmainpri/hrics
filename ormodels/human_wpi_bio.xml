@@ -228,9 +228,9 @@
         <translation>0 0 0</translation>
         <geom type="cylinder">
 <!--            <translation>0 0 0</translation>-->
-            <translation>0 -.08 0</translation> <!-- Why ??? ... -->
+            <translation>0 -.17 0</translation> <!-- Why ??? ... -->
             <radius>0.053</radius>
-            <height>0.24</height>
+            <height>0.34</height>
             <diffuseColor>0.800 0.000 0.0100</diffuseColor>
             <transparency>0.5</transparency>
         </geom>
@@ -277,7 +277,7 @@
     </body>
 
     <body name="rWristDummy">
-        <rotationaxis>0 1 0 90</rotationaxis>
+        <!--<rotationaxis>0 1 0 90</rotationaxis>-->
         <translation>0 0 0</translation>
         <offsetfrom>rRadius</offsetfrom>
         <geom type="sphere">
@@ -300,7 +300,7 @@
     <body name="rWristDummyY">
         <offsetfrom>rWristDummyX</offsetfrom>
         <translation>0 0 0</translation>
-        <rotationaxis>0 1 0 -90</rotationaxis>
+        <!--<rotationaxis>0 1 0 -90</rotationaxis>-->
         <geom type="sphere">
             <radius>0.02</radius>
             <transparency>1</transparency>

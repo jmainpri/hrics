@@ -328,7 +328,7 @@ class BioHumanIk():
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rShoulderY").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rElbowZ").GetHierarchyChildLink().GetTransform(), 1))
-        self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rWristY").GetHierarchyChildLink().GetTransform(), 1))
+        # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rWristY").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, self.human.GetJoint("rArmTrans").GetHierarchyChildLink().GetTransform(), 1))
         # self.handles.append(misc.DrawAxes(self.env, inv_pelvis * self.t_torso, 1))
         # self.handles.append(misc.DrawAxes(self.env, self.t_pelvis, 2))
@@ -337,10 +337,10 @@ class BioHumanIk():
 
         # print "joint : ", self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform()[0:3, 3]
 
-        # self.handles.append(misc.DrawAxes(self.env, self.trunkE, .3))
-        # self.handles.append(misc.DrawAxes(self.env, self.UAE, .3))
-        # self.handles.append(misc.DrawAxes(self.env, self.LAE, .3))
-        self.handles.append(misc.DrawAxes(self.env, self.handE, .3))
+        self.handles.append(misc.DrawAxes(self.env, self.trunkE, .2))
+        self.handles.append(misc.DrawAxes(self.env, self.UAE, .2))
+        self.handles.append(misc.DrawAxes(self.env, self.LAE, .2))
+        self.handles.append(misc.DrawAxes(self.env, self.handE, .2))
 
         return dist
 
@@ -428,7 +428,7 @@ class BioHumanIk():
         # 9 -> 30-32 radial styloid
         # 10 -> 33-35 2nd metacarpal head
 
-        # Get joint centers
+        # Get joint centers and axises
 
         # TORSO
         trunk_origin = markers[1]
@@ -455,6 +455,8 @@ class BioHumanIk():
 
         # --------------------------------------------------------------------
         # Define matrices
+
+        # TRUNK
         trunkY = c7s_midpt-trunk_center
         trunkZ = cross(trunkY, xyphoid_T8)
         trunkX = cross(trunkY, trunkZ)
@@ -462,27 +464,29 @@ class BioHumanIk():
         trunkZ *= - 1.0
         trunkE = normalize(transpose(matrix([trunkX, trunkY, trunkZ])))
 
-        # shoulderX = acromion-c7s_midpt
-        # shoulderZ = cross(shoulderX, trunkY)
-        # shoulderY = cross(shoulderZ, shoulderX)
-        # shouldE = self.normalize(matrix([shoulderX, shoulderY, shoulderZ]))
+        # for each rotation matrix verify U*Ut = eye(3)
+        # print "trunkE"
+        # print trunkE * transpose(trunkE)
 
-        # UAZ_offset = array([-0.1601, -0.1286, 0.0411])
-        UAZ = - elb_axis  # / la.norm(elb_axis)  # - UAZ_offset
+        # SHOULDER
         UAY = gleno_center - elb_center
+        UAZ = cross(UAY, elb_axis)  # / la.norm(elb_axis)  # - UAZ_offset
         UAX = cross(UAY, UAZ)
         UAE = normalize(transpose(matrix([UAX, UAY, UAZ])))
 
+        # ELBOW
         LAY = LApY
         LAX = cross(LAY, wrist_axis)
         LAZ = cross(LAX, LAY)
         LAE = normalize(transpose(matrix([LAX, LAY, LAZ])))
 
+        # HAND
         handY = wrist_center - hand_origin
         handX = cross(handY, wrist_axis)
         handZ = cross(handX, handY)
         handE = normalize(transpose(matrix([handX, handY, handZ])))
 
+        # Store matrices for drawing
         self.trunkE = self.t_trans * MakeTransform(trunkE, matrix(trunk_center/1000))
         self.UAE = self.t_trans * MakeTransform(UAE, matrix(gleno_center/1000))
         self.LAE = self.t_trans * MakeTransform(LAE, matrix(elb_center/1000))
@@ -496,7 +500,7 @@ class BioHumanIk():
         # globalE=[0 1 0; 0 0 1; 1 0 0]
 
         # --------------------------------------------------------------------
-        # Get eulers angles
+        # Get eulers angles from matrices
 
         # Method 1: find euler angles
         trunk_about_glob = la.inv(globalE) * trunkE
@@ -522,14 +526,6 @@ class BioHumanIk():
         elb_a = euler_from_matrix(LA_about_UA, 'rzxy')
         elb_a = elb_a * 180/math.pi
 
-        # print "elb_a", elb_a
-
-        # LAY /= la.norm(LAY)
-        # UAY /= la.norm(UAY)
-        # elbowdot = LAY.dot(UAY)
-        # elb_a[0] = acos(elbowdot)*180/pi
-        # elb_a[0] = elb_a[1]
-
         # calculate euler angles for the wrist
         hand_about_LA = la.inv(LAE) * handE
         hand_about_LA = normalize(hand_about_LA)
@@ -537,17 +533,8 @@ class BioHumanIk():
         wrist_a = euler_from_matrix(hand_about_LA, 'rzxy')
         wrist_a = wrist_a * 180/math.pi
 
-        # wrist has problems with euler angle discontinuities.
-        # if wrist_a[0] <= -90:
-        #     wrist_a[0] = wrist_a[0]+180
-        #     wrist_a[2] = wrist_a[2]+180
-        #
-        # if wrist_a[0] >= 180:
-        #     wrist_a[0] = wrist_a[0]-180
-        #     wrist_a[2] = wrist_a[2]-180
-
-        # wrist_a(1:2) = wrist_a(1:2)  # default wrist offset is 18.5
-
+        # --------------------------------------------------------------------
+        # Pack arm configuration in degrees
         q = array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         q[0] = 0
         q[1] = tr_a[0]
@@ -573,6 +560,7 @@ if __name__ == "__main__":
     # raw_markers /= 1000  # Set markers in meters
     # (m,) = raw_markers[0].shape  # number of values in the marker set
 
+    # use human_mocap_second.zip
     marker_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/markers_fixed_cut.csv'
     object_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/objects_fixed_cut.csv'
     [frames_m, frames_o] = marker_utils.load_file(marker_file, object_file)
@@ -589,6 +577,10 @@ if __name__ == "__main__":
         h.draw_markers(config)
 
         time.sleep(0.01)
+
+        if i == 1:
+            print "press enter to continue"
+            sys.stdin.readline()
 
         # print "Press return to next."
         # sys.stdin.readline()
