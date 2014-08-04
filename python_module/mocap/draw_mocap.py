@@ -37,11 +37,12 @@ from copy import deepcopy
 import numpy as np
 from numpy import linalg as la
 from TransformMatrix import *
+import transformation_helper
 from rodrigues import *
-from subprocess import call
+from MocapCommon import *
 
 NB_MARKERS = 18
-NB_HUMAN = 1 #  TODO Read in from file like in fix_marker_id
+NB_HUMAN = 2 #  TODO Read in from file like in fix_marker_id
 
 class DrawMarkers():
 
@@ -51,7 +52,7 @@ class DrawMarkers():
         self.env.SetViewer('qtcoin')
         self.env.SetDebugLevel(DebugLevel.Verbose)
         self.env.Reset()
-        self.env.Load("../ormodels/human_wpi_bio.xml")
+        self.env.Load("../../ormodels/human_wpi_bio.xml")
 
         self.human = self.env.GetRobots()[0]
         self.handles = []
@@ -91,9 +92,12 @@ class DrawMarkers():
                 x = float(o_cells[i+2])
                 y = float(o_cells[i+3])
                 z = float(o_cells[i+4])
+                rx = float(o_cells[i+5])
+                ry = float(o_cells[i+6])
+                rz = float(o_cells[i+7])
+                rw = float(o_cells[i+8])
 
-
-                object = Object( name, occluded, x, y, z)
+                object = Object( name, occluded, x, y, z, rx, ry, rz, rw)
                 objects.append(object)
 
             # Load Markers
@@ -165,6 +169,10 @@ class DrawMarkers():
                 humans_raw.append( np.array([ChestFront_raw, ChestBack_raw, SternumFront_raw, SternumBack_raw, rShoulderFront_raw, rShoulderBack_raw,
                                             rElbowOuter_raw, rElbowInner_raw, rWristOuter_raw, rWristInner_raw, rPalm_raw, lShoulderFront_raw, 
                                             lShoulderBack_raw, lElbowOuter_raw, lElbowInner_raw, lWristOuter_raw, lWristInner_raw, lPalm_raw]) )
+
+                self.draw_object_axes(frame.object_list[(i/18)*2])
+                self.draw_object_axes(frame.object_list[(i/18)*2+1])
+
 
             for human in humans:
                 self.draw_skeleton(human)
@@ -245,57 +253,17 @@ class DrawMarkers():
 
         self.handles.append(self.env.plot3(points=point_list, pointsize=0.02, colors=array(colors), drawstyle=1))
 
-
-class Marker:
-    def __init__(self, id, x, y, z, name=''):
-        self.id = id
-        self.x = x
-        self.y = y
-        self.z = z
-        self.name = name
-        self.array = np.array([self.x, self.y, self.z])
-
-    def numpy(self):
-        return self.array
-
-class Object:
-    def __init__(self, id, occluded, x, y, z):
-        self.id = id
-        self.occluded = occluded
-        self.x = x
-        self.y = y
-        self.z = z
-        self.array = np.array([self.x, self.y, self.z])
-
-    def is_occluded(self):
-        return self.occluded
+    def draw_object_axes(self, object):
+        tf = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([object.r_w, object.r_x, object.r_y, object.r_z]) )), transpose(matrix([object.x, object.y, object.z])) )
+        self.handles.append(misc.DrawAxes( self.env, matrix(tf), 1 ))
 
 
-class Frame:
-    def __init__(self, t_sec, t_nsec, nb_markers, marker_list, object_list):
-        self.sec = t_sec
-        self.nsec = t_nsec
-        self.count = nb_markers
-        self.marker_list = marker_list
-        self.object_list = object_list
-
-    def get_marker_by_id(self, id):
-        for marker in self.marker_list:
-            if marker.id == id:
-                return marker
-
-        print "Couldn't find marker with id : ", id
-        return None
-
-    def get_time(self):
-        return self.sec + (self.nsec/1000000000)
 
 if __name__ == "__main__":
 
     d = DrawMarkers()
-    # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_smoothed.csv', '/home/rafi/logging_data/third/objects.csv')
-    # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv', '/home/rafi/logging_data/fourth/objects_fixed.csv')
-    d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_test.csv', '/home/rafi/workspace/hrics-or-plugins/examples/objects_test.csv')
+    # d.load_file('/home/rafi/logging_three/first/markers.csv', '/home/rafi/logging_three/first/objects.csv')
+    d.load_file('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv')
     sys.stdin.readline()
     # d.draw_center_points()
     d.draw_frames_raw()

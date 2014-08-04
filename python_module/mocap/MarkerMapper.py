@@ -49,7 +49,6 @@ from TransformMatrix import *
 # rElbow
 # lElbow
 
-
 class Point:
     def __init__(self, id, point):
         self.original_id = id
@@ -63,7 +62,7 @@ class Point:
         diff = self.array - other.array
         return math.sqrt( np.dot(diff, diff.conj()) )
 
-class AssignNames:
+class MarkerMapper:
     def __init__(self, point_list, pelvis_frame):
         self.count = len(point_list)
         self.points = [None]*self.count
@@ -72,24 +71,63 @@ class AssignNames:
         for i, p in enumerate(point_list):
             self.points[i] = Point( p[0], p[1] )
 
-    def assign_marker_names(self):
+    def assign_marker_names(self, elbow_pads, r_arm_only):
         self.put_points_in_frame(self.pelv_frame)
         body = copy(self.points)
 
-        # Get the right arm : first 7 points with negative y
-        r_arm = sorted(body, key=lambda p: p.y, reverse=False)[0:7]
-        # Remove the right arm from the body list
-        body = [ point for point in body if point not in r_arm ]
+        # Using an elbow pad object instead of default marker setup
+        if elbow_pads:
+            if r_arm_only:
+                # Get the right arm : first 5 points with negative y
+                r_arm = sorted(body, key=lambda p: p.y, reverse=False)[0:5]
+                # Remove the right arm from the body list
+                body = [ point for point in body if point not in r_arm ]
 
-        # Get the left arm
-        l_arm = sorted(body, key=lambda p: p.y, reverse=True)[0:7]
-        # Remove the left arm from the body list
-        body = [ point for point in body if point not in l_arm ]
+                # Assign names from each list
+                self.assign_right_arm_names_pads(r_arm)
+                self.assign_body_names(body)
+            else:
+                print "Haven't set this up yet"
+                # Get the right arm : first 5 points with negative y
+                r_arm = sorted(body, key=lambda p: p.y, reverse=False)[0:5]
+                # Remove the right arm from the body list
+                body = [ point for point in body if point not in r_arm ]
 
-        # Assign names from each list
-        self.assign_right_arm_names(r_arm)
-        self.assign_left_arm_names(l_arm)
-        self.assign_body_names(body)
+                # Get the left arm
+                l_arm = sorted(body, key=lambda p: p.y, reverse=True)[0:5]
+                # Remove the left arm from the body list
+                body = [ point for point in body if point not in l_arm ]
+
+                # Assign names from each list
+                self.assign_right_arm_names_pads(r_arm)
+                self.assign_left_arm_names_pads(l_arm)
+                self.assign_body_names(body)
+        # Using default marker setup
+        else:
+            if r_arm_only:
+                # Get the right arm : first 7 points with negative y
+                r_arm = sorted(body, key=lambda p: p.y, reverse=False)[0:7]
+                # Remove the right arm from the body list
+                body = [ point for point in body if point not in r_arm ]
+
+                # Assign names from each list
+                self.assign_right_arm_names(r_arm)
+                self.assign_body_names(body)
+            else:
+                # Get the right arm : first 7 points with negative y
+                r_arm = sorted(body, key=lambda p: p.y, reverse=False)[0:7]
+                # Remove the right arm from the body list
+                body = [ point for point in body if point not in r_arm ]
+
+                # Get the left arm
+                l_arm = sorted(body, key=lambda p: p.y, reverse=True)[0:7]
+                # Remove the left arm from the body list
+                body = [ point for point in body if point not in l_arm ]
+
+                # Assign names from each list
+                self.assign_right_arm_names(r_arm)
+                self.assign_left_arm_names(l_arm)
+                self.assign_body_names(body)
 
         id_map = [None]*self.count
         for point in self.points:
@@ -146,6 +184,34 @@ class AssignNames:
         # print 'rShoulderBack : ', rShoulderBack.original_id
         self.get_point_by_id(rShoulderBack.original_id).new_id = 5
 
+    def assign_right_arm_names_pads(self, r_arm_points):
+        r_arm_points.sort( key=lambda p: p.z, reverse=False )
+
+        # Palm has to be first point in the list
+        rPalm = r_arm_points[0]
+        self.get_point_by_id(rPalm.original_id).new_id = 8
+        # print 'rPalm : ', rPalm.original_id
+
+        # Wrist
+        rWrists = r_arm_points[1:3]
+        rWristOuter = max(rWrists, key=lambda p: p.x)
+        # print 'rWristOuter : ', rWristOuter.original_id
+        self.get_point_by_id(rWristOuter.original_id).new_id = 6
+
+        rWristInner = min(rWrists, key=lambda p: p.x)
+        self.get_point_by_id(rWristInner.original_id).new_id = 7
+        # print 'rWristInner : ', rWristInner.original_id
+
+        # Shoulder
+        Shoulders = r_arm_points[3:]
+        rShoulderFront = max(Shoulders, key=lambda p: p.x)
+        # print 'rShoulderFront : ', rShoulderFront.original_id
+        self.get_point_by_id(rShoulderFront.original_id).new_id = 4
+
+        rShoulderBack = min(Shoulders, key=lambda p: p.x)
+        # print 'rShoulderBack : ', rShoulderBack.original_id
+        self.get_point_by_id(rShoulderBack.original_id).new_id = 5
+
     def assign_left_arm_names(self, l_arm_points):
         l_arm_points.sort( key=lambda p: p.z, reverse=False )
 
@@ -183,6 +249,34 @@ class AssignNames:
         lShoulderBack = min(Shoulders, key=lambda p: p.x)
         # print 'lShoulderBack : ', lShoulderBack.original_id
         self.get_point_by_id(lShoulderBack.original_id).new_id = 12
+
+    def assign_left_arm_names_pads(self, l_arm_points):
+        l_arm_points.sort( key=lambda p: p.z, reverse=False )
+
+        # Palm has to be first point in the list
+        lPalm = l_arm_points[0]
+        self.get_point_by_id(lPalm.original_id).new_id = 13
+        # print 'lPalm : ', lPalm.original_id
+
+        # Wrist
+        lWrists = l_arm_points[1:3]
+        lWristOuter = max(lWrists, key=lambda p: p.x)
+        # print 'lWristOuter : ', lWristOuter.original_id
+        self.get_point_by_id(lWristOuter.original_id).new_id = 11
+
+        lWristInner = min(lWrists, key=lambda p: p.x)
+        self.get_point_by_id(lWristInner.original_id).new_id = 12
+        # print 'lWristInner : ', lWristInner.original_id
+
+        # Shoulder
+        Shoulders = l_arm_points[3:]
+        lShoulderFront = max(Shoulders, key=lambda p: p.x)
+        # print 'lShoulderFront : ', lShoulderFront.original_id
+        self.get_point_by_id(lShoulderFront.original_id).new_id = 9
+
+        lShoulderBack = min(Shoulders, key=lambda p: p.x)
+        # print 'lShoulderBack : ', lShoulderBack.original_id
+        self.get_point_by_id(lShoulderBack.original_id).new_id = 10
 
     def assign_body_names(self, body_points):
         body_points.sort( key=lambda p: p.z, reverse=False )
