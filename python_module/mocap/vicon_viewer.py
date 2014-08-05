@@ -19,8 +19,8 @@ from openravepy import *
 class Tracker:
 
     def __init__(self, marker_topic, object_topic):
-        # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_three/first/2014-07-31-15-50-15.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./') 
-        self.bag = subprocess.Popen('rosbag play /home/rafi/logging_two/second/2014-07-24-17-11-06.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./') 
+        # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_three/first/2014-07-31-15-50-15.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+        self.bag = subprocess.Popen('rosbag play /home/rafi/logging_two/second/2014-07-24-17-11-06.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
 
         self.frames = []
         self.last_frame = None
@@ -51,7 +51,7 @@ class Tracker:
         self.lock.release()
 
     def object_cb(self, msg):
-        
+
         self.lock.acquire()
         self.object_q.put(msg)
 
@@ -107,7 +107,7 @@ class Tracker:
 
 
         # self.frames.append(frame)
-        
+
     def try_init(self, frame):
         if frame.count == ( NB_HUMAN * NB_MARKERS):
             pelv_frames = []
@@ -118,7 +118,7 @@ class Tracker:
             if len(pelv_frames) is not NB_HUMAN:
                 return
 
-            # Get the marker map for each human 
+            # Get the marker map for each human
             print "Getting marker name map"
             maps = []
 
@@ -160,7 +160,7 @@ if __name__ == '__main__':
 
     THRESHOLD   = 0.0025
     # NB_MARKERS  = 18
-    NB_HUMAN    = 2
+    NB_HUMAN    = 1
     ELBOW_PADS  = False
     RARM_ONLY   = False
     NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)

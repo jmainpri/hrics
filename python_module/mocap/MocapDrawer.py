@@ -143,6 +143,24 @@ class Drawer():
             time.sleep(dt)
             self.clear()
 
+        return
+
+    def play_skeleton(self):
+        # for frame in self.frames:
+        prev_time = self.frames[0].get_time()
+
+        for frame in self.frames:
+            curr_time = frame.get_time()
+
+            self.draw_frame_skeleton(frame)
+
+            dt = curr_time - prev_time
+            prev_time = curr_time
+            time.sleep(dt)
+            self.clear()
+
+        return
+
     def isolate_humans(self, frame):
         humans = []
 
@@ -247,8 +265,8 @@ class Drawer():
 
 if __name__ == '__main__':
 
-    NB_HUMAN    = 1
-    ELBOW_PADS  = True
+    NB_HUMAN    = 2
+    ELBOW_PADS  = False
     RARM_ONLY   = True
     NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)
 
@@ -257,4 +275,4 @@ if __name__ == '__main__':
 
     d =  Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
     d.load_file(m_file, o_file)
-    d.play_raw()
+    d.play_skeleton()

@@ -7,7 +7,7 @@
 #
 ####################################################################################################
 #
-# A note to the user - this code was written because the last time I needed to do one of the 
+# A note to the user - this code was written because the last time I needed to do one of the
 # operations provided in this API (composing a pose with a transform), it required ~20 lines of code
 #
 # It relies exclusively on the powerful tranformations.py library and numpy linear algebra library

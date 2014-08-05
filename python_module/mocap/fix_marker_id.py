@@ -371,14 +371,14 @@ class MarkerFixer:
 if __name__ == '__main__':
 
     THRESHOLD   = 0.0025
-    NB_MARKERS  = 9
-    NB_HUMAN    = 1
-    ELBOW_PADS  = True
-    RARM_ONLY   = True
+    ELBOW_PADS  = False
+    RARM_ONLY   = False
+    NB_MARKERS  = get_nb_markers(ELBOW_PADS, RARM_ONLY)
+    NB_HUMAN    = 2
 
 
-    # f = Fixer('/home/rafi/logging_data/second/markers.csv', '/home/rafi/logging_data/second/objects_fixed.csv')
-    f = MarkerFixer('/home/rafi/logging_three/first/markers.csv', '/home/rafi/logging_three/first/objects.csv')
+    f = MarkerFixer('/home/rafi/logging_two/second/markers.csv', '/home/rafi/logging_two/second/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_three/first/markers.csv', '/home/rafi/logging_three/first/objects.csv')
 
     try:
         with Timer() as t:
