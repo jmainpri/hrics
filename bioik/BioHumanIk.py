@@ -114,14 +114,14 @@ class BioHumanIk():
 
         # --------------------------------------------------------------------
         # Translations
-        offset_torso_shoulder = (gleno_center - trunk_center)
-        offset_shoulder_elbow = la.norm((gleno_center - elb_center))
-        offset_elbow_wrist = la.norm((wrist_center - elb_center))
+        d_torso_shoulder = (gleno_center - trunk_center)
+        d_shoulder_elbow = la.norm((gleno_center - elb_center))
+        d_elbow_wrist = la.norm((wrist_center - elb_center))
 
         # Get shoulder center in the torso frame
         # get it the global frame then compute the torso frame
         inv_torso = la.inv(matrix(MakeTransform(trunkE, matrix([0., 0., 0.]))))
-        offset_torso = array(array(inv_torso).dot(append((gleno_center), 1)))[0:3]
+        d_torso = array(array(inv_torso).dot(append((gleno_center), 1)))[0:3]
 
         # --------------------------------------------------------------------
         # Global frame
@@ -171,4 +171,4 @@ class BioHumanIk():
         q[10] = wrist_a[0]
         q[11] = wrist_a[1]
         q[12] = wrist_a[2]
-        return [q, offset_torso, offset_torso_shoulder, offset_shoulder_elbow, offset_elbow_wrist]
+        return [q, d_torso, d_torso_shoulder, d_shoulder_elbow, d_elbow_wrist]
