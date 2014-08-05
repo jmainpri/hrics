@@ -2,7 +2,6 @@ from math_utils import *
 from numpy import *
 from numpy import linalg as la
 from TransformMatrix import *
-from rodrigues import *
 
 
 class BioHumanIk():
@@ -95,7 +94,6 @@ class BioHumanIk():
 
         # --------------------------------------------------------------------
         # Translations
-
         offset_torso_shoulder = (gleno_center - trunk_center)
         offset_shoulder_elbow = la.norm((gleno_center - elb_center))
         offset_elbow_wrist = la.norm((wrist_center - elb_center))
@@ -118,31 +116,22 @@ class BioHumanIk():
         # Method 1: find euler angles
         trunk_about_glob = la.inv(globalE) * trunkE
         trunk_about_glob = normalize(trunk_about_glob)
-        # [tr_a, tr_b] = rtocarda(trunk_about_glob, 1, 3, 2)
         tr_a = euler_from_matrix(trunk_about_glob, 'rxzy')
         tr_a = tr_a * 180/math.pi
 
-        # calculate euler angles for the shoulder
-        # normalize to ensure each has a length of one.
-        # Method 1: euler angles (ISB recommendation)
         UA_about_trunk = la.inv(trunkE) * UAE
         UA_about_trunk = normalize(UA_about_trunk)
-        # [sh_a, sh_b] = rtocarda(UA_about_trunk, 2, 1, 2)
         sh_a = euler_from_matrix(UA_about_trunk, 'ryxy')
         sh_a = sh_a * 180/math.pi
-        # print "sh_a : ", sh_a
-        # sh_a = -sh_a
 
         LA_about_UA = la.inv(UAE) * LAE
         LA_about_UA = normalize(LA_about_UA)
-        # [elb_a, elb_b] = rtocarda(LA_about_UA, 3, 1, 2)
         elb_a = euler_from_matrix(LA_about_UA, 'rzxy')
         elb_a = elb_a * 180/math.pi
 
         # calculate euler angles for the wrist
         hand_about_LA = la.inv(LAE) * handE
         hand_about_LA = normalize(hand_about_LA)
-        # [wrist_a, wrist_b] = rtocarda(hand_about_LA, 3, 1, 2)
         wrist_a = euler_from_matrix(hand_about_LA, 'rzxy')
         wrist_a = wrist_a * 180/math.pi
 
