@@ -65,6 +65,7 @@ class MarkerFixer:
                 r_z = float(o_cells[i+7])
                 r_w = float(o_cells[i+8])
 
+
                 object = Object( name, occluded, x, y, z, r_x, r_y, r_z, r_w )
                 objects.append(object)
 
@@ -244,13 +245,13 @@ class MarkerFixer:
 
                 pelv_frames = []
                 for object in frame.object_list:
-                    if 'Pelvis' in object.id and not object.is_occluded():
+                    if object and 'Pelvis' in object.id and not object.is_occluded():
                         pelv_frames.append(object.get_rot_matrix())
 
                 if len(pelv_frames) is not NB_HUMAN:
                     continue
 
-                # Get the marker map for each human 
+                # Get the marker map for each human
                 print "Getting marker name map"
                 maps = []
 
@@ -261,7 +262,6 @@ class MarkerFixer:
                 # Reorder markers according to map
                 new_marker_list = []
                 for map in maps:
-                    print map
                     for id in map:
                         new_marker_list.append(frame.marker_list[id])
 
@@ -371,14 +371,15 @@ class MarkerFixer:
 if __name__ == '__main__':
 
     THRESHOLD   = 0.0025
-    ELBOW_PADS  = False
-    RARM_ONLY   = False
+    ELBOW_PADS  = True
+    RARM_ONLY   = True
     NB_MARKERS  = get_nb_markers(ELBOW_PADS, RARM_ONLY)
     NB_HUMAN    = 2
 
 
-    f = MarkerFixer('/home/rafi/logging_two/second/markers.csv', '/home/rafi/logging_two/second/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_data/second/markers.csv', '/home/rafi/logging_data/second/objects_fixed.csv')
     # f = MarkerFixer('/home/rafi/logging_three/first/markers.csv', '/home/rafi/logging_three/first/objects.csv')
+    f = MarkerFixer('/home/rafi/logging_five/4/markers.csv', '/home/rafi/logging_five/4/objects.csv')
 
     try:
         with Timer() as t:

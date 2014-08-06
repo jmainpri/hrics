@@ -2,6 +2,7 @@ from openravepy import *
 from MocapCommon import *
 import transformation_helper
 import csv
+import sys
 
 class Human():
 
@@ -133,15 +134,17 @@ class Drawer():
         # for frame in self.frames:
         prev_time = self.frames[0].get_time()
 
-        for frame in self.frames:
+        for i, frame in enumerate(self.frames):
             curr_time = frame.get_time()
-
+            # self.draw_point_by_name(frame, 'Chest')
             self.draw_frame_raw(frame)
+            self.draw_frame_axes(frame)
 
             dt = curr_time - prev_time
             prev_time = curr_time
             time.sleep(dt)
             self.clear()
+
 
         return
 
@@ -175,6 +178,8 @@ class Drawer():
 
     def draw_frame_skeleton(self, frame):
         humans = self.isolate_humans(frame)
+        # self.draw_point_by_name(frame, 'Sternum')
+        self.draw_frame_axes(frame)
 
         for h in humans:
             centers = h.get_center_points()
@@ -186,9 +191,33 @@ class Drawer():
         for m in frame.marker_list:
             point_list.append(m.array)
         for o in frame.object_list:
-            point_list.append(o.array)
+            if o:
+                point_list.append(o.array)
 
         self.draw_points(np.array(point_list))
+
+    def draw_point_by_name(self, frame, name):
+        point_list = []
+
+        for m in frame.marker_list:
+            if name in m.id:
+                point_list.append(m.array)
+
+        self.draw_point_isolated(np.array(point_list))
+
+    def draw_point_isolated(self, point_list):
+        points = point_list
+
+        colors = []
+        nb_points = len(points)
+        for n in range(len(point_list)):
+            if n == 17:
+                colors.append((1,0,0))
+            else:
+                colors.append((0,0,1))
+
+        self.handles.append(self.env.plot3(points=point_list, pointsize=0.05, colors=array(colors), drawstyle=1))
+
 
     def draw_points(self, point_list):
         points = point_list
@@ -196,6 +225,7 @@ class Drawer():
         colors = []
         nb_points = len(points)
         for n in linspace(0.0, 1.0, num=nb_points):
+            # colors.append((0,0,1))
             colors.append((float(n)*1, (1-float(n))*1, 0))
 
         self.handles.append(self.env.plot3(points=point_list, pointsize=0.02, colors=array(colors), drawstyle=1))
@@ -210,7 +240,7 @@ class Drawer():
             colors.append((float(n)*1, (1-float(n))*1, 0))
 
         # Marker points
-        self.handles.append(self.env.plot3(points=point_list, pointsize=0.02, colors=array(colors), drawstyle=1))
+        # self.handles.append(self.env.plot3(points=point_list, pointsize=0.05, colors=array(colors), drawstyle=1))
 
         if not self.r_arm_only:
 
@@ -252,12 +282,15 @@ class Drawer():
             self.handles.append(self.env.drawlinestrip(points=pelv, linewidth=3.0))
 
     def draw_object_axes(self, object):
-        tf = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([object.r_w, object.r_x, object.r_y, object.r_z]) )), transpose(matrix([object.x, object.y, object.z])) )
+        # tf = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([object.r_w, object.r_x, object.r_y, object.r_z]) )), transpose(matrix([object.x, object.y, object.z])) )
+
+        tf = object.get_rot_matrix()
         self.handles.append(misc.DrawAxes( self.env, matrix(tf), 0.5 ))
 
     def draw_frame_axes(self, frame):
         for o in frame.object_list:
-            self.draw_object_axes(o)
+            if not o.is_occluded():
+                self.draw_object_axes(o)
 
     def clear(self):
         del self.handles[:]
@@ -266,12 +299,15 @@ class Drawer():
 if __name__ == '__main__':
 
     NB_HUMAN    = 2
-    ELBOW_PADS  = False
+    ELBOW_PADS  = True
     RARM_ONLY   = True
     NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)
 
     m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
     o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+
+    # m_file = '/home/rafi/logging_five/1/markers.csv'
+    # o_file = '/home/rafi/logging_five/1/objects.csv'
 
     d =  Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
     d.load_file(m_file, o_file)

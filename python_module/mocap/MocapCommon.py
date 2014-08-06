@@ -3,6 +3,8 @@ import openravepy
 import collections
 import numpy as np
 import time
+from openravepy import *
+import transformation_helper
 
 class Timer:
     def __enter__(self):
@@ -54,32 +56,51 @@ class Object:
         return self.occluded
 
     def get_rot_matrix(self):
-        mat =  MakeTransform( openravepy.rotationMatrixFromQuat(np.array([self.r_x, self.r_y, self.r_z, self.r_w])), np.transpose(np.matrix([self.x, self.y, self.z])))
+
+        mat =  MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([self.r_w, self.r_x, self.r_y, self.r_z]) )), transpose(matrix([self.x, self.y, self.z])) )
 
         # TODO figure out if this works on all Pelvis frames.  If not, why?
-        if 'Pelvis0' in self.id:
-            x_dir = np.array(np.transpose(mat[:,0]).tolist()[0][:3])
-            y_dir = np.array(np.transpose(mat[:,1]).tolist()[0][:3])
-            z_dir = np.array(np.transpose(mat[:,2]).tolist()[0][:3])
+        # if 'Pelvis' in self.id:
+        #     # x_dir = np.array(np.transpose(mat[:,0]).tolist()[0][:3])
+        #     # y_dir = np.array(np.transpose(mat[:,1]).tolist()[0][:3])
+        #     # z_dir = np.array(np.transpose(mat[:,2]).tolist()[0][:3])
 
-            new_x = -z_dir
-            new_x[2] = 0
-            new_x = new_x/np.linalg.norm(new_x)
-            new_z = np.array([0,0,1])
+        #     # new_x = -z_dir
+        #     # new_x[2] = 0
+        #     # new_x = new_x/np.linalg.norm(new_x)
 
-            new_y = np.cross(new_x, new_z)
-            new_y = new_y/np.linalg.norm(new_y)
-            new_y = -new_y
+        #     # new_z = np.array([0,0,1])
 
-            mat[0][0, 0] = new_x[0]
-            mat[0][0, 1] = new_y[0]
-            mat[0][0, 2] = new_z[0]
-            mat[1][0, 0] = new_x[1]
-            mat[1][0, 1] = new_y[1]
-            mat[1][0, 2] = new_z[1]
-            mat[2][0, 0] = new_x[2]
-            mat[2][0, 1] = new_y[2]
-            mat[2][0, 2] = new_z[2]
+        #     # new_y = np.cross(new_x, new_z)
+        #     # new_y = new_y/np.linalg.norm(new_y)
+        #     # new_y = -new_y
+
+        #     # mat[0][0, 0] = new_x[0]
+        #     # mat[0][0, 1] = new_y[0]
+        #     # mat[0][0, 2] = new_z[0]
+        #     # mat[1][0, 0] = new_x[1]
+        #     # mat[1][0, 1] = new_y[1]
+        #     # mat[1][0, 2] = new_z[1]
+        #     # mat[2][0, 0] = new_x[2]
+        #     # mat[2][0, 1] = new_y[2]
+        #     # mat[2][0, 2] = new_z[2]
+
+
+        #     # ---------------------------------
+        #     x_dir = np.array(np.transpose(mat[:,0]).tolist()[0][:3])
+        #     y_dir = np.array(np.transpose(mat[:,1]).tolist()[0][:3])
+        #     z_dir = np.array(np.transpose(mat[:,2]).tolist()[0][:3])
+
+        #     new_z = np.array([0,0,1])
+        #     new_x = np.cross(y_dir, new_z)
+        #     new_y = np.cross(new_z, new_x)
+
+        #     new_x = new_x/np.linalg.norm(new_x)
+        #     new_y = new_y/np.linalg.norm(new_y)
+        #     new_z = new_z/np.linalg.norm(new_z)
+
+        #     t_rot = np.transpose( np.matrix([new_x, new_y, new_z]) )
+        #     mat = MakeTransform( t_rot, np.matrix([self.x, self.y, self.z]))
 
         return mat
 
@@ -124,10 +145,12 @@ class Frame:
 
 
         # HACK for messed up object ids in third logging data
-        # new_list.append( self.get_object_by_id("Pelvis1") )
-        # new_list.append( self.get_object_by_id("Head1") )
+        # new_list.append( self.get_object_by_id("Pelvis0") )
+        # new_list.append( self.get_object_by_id("Head0") )
         # new_list.append( self.get_object_by_id("rElbow0") )
-
+        # new_list.append( self.get_object_by_id("Pelvis1") )
+        # new_list.append( self.get_object_by_id("Head2") )
+        # new_list.append( self.get_object_by_id("rElbow1") )
 
         self.object_list = new_list
 
@@ -337,8 +360,6 @@ class Frame:
 
 
 def get_nb_markers(elbow_pads, r_arm_only):
-    nb_markers = 18
-
     if elbow_pads:
         if r_arm_only:
             nb_markers = 9
@@ -360,6 +381,6 @@ def get_nb_objects(elbow_pads, r_arm_only):
         else:
             nb_objects = 4
     else:
-        nb_objects = 2 
+        nb_objects = 2
 
     return nb_objects

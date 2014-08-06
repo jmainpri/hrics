@@ -20,7 +20,18 @@ class Tracker:
 
     def __init__(self, marker_topic, object_topic):
         # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_three/first/2014-07-31-15-50-15.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
-        self.bag = subprocess.Popen('rosbag play /home/rafi/logging_two/second/2014-07-24-17-11-06.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+        # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_fourth/0/2014-08-05-17-58-43.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+
+        # lOGGING 5
+        # 1
+        # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_five/1/2014-08-06-12-19-59.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+        # 2
+        # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_five/2/2014-08-06-12-21-42.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+        # 3
+        # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_five/3/2014-08-06-12-22-42.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+        # 4
+        self.bag = subprocess.Popen('rosbag play /home/rafi/logging_five/4/2014-08-06-12-24-52.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+
 
         self.frames = []
         self.last_frame = None
@@ -112,7 +123,7 @@ class Tracker:
         if frame.count == ( NB_HUMAN * NB_MARKERS):
             pelv_frames = []
             for object in frame.object_list:
-                if 'Pelvis' in object.id and not object.is_occluded():
+                if object and 'Pelvis' in object.id and not object.is_occluded():
                     pelv_frames.append(object.get_rot_matrix())
 
             if len(pelv_frames) is not NB_HUMAN:
@@ -151,7 +162,7 @@ class Tracker:
     def on_shutdown(self):
         print "killing bag process"
         subprocess.Popen('kill ' + str(self.bag.pid), shell=True)
-        self.save_file()
+        # self.save_file()
         print "done"
 
 
@@ -160,9 +171,9 @@ if __name__ == '__main__':
 
     THRESHOLD   = 0.0025
     # NB_MARKERS  = 18
-    NB_HUMAN    = 1
-    ELBOW_PADS  = False
-    RARM_ONLY   = False
+    NB_HUMAN    = 2
+    ELBOW_PADS  = True
+    RARM_ONLY   = True
     NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)
 
 
