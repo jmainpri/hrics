@@ -229,10 +229,6 @@ void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
 
         }
 
-
-
-
-
         // Load and draw objects + frame
         for ( int col = 3; col <= nb_objects*9; col+=9  )
         {
