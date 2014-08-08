@@ -105,14 +105,14 @@ class BioHumanIk():
 
         else:
 
-            elb_center = array(transpose(t_elbow[:, 2]).tolist()[0][:3])
-            elb_axis = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
-            print "t_elbow : "
-            print t_elbow
-            print "elb_axis : "
-            print elb_axis
-            print "elb_center : "
-            print elb_center
+            elb_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
+            elb_axis = array(transpose(t_elbow[:, 2]).tolist()[0][:3])
+            # print "t_elbow : "
+            # print t_elbow
+            # print "elb_axis : "
+            # print elb_axis
+            # print "elb_center : "
+            # print elb_center
 
             # HAND
             wrist_axis = markers[7] - markers[6]
@@ -130,12 +130,6 @@ class BioHumanIk():
         trunkX = cross(trunkY, trunkZ)
         trunkX *= - 1.0
         trunkZ *= - 1.0
-
-        print "---------------"
-        print trunkY
-        print trunkZ
-        print trunkX
-
         trunkE = normalize(transpose(matrix([trunkX, trunkY, trunkZ])))
 
         # for each rotation matrix verify U*Ut = eye(3)
@@ -146,23 +140,14 @@ class BioHumanIk():
         UAY = gleno_center - elb_center
         UAZ = cross(UAY, elb_axis)  # / la.norm(elb_axis)  # - UAZ_offset
         UAX = cross(UAY, UAZ)
-
-        print "---------------"
-        print UAY
-        print UAZ
-        print UAX
-
         UAE = normalize(transpose(matrix([UAX, UAY, UAZ])))
 
-        if not self.use_elbow_pads:
-            # ELBOW
-            LAY = LApY
-            LAX = cross(LAY, wrist_axis)
-            LAZ = cross(LAX, LAY)
-            LAE = normalize(transpose(matrix([LAX, LAY, LAZ])))
-
-        else:
-            LAE = t_elbow[0:3][:, 0:3]
+        # ELBOW
+        LAY = LApY
+        LAX = cross(LAY, wrist_axis)
+        LAZ = cross(LAX, LAY)
+        LAE = normalize(transpose(matrix([LAX, LAY, LAZ])))
+        # LAE = t_elbow[0:3][:, 0:3]
 
         # HAND
         handY = wrist_center - hand_origin

@@ -253,7 +253,7 @@ class Drawer():
 
     def draw_frame_skeleton(self, frame):
         humans = self.isolate_humans(frame)
-        self.draw_frame_axes(frame)
+        # self.draw_frame_axes(frame)
         self.draw_frame_raw(frame)
 
         for h in humans:

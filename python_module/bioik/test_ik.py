@@ -99,7 +99,7 @@ class TestBioHumanIk(BioHumanIk):
         self.env.SetViewer('qtcoin')
         self.env.SetDebugLevel(DebugLevel.Verbose)
         self.env.Reset()
-        self.env.Load("../ormodels/human_wpi_bio.xml")
+        self.env.Load("../../ormodels/human_wpi_bio.xml")
 
         self.human = self.env.GetRobots()[0]
 
@@ -298,7 +298,7 @@ class TestBioHumanIk(BioHumanIk):
 
         return dist
 
-    def draw_markers(self, config, d_torso, d_torso_shoulder, d_shoulder_elbow, d_elbow_wrist):
+    def draw_markers(self, config, d_torso, d_shoulder_elbow, d_elbow_wrist):
 
         del self.handles[:]
 
@@ -320,7 +320,7 @@ class TestBioHumanIk(BioHumanIk):
         q_cur = self.get_human_configuration(config)
         self.human.SetDOFValues(q_cur[0:self.human.GetDOF()])
 
-        self.offset_torso_shoulder = d_torso_shoulder
+        # self.offset_torso_shoulder = d_torso_shoulder
         self.offset_shoulder_elbow = d_shoulder_elbow
         self.offset_elbow_wrist = d_elbow_wrist
         self.offset_torso = d_torso
@@ -378,8 +378,8 @@ if __name__ == "__main__":
     # (m,) = raw_markers[0].shape  # number of values in the marker set
 
     # use human_mocap_second.zip
-    marker_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/markers_fixed_cut.csv'
-    object_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/objects_fixed_cut.csv'
+    marker_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/data/second/markers_fixed_cut.csv'
+    object_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/data/second/objects_fixed_cut.csv'
     [frames_m, frames_o] = marker_utils.load_file(marker_file, object_file)
 
     h = TestBioHumanIk()
@@ -388,9 +388,9 @@ if __name__ == "__main__":
 
         h.set_markers(frames_m[i][0:11])
         h.set_pelvis_frame(frames_o[i][0][0:7])
-        markers = h.get_markers_in_pelvis_frame(h.markers)
-        [q, d_torso, d_torso_shoulder, d_shoulder_elbow, d_elbow_wrist] = h.compute_ik(markers)
-        h.draw_markers(q, d_torso, d_torso_shoulder, d_shoulder_elbow, d_elbow_wrist)
+        markers = h.get_markers_in_pelvis_frame(h.markers, h.t_pelvis)
+        [q, d_torso, d_shoulder_elbow, d_elbow_wrist] = h.compute_ik(markers)
+        h.draw_markers(q, d_torso, d_shoulder_elbow, d_elbow_wrist)
 
         time.sleep(0.01)
 
