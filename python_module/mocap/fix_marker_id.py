@@ -3,7 +3,6 @@
 # Rafi Hayne
 
 from TransformMatrix import *
-from get_marker_names import *
 import csv
 import numpy as np
 import os
@@ -377,9 +376,22 @@ if __name__ == '__main__':
     NB_HUMAN    = 2
 
 
-    # f = MarkerFixer('/home/rafi/logging_data/second/markers.csv', '/home/rafi/logging_data/second/objects_fixed.csv')
+    # f = MarkerFixer('/home/rafi/logging_six/2/markers.csv', '/home/rafi/logging_six/2/objects.csv')
+
+
     # f = MarkerFixer('/home/rafi/logging_three/first/markers.csv', '/home/rafi/logging_three/first/objects.csv')
-    f = MarkerFixer('/home/rafi/logging_five/4/markers.csv', '/home/rafi/logging_five/4/objects.csv')
+    # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0000-1700]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0000-1700]objects.csv')
+    # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1750-3200]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1750-3200]objects.csv')
+
+    f = MarkerFixer('/home/rafi/logging_nine/2/[1000-3900]markers.csv', '/home/rafi/logging_nine/2/[1000-3900]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[5900-9000]markers.csv', '/home/rafi/logging_nine/2/[5900-9000]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[11700-14800]markers.csv', '/home/rafi/logging_nine/2/[11700-14800]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[22400-25300]markers.csv', '/home/rafi/logging_nine/2/[22400-25300]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[28300-30800]markers.csv', '/home/rafi/logging_nine/2/[28300-30800]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[33000-35700]markers.csv', '/home/rafi/logging_nine/2/[33000-35700]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[37900-40400]markers.csv', '/home/rafi/logging_nine/2/[37900-40400]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[42600-44700]markers.csv', '/home/rafi/logging_nine/2/[42600-44700]objects.csv')
+
 
     try:
         with Timer() as t:

@@ -22,6 +22,19 @@ class Tracker:
         # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_three/first/2014-07-31-15-50-15.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
         # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_fourth/0/2014-08-05-17-58-43.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
 
+
+        # lOGGING 4
+        # 1
+        # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_fourth/1/2014-08-05-18-00-23.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+        # 2
+        # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_fourth/2/2014-08-05-18-03-25.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+        # 3
+        # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_fourth/3/2014-08-05-18-05-03.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+        # 4
+        # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_fourth/4/2014-08-05-18-06-38.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+
+
+
         # lOGGING 5
         # 1
         # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_five/1/2014-08-06-12-19-59.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
@@ -30,7 +43,7 @@ class Tracker:
         # 3
         # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_five/3/2014-08-06-12-22-42.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
         # 4
-        self.bag = subprocess.Popen('rosbag play /home/rafi/logging_five/4/2014-08-06-12-24-52.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+        # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_five/4/2014-08-06-12-24-52.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
 
 
         self.frames = []
