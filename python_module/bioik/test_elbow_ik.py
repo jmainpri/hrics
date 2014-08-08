@@ -343,21 +343,30 @@ if __name__ == "__main__":
     # o_file = folder + '[1500-1680]objects.csv'
 
     # LATEST ------------------------------------
-    # m_file = folder + '[0440-0580]markers.csv'
-    # o_file = folder + '[0440-0580]objects.csv'
+    name = '[0440-0580]'
+    m_file = folder + name + 'markers.csv'
+    o_file = folder + name + 'objects.csv'
 
-    # m_file = folder + '[0700-0860]markers.csv'
-    # o_file = folder + '[0700-0860]objects.csv'
+    # name = '[0700-0860]'
+    # m_file = folder + name + 'markers.csv'
+    # o_file = folder + name + 'objects.csv'
 
-    m_file = folder + '[1460-1620]markers.csv'
-    o_file = folder + '[1460-1620]objects.csv'
-    name = '[1460-1620]'
+    # m_file = folder + '[1460-1620]markers.csv'
+    # o_file = folder + '[1460-1620]objects.csv'
+    # name = '[1460-1620]'
 
     # m_file = folder + '[1800-1980]markers.csv'
     # o_file = folder + '[1800-1980]objects.csv'
     #
-    # m_file = folder + '[1840-2300]markers.csv'
-    # o_file = folder + '[1840-2300]objects.csv'
+    name = '[1460-1620]'
+    m_file = folder + name + 'markers.csv'
+    o_file = folder + name + 'objects.csv'
+
+    m_file = folder + name + 'markers_new_smooth.csv'
+    o_file = folder + name + 'objects_new_smooth.csv'
+
+    # m_file = folder + name + 'markers_raw.csv'
+    # o_file = folder + name + 'objects_raw.csv'
 
     print "try to load file : ", m_file
     print "try to load file : ", o_file
