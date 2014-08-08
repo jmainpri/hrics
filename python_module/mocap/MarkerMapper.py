@@ -1,3 +1,7 @@
+#!/usr/bin/python
+
+# Rafi Hayne
+
 import numpy as np
 from TransformMatrix import *
 

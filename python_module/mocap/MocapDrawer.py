@@ -1,8 +1,20 @@
+#!/usr/bin/python
+
+# Rafi Hayne
+
 from openravepy import *
 from MocapCommon import *
 import transformation_helper
 import csv
 import sys
+
+
+# TMP ROS STUFF
+import rospy
+from cv_bridge import CvBridge, CvBridgeError
+import cv2
+from os import listdir
+from os.path import isfile, join
 
 class Human():
 
@@ -68,6 +80,7 @@ class Drawer():
         self.handles = []
 
         self.frames = []
+
 
     def load_file(self, m_filepath, o_filepath):
         print "Trying to open file"
@@ -152,14 +165,74 @@ class Drawer():
         # for frame in self.frames:
         prev_time = self.frames[0].get_time()
 
-        for frame in self.frames:
+        # IMAGE PUBLISHER
+        folder = "/home/rafi/logging_nine/2"
+        images = [ f for f in listdir(folder) if isfile(join(folder,f)) and '.png' in f ]
+        print "Num images : ", len(images)
+        times = []
+
+        for img in images:
+            sec, nsec = img.split('_')
+            times.append( rospy.Time(int(sec), int(nsec.split('.')[0]) ).to_sec() )
+
+        tuple_list = zip(times, images)
+        sorted_images = sorted(tuple_list, key = lambda p : p[0])
+
+        # print sorted_images
+        # Realtime images playback
+        # READ IMAGES
+        # t_old = None
+        # for t, img in sorted_images:
+        #     sec, nsec = img.split('_')
+        #     cv_image = cv2.imread( folder + "/" + img, 1)
+        #     cv2.imshow('my_picture',cv_image)
+        #     if t_old is None : t_old = t
+        #     time.sleep(t-t_old)
+        #     t_old = t
+
+
+        # # Step by step image view
+        # for i, (t, img) in enumerate(sorted_images):
+        #     if i % 100 == 0:
+        #         print i
+        #         sec, nsec = img.split('_')
+        #         cv_image = cv2.imread( folder + "/" + img, 1)
+        #         cv2.imshow('my_picture',cv_image)
+        #         sys.stdin.readline()
+
+        sys.stdin.readline()
+        for i, frame in enumerate(self.frames):
             curr_time = frame.get_time()
 
             self.draw_frame_skeleton(frame)
 
             dt = curr_time - prev_time
+            dt = 0.05
             prev_time = curr_time
             time.sleep(dt)
+
+            # if True:
+            # if i % 20 == 0 :
+
+            #     try:
+            #         for t, img in sorted_images:
+            #             if t > curr_time:
+            #                 image_name = folder + "/" + img
+            #                 break
+
+            #         cv_image = cv2.imread( image_name, 1)
+            #         cv2.imshow('my_picture', cv_image)
+            #         # print image_name
+            #     except e:
+            #         print e
+
+            #     sys.stdin.readline()
+
+            #     # print "blocking?"
+            #     # rospy.spin()
+
+            #     print "Frame : ", i , " press enter"
+
             self.clear()
 
         return
@@ -178,7 +251,6 @@ class Drawer():
 
     def draw_frame_skeleton(self, frame):
         humans = self.isolate_humans(frame)
-        # self.draw_point_by_name(frame, 'Sternum')
         self.draw_frame_axes(frame)
 
         for h in humans:
@@ -240,7 +312,7 @@ class Drawer():
             colors.append((float(n)*1, (1-float(n))*1, 0))
 
         # Marker points
-        # self.handles.append(self.env.plot3(points=point_list, pointsize=0.05, colors=array(colors), drawstyle=1))
+        self.handles.append(self.env.plot3(points=point_list, pointsize=0.02, colors=array(colors), drawstyle=1))
 
         if not self.r_arm_only:
 
@@ -285,7 +357,7 @@ class Drawer():
         # tf = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([object.r_w, object.r_x, object.r_y, object.r_z]) )), transpose(matrix([object.x, object.y, object.z])) )
 
         tf = object.get_rot_matrix()
-        self.handles.append(misc.DrawAxes( self.env, matrix(tf), 0.5 ))
+        self.handles.append(misc.DrawAxes( self.env, matrix(tf), 0.1 ))
 
     def draw_frame_axes(self, frame):
         for o in frame.object_list:
@@ -303,8 +375,53 @@ if __name__ == '__main__':
     RARM_ONLY   = True
     NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)
 
-    m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
-    o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+
+    # m_file = '/home/rafi/Desktop/TEMP/[0580-0680]markers.csv'
+    # o_file = '/home/rafi/Desktop/TEMP/[0580-0680]objects.csv'
+
+    m_file = '/home/rafi/Desktop/TEMP/[1300-1420]markers.csv'
+    o_file = '/home/rafi/Desktop/TEMP/[1300-1420]objects.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1000-3900]markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1000-3900]objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+
+
+
+
+
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[5900-9000]markers.csv', '/home/rafi/logging_nine/2/[5900-9000]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[11700-14800]markers.csv', '/home/rafi/logging_nine/2/[11700-14800]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[22400-25300]markers.csv', '/home/rafi/logging_nine/2/[22400-25300]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[28300-30800]markers.csv', '/home/rafi/logging_nine/2/[28300-30800]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[33000-35700]markers.csv', '/home/rafi/logging_nine/2/[33000-35700]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[37900-40400]markers.csv', '/home/rafi/logging_nine/2/[37900-40400]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[42600-44700]markers.csv', '/home/rafi/logging_nine/2/[42600-44700]objects.csv')
 
     # m_file = '/home/rafi/logging_five/1/markers.csv'
     # o_file = '/home/rafi/logging_five/1/objects.csv'
