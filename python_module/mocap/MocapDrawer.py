@@ -160,6 +160,10 @@ class Drawer():
             dt = curr_time - prev_time
             prev_time = curr_time
             time.sleep(dt)
+
+            print "press enter to continue"
+            sys.stdin.readline()
+
             self.clear()
 
         return
@@ -180,6 +184,7 @@ class Drawer():
         humans = self.isolate_humans(frame)
         # self.draw_point_by_name(frame, 'Sternum')
         self.draw_frame_axes(frame)
+        self.draw_frame_raw(frame)
 
         for h in humans:
             centers = h.get_center_points()
@@ -240,7 +245,7 @@ class Drawer():
             colors.append((float(n)*1, (1-float(n))*1, 0))
 
         # Marker points
-        # self.handles.append(self.env.plot3(points=point_list, pointsize=0.05, colors=array(colors), drawstyle=1))
+        self.handles.append(self.env.plot3(points=point_list, pointsize=0.02, colors=array(colors), drawstyle=1))
 
         if not self.r_arm_only:
 
@@ -284,7 +289,7 @@ class Drawer():
     def draw_object_axes(self, object):
         # tf = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([object.r_w, object.r_x, object.r_y, object.r_z]) )), transpose(matrix([object.x, object.y, object.z])) )
 
-        tf = object.get_rot_matrix()
+        tf = object.get_transform()
         self.handles.append(misc.DrawAxes( self.env, matrix(tf), 0.5 ))
 
     def draw_frame_axes(self, frame):

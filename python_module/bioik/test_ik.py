@@ -138,27 +138,6 @@ class TestBioHumanIk(BioHumanIk):
 
         return points_3d
 
-    def get_markers_in_pelvis_frame(self):
-
-        # Construct frame centered at torso with orientation
-        # set by the pelvis frame, add rotation offset for matlab code
-
-        trunk_center = (self.markers[0] + self.markers[1])/2
-
-        self.t_trans = deepcopy(self.t_pelvis)
-        self.t_trans[0:3, 3] = transpose(matrix(trunk_center))
-        self.t_trans = self.t_trans * MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
-
-        inv_t_trans = la.inv(self.t_trans)
-
-        points_3d = len(self.markers)*[array([0., 0., 0.])]
-
-        for i, p in enumerate(self.markers):
-            points_3d[i] = array(array(inv_t_trans).dot(array(append(p, 1.0))))[0:3]
-            # points_3d[i] *= 1000
-
-        return points_3d
-
     def save_markers_to_file(self):
 
         with open("./matlab/markers_tmp.csv", 'w') as m_file:
@@ -409,7 +388,7 @@ if __name__ == "__main__":
 
         h.set_markers(frames_m[i][0:11])
         h.set_pelvis_frame(frames_o[i][0][0:7])
-        markers = h.get_markers_in_pelvis_frame()
+        markers = h.get_markers_in_pelvis_frame(h.markers)
         [q, d_torso, d_torso_shoulder, d_shoulder_elbow, d_elbow_wrist] = h.compute_ik(markers)
         h.draw_markers(q, d_torso, d_torso_shoulder, d_shoulder_elbow, d_elbow_wrist)
 

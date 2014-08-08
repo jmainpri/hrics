@@ -55,7 +55,7 @@ class Object:
     def is_occluded(self):
         return self.occluded
 
-    def get_rot_matrix(self):
+    def get_transform(self):
 
         mat =  MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([self.r_w, self.r_x, self.r_y, self.r_z]) )), transpose(matrix([self.x, self.y, self.z])) )
 

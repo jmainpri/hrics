@@ -22,19 +22,45 @@ from math_utils import *
 from numpy import *
 from numpy import linalg as la
 from TransformMatrix import *
-
+from rodrigues import *
+from copy import deepcopy
 
 class BioHumanIk():
 
     def __init__(self):
 
+        # Matrices
         self.t_trans = matrix(eye(4))
         self.trunkE = None
         self.UAE = None
         self.LAE = None
         self.handE = None
 
-    def compute_ik(self, markers):
+        # Mode
+        self.use_elbow_pads = False
+
+    def get_markers_in_pelvis_frame(self, markers, t_pelvis):
+
+        # Construct frame centered at torso with orientation
+        # set by the pelvis frame, add rotation offset for matlab code
+
+        trunk_center = (markers[0] + markers[1])/2
+
+        self.t_trans = deepcopy(t_pelvis)
+        self.t_trans[0:3, 3] = transpose(matrix(trunk_center))
+        self.t_trans = self.t_trans * MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
+
+        inv_t_trans = la.inv(self.t_trans)
+
+        points_3d = len(markers)*[array([0., 0., 0.])]
+
+        for i, p in enumerate(markers):
+            points_3d[i] = array(array(inv_t_trans).dot(array(append(p, 1.0))))[0:3]
+            # points_3d[i] *= 1000
+
+        return points_3d
+
+    def compute_ik(self, markers, t_elbow=None):
 
         # 0 -> 3-5 xyphoid process
         # 1 -> 6-8 T8
@@ -42,8 +68,10 @@ class BioHumanIk():
         # 3 -> 12-14 C7
         # 4 -> 15-17 Acromion process
         # 5 -> 18-20 Glenohumeral cntr of rot. (post)
+
         # 6 -> 21-23 Medial epicondyle
         # 7 -> 24-26 lateral epicondyle
+
         # 8 -> 27-29 ulnar styloid
         # 9 -> 30-32 radial styloid
         # 10 -> 33-35 2nd metacarpal head
@@ -62,16 +90,36 @@ class BioHumanIk():
         acromion = array([markers[4][0], markers[4][1], fixedz])
         gleno_center = array([acromion[0], acromion[1], markers[5][2]])  # p_shoulder_center
 
-        # ELBOW
-        elb_axis = markers[6] - markers[7]
-        elb_center = markers[7] + 0.5 * elb_axis  # p_elbow_center
+        if not self.use_elbow_pads:
 
-        # HAND
-        wrist_axis = markers[9] - markers[8]
-        wrist_center = markers[8] + 0.5 * wrist_axis  # p_wrist_center
-        UlnStylPro = markers[8] + 10 * wrist_axis / la.norm(wrist_axis)
-        LApY = elb_center - wrist_center  # UlnStylPro
-        hand_origin = markers[10]  # - array([0.0, 0.0, 40.0])
+            # ELBOW
+            elb_axis = markers[6] - markers[7]
+            elb_center = markers[7] + 0.5 * elb_axis  # p_elbow_center
+
+            # HAND
+            wrist_axis = markers[9] - markers[8]
+            wrist_center = markers[8] + 0.5 * wrist_axis  # p_wrist_center
+            UlnStylPro = markers[8] + 10 * wrist_axis / la.norm(wrist_axis)
+            LApY = elb_center - wrist_center  # UlnStylPro
+            hand_origin = markers[10]  # - array([0.0, 0.0, 40.0])
+
+        else:
+
+            elb_center = array(transpose(t_elbow[:, 2]).tolist()[0][:3])
+            elb_axis = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
+            print "t_elbow : "
+            print t_elbow
+            print "elb_axis : "
+            print elb_axis
+            print "elb_center : "
+            print elb_center
+
+            # HAND
+            wrist_axis = markers[7] - markers[6]
+            wrist_center = markers[6] + 0.5 * wrist_axis  # p_wrist_center
+            UlnStylPro = markers[6] + 10 * wrist_axis / la.norm(wrist_axis)
+            LApY = elb_center - wrist_center  # UlnStylPro
+            hand_origin = markers[8]  # - array([0.0, 0.0, 40.0])
 
         # --------------------------------------------------------------------
         # Define matrices
@@ -82,6 +130,12 @@ class BioHumanIk():
         trunkX = cross(trunkY, trunkZ)
         trunkX *= - 1.0
         trunkZ *= - 1.0
+
+        print "---------------"
+        print trunkY
+        print trunkZ
+        print trunkX
+
         trunkE = normalize(transpose(matrix([trunkX, trunkY, trunkZ])))
 
         # for each rotation matrix verify U*Ut = eye(3)
@@ -92,13 +146,23 @@ class BioHumanIk():
         UAY = gleno_center - elb_center
         UAZ = cross(UAY, elb_axis)  # / la.norm(elb_axis)  # - UAZ_offset
         UAX = cross(UAY, UAZ)
+
+        print "---------------"
+        print UAY
+        print UAZ
+        print UAX
+
         UAE = normalize(transpose(matrix([UAX, UAY, UAZ])))
 
-        # ELBOW
-        LAY = LApY
-        LAX = cross(LAY, wrist_axis)
-        LAZ = cross(LAX, LAY)
-        LAE = normalize(transpose(matrix([LAX, LAY, LAZ])))
+        if not self.use_elbow_pads:
+            # ELBOW
+            LAY = LApY
+            LAX = cross(LAY, wrist_axis)
+            LAZ = cross(LAX, LAY)
+            LAE = normalize(transpose(matrix([LAX, LAY, LAZ])))
+
+        else:
+            LAE = t_elbow[0:3][:, 0:3]
 
         # HAND
         handY = wrist_center - hand_origin
@@ -114,7 +178,7 @@ class BioHumanIk():
 
         # --------------------------------------------------------------------
         # Translations
-        d_torso_shoulder = (gleno_center - trunk_center)
+        # d_torso_shoulder = (gleno_center - trunk_center)
         d_shoulder_elbow = la.norm((gleno_center - elb_center))
         d_elbow_wrist = la.norm((wrist_center - elb_center))
 
@@ -171,4 +235,4 @@ class BioHumanIk():
         q[10] = wrist_a[0]
         q[11] = wrist_a[1]
         q[12] = wrist_a[2]
-        return [q, d_torso, d_torso_shoulder, d_shoulder_elbow, d_elbow_wrist]
+        return [q, d_torso, d_shoulder_elbow, d_elbow_wrist]

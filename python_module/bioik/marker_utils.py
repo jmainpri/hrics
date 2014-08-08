@@ -35,6 +35,24 @@ from numpy import linalg as la
 # lWristInner_raw     = frame.marker_list[i+16].array
 # lPalm_raw           = frame.marker_list[i+17].array
 
+#--------------------------------------------------------------
+# ELBOWPAD SETUP
+
+# ** Markers
+# ChestFront        0
+# ChestBack         1
+# SternumFront      2
+# SternumBack       3
+# rShoulderFront    4
+# rShoulderBack     5
+# rWristOuter       6
+# rWristInner       7
+# rPalm             8
+
+# ** Objects
+# Pelvis            0
+# Head              1
+# rElbow            2
 
 def remap_to_matlab(in_markers):
 
