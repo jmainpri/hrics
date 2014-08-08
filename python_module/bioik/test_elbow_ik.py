@@ -8,6 +8,8 @@ import sys
 import time
 from copy import deepcopy
 
+mapping = [-1, 6, 7, 8, 16, 17, 18, 20, 21, 22, 24, 25, 26]
+
 class TestBioHumanIk(BioHumanIk):
 
     def __init__(self, m_file, o_file):
@@ -27,6 +29,9 @@ class TestBioHumanIk(BioHumanIk):
         self.env = self.drawer.env
         self.env.Load("../../ormodels/humans_bio_env.xml")
         self.humans = self.env.GetRobots()
+
+        # Get torso offset
+        self.offset_pelvis_torso_init = self.humans[0].GetJoint("TorsoX").GetHierarchyChildLink().GetTransform()[0:3, 3]
 
         t_cam = array([[ -0.655253290114, -0.106306078558, 0.747891799297, -0.302201271057] , \
                         [ -0.725788890663, 0.363116971923, -0.584274379801, 2.68592453003] , \
@@ -87,15 +92,15 @@ class TestBioHumanIk(BioHumanIk):
         human.SetDOFValues([offset_elbow_wrist], [23])
 
         # Map the joint angles and set to radians
-    def get_human_configuration(self, config):
+    def get_human_configuration(self, human, config):
 
         motion = [config]
         for configuration in motion:  # motion should be one row. otherwise take the last element
 
-            q = self.human.GetDOFValues()
+            q = human.GetDOFValues()
             for i, dof in enumerate(configuration):
                 if mapping[i] >= 0:
-                    self.q[mapping[i]] = dof * pi / 180
+                    q[mapping[i]] = dof * pi / 180
         return q
 
     def play_skeleton(self):
@@ -126,17 +131,27 @@ class TestBioHumanIk(BioHumanIk):
                 for o in humans[j].objects:
                     transforms.append(o.get_transform())
 
-                t_pelvis = transforms[0] * MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
-                t_head   = transforms[1]
-                t_elbow  = transforms[2]
-
-                markers = self.get_markers_in_pelvis_frame(markers, t_pelvis)
-                [q, d_torso, d_shoulder_elbow, d_elbow_wrist] = self.compute_ik(markers, t_elbow)
-
-                offset_pelvis_torso = array([0., 0., 0.])
-
-                self.set_human_model_sizes(h, t_pelvis, offset_pelvis_torso,
-                                           d_torso, d_shoulder_elbow, d_elbow_wrist)
+                # t_pelvis = transforms[0] * MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
+                # t_head   = transforms[1]
+                # t_elbow  = transforms[2]
+                #
+                # trunk_center = (markers[0] + markers[1])/2
+                # inv_pelvis = la.inv(t_pelvis)
+                # trunk_center = array(array(inv_pelvis).dot(append(trunk_center, 1)))[0:3]
+                #
+                # markers = self.get_markers_in_pelvis_frame(markers, t_pelvis)
+                #
+                # [config, d_torso, d_shoulder_elbow, d_elbow_wrist] = self.compute_ik(markers, t_elbow)
+                #
+                # offset_pelvis_torso = trunk_center
+                # offset_pelvis_torso -= self.offset_pelvis_torso_init
+                # # offset_pelvis_torso += array([0.16, 0., 0.])
+                #
+                # self.set_human_model_sizes(h, t_pelvis, offset_pelvis_torso,
+                #                            d_torso, d_shoulder_elbow, d_elbow_wrist)
+                #
+                # q_cur = self.get_human_configuration(h, config)
+                # h.SetDOFValues(q_cur[0:h.GetDOF()])
 
             print len(markers)
 
@@ -172,6 +187,25 @@ if __name__ == "__main__":
 
     # m_file = folder + '[1820-1960]markers.csv'
     # o_file = folder + '[1820-1960]objects.csv'
+
+    m_file = folder + '[1500-1680]markers.csv'
+    o_file = folder + '[1500-1680]objects.csv'
+
+    # LATEST
+    m_file = folder + '[0440-0580]markers.csv'
+    o_file = folder + '[0440-0580]objects.csv'
+
+    # m_file = folder + '[0700-0860]markers.csv'
+    # o_file = folder + '[0700-0860]objects.csv'
+    #
+    # m_file = folder + '[1469-1620]markers.csv'
+    # o_file = folder + '[1469-1620]objects.csv'
+    #
+    # m_file = folder + '[1800-1980]markers.csv'
+    # o_file = folder + '[1800-1980]objects.csv'
+    #
+    # m_file = folder + '[1840-2300]markers.csv'
+    # o_file = folder + '[1840-2300]objects.csv'
 
     print "try to load file : ", m_file
     print "try to load file : ", o_file
