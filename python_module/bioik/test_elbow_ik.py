@@ -136,6 +136,8 @@ class TestBioHumanIk(BioHumanIk):
 
         dist = 0.0
 
+        print_dist = False
+
         for j in human.GetJoints():
 
             p_link = j.GetHierarchyChildLink().GetTransform()[0:3, 3]
@@ -143,24 +145,28 @@ class TestBioHumanIk(BioHumanIk):
             if j.GetName() == "TorsoZ":
                 # self.handles.append(self.env.plot3(p_link, pointsize=0.02, colors=array([0, 0, 0]), drawstyle=1))
                 dist = la.norm(p_link - p0)
-                print "p_link : ", p_link
-                print "dist torso : ", dist
+                if print_dist:
+                    print "p_link : ", p_link
+                    print "dist torso : ", dist
                 self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
                 # l = self.human.GetLink("TorsoDummyY")
                 # self.handles.append(misc.DrawAxes(self.env, j.GetHierarchyChildLink().GetTransform(), 1.0))
             if j.GetName() == "rShoulderX":
                 # self.handles.append(self.env.plot3(p_link, pointsize=0.05, colors=array([0, 0, 0]), drawstyle=1))
                 dist = la.norm(p_link - p1)
-                print "dist shoulder : ", dist
+                if print_dist:
+                    print "dist shoulder : ", dist
                 self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
             if j.GetName() == "rElbowZ":
                 dist = la.norm(p_link - p2)
-                print "dist elbow : ", dist
+                if print_dist:
+                    print "dist elbow : ", dist
                 self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
             if j.GetName() == "rWristX":
                 dist = la.norm(p_link - p3)
                 self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
-                print "dist wrist : ", dist
+                if print_dist:
+                    print "dist wrist : ", dist
             #if j.GetName() == "rShoulderZ":
             #    self.handles.append(misc.DrawAxes(self.env, j.GetHierarchyChildLink().GetTransform(), 0.3))
 
@@ -303,11 +309,13 @@ class TestBioHumanIk(BioHumanIk):
 
                 traj.append([[dt], h.GetDOFValues()])
 
-                print curr_time
+#                print curr_time
 
             # if i % 3 == 0:
             #     print "press enter to continue"
             #     sys.stdin.readline()
+            for h in self.humans:
+                print "robot in collision ", h.CheckSelfCollision()
 
     def run(self):
 
@@ -365,8 +373,8 @@ if __name__ == "__main__":
     m_file = folder + name + 'markers_new_smooth.csv'
     o_file = folder + name + 'objects_new_smooth.csv'
 
-    # m_file = folder + name + 'markers_raw.csv'
-    # o_file = folder + name + 'objects_raw.csv'
+    m_file = folder + name + 'markers_raw.csv'
+    o_file = folder + name + 'objects_raw.csv'
 
     print "try to load file : ", m_file
     print "try to load file : ", o_file

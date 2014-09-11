@@ -119,7 +119,7 @@ class BioHumanIk():
             wrist_center = markers[6] + 0.5 * wrist_axis  # p_wrist_center
             UlnStylPro = markers[6] + 10 * wrist_axis / la.norm(wrist_axis)
             LApY = elb_center - wrist_center  # UlnStylPro
-            hand_origin = markers[8]  # - array([0.0, 0.0, 40.0])
+            hand_origin = markers[8] - array([0.0, 0.0, 0.04]) # TODO perform offset in wrist frame
 
         # --------------------------------------------------------------------
         # Define matrices
