@@ -93,11 +93,14 @@ class MarkerFixer:
         #  Get the out filename
         dir, path = os.path.split(self.m_filepath)
         name, type = path.rsplit('.', 1)
-        m_outpath = name + '_fixed.'+type
+        m_outpath = dir+'/'+name + '_fixed.'+type
+        drop_outpath = dir+'/'+name + '_dropped.'+type
 
         dir, path = os.path.split(self.o_filepath)
         name, type = path.rsplit('.', 1)
-        o_outpath = name + '_fixed.'+type
+        o_outpath = dir+'/'+name + '_fixed.'+type
+
+        print "saving file : ", m_outpath
 
         # No need to normalize ids.  we output marker names
         # print "Trying to normalize ids"
@@ -105,41 +108,49 @@ class MarkerFixer:
 
         with open(m_outpath, 'w') as m_file:
             with open(o_outpath, 'w') as o_file:
-                for frame in self.frames[self.first_frame:self.last_frame]:
-                    line_str = ""
-                    line_str += str(frame.sec) + ','
-                    line_str += str(frame.nsec) + ','
-                    line_str += str(frame.count) + ','
+                with open(drop_outpath, 'w') as d_file:
+                    for frame in self.frames[self.first_frame:self.last_frame]:
+                        drop_str = ''
 
-                    for marker in frame.marker_list:
-                        line_str += str(marker.name) + ','
-                        line_str += str(marker.x) + ','
-                        line_str += str(marker.y) + ','
-                        line_str += str(marker.z) + ','
+                        line_str = ""
+                        line_str += str(frame.sec) + ','
+                        line_str += str(frame.nsec) + ','
+                        line_str += str(frame.count) + ','
 
-                    line_str = line_str.rstrip(',')
-                    line_str += '\n'
-                    m_file.write(line_str)
+                        for marker in frame.marker_list:
+                            drop_str += str(marker.times_dropped) + ','
+                            line_str += str(marker.name) + ','
+                            line_str += str(marker.x) + ','
+                            line_str += str(marker.y) + ','
+                            line_str += str(marker.z) + ','
 
-                    line_str = ""
-                    line_str += str(frame.sec) + ','      #TODO should probalby use a different time stamp.  at least align frames by timestamp
-                    line_str += str(frame.nsec) + ','
-                    line_str += str(len(frame.object_list)) + ','
+                        line_str = line_str.rstrip(',')
+                        line_str += '\n'
+                        m_file.write(line_str)
 
-                    for obj in frame.object_list:
-                        line_str += str(obj.id) + ','
-                        line_str += str(obj.occluded) + ','
-                        line_str += str(obj.x) + ','
-                        line_str += str(obj.y) + ','
-                        line_str += str(obj.z) + ','
-                        line_str += str(obj.r_x) + ','
-                        line_str += str(obj.r_y) + ','
-                        line_str += str(obj.r_z) + ','
-                        line_str += str(obj.r_w) + ','
+                        drop_str = drop_str.rstrip(',')
+                        drop_str += '\n'
+                        d_file.write(drop_str)
 
-                    line_str = line_str.rstrip(',')
-                    line_str += '\n'
-                    o_file.write(line_str)
+                        line_str = ""
+                        line_str += str(frame.sec) + ','      #TODO should probalby use a different time stamp.  at least align frames by timestamp
+                        line_str += str(frame.nsec) + ','
+                        line_str += str(len(frame.object_list)) + ','
+
+                        for obj in frame.object_list:
+                            line_str += str(obj.id) + ','
+                            line_str += str(obj.occluded) + ','
+                            line_str += str(obj.x) + ','
+                            line_str += str(obj.y) + ','
+                            line_str += str(obj.z) + ','
+                            line_str += str(obj.r_x) + ','
+                            line_str += str(obj.r_y) + ','
+                            line_str += str(obj.r_z) + ','
+                            line_str += str(obj.r_w) + ','
+
+                        line_str = line_str.rstrip(',')
+                        line_str += '\n'
+                        o_file.write(line_str)
 
     def get_average_position(self):
         m_tot = np.array( [0, 0, 0] )
@@ -309,9 +320,12 @@ class MarkerFixer:
             print "Window size can't be even"
             return
 
+        new_frames = self.frames[:]
+
         window = self.frames[self.first_frame:self.first_frame+size]
 
         for i in range( self.first_frame + int(floor(size/2)), self.last_frame-int(floor(size/2))):
+            new_markers = []
             for m, marker in enumerate(self.frames[i].marker_list):
                 avg = np.array([0.0,0.0,0.0])
 
@@ -321,12 +335,24 @@ class MarkerFixer:
 
                 avg = avg/float(size)
 
-                self.frames[i].marker_list[m].array = avg
-                self.frames[i].marker_list[m].x = avg[0]
-                self.frames[i].marker_list[m].y = avg[1]
-                self.frames[i].marker_list[m].z = avg[2]
+                # self.frames[i].marker_list[m].array = avg
+                # self.frames[i].marker_list[m].x = avg[0]
+                # self.frames[i].marker_list[m].y = avg[1]
+                # self.frames[i].marker_list[m].z = avg[2]
+
+                temp_marker = self.frames[i].marker_list[m]
+                temp_marker.array = avg
+                temp_marker.x = avg[0]
+                temp_marker.y = avg[1]
+                temp_marker.z = avg[2]
+
+                new_markers.append(temp_marker)
+
+            new_frames[i].marker_list = new_markers
 
             window = window[1:] + [self.frames[i+1]]
+
+        self.frames = new_frames
 
     def normalize_ids(self):
         for frame in self.frames:
@@ -377,13 +403,13 @@ if __name__ == '__main__':
 
 
     # f = MarkerFixer('/home/rafi/logging_six/2/markers.csv', '/home/rafi/logging_six/2/objects.csv')
-
+    # f = MarkerFixer('/home/rafi/logging_five/1/markers.csv', '/home/rafi/logging_five/1/objects.csv')
 
     # f = MarkerFixer('/home/rafi/logging_three/first/markers.csv', '/home/rafi/logging_three/first/objects.csv')
     # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0000-1700]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0000-1700]objects.csv')
     # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1750-3200]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1750-3200]objects.csv')
 
-    f = MarkerFixer('/home/rafi/logging_nine/2/[1000-3900]markers.csv', '/home/rafi/logging_nine/2/[1000-3900]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[1000-3900]markers.csv', '/home/rafi/logging_nine/2/[1000-3900]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[5900-9000]markers.csv', '/home/rafi/logging_nine/2/[5900-9000]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[11700-14800]markers.csv', '/home/rafi/logging_nine/2/[11700-14800]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[22400-25300]markers.csv', '/home/rafi/logging_nine/2/[22400-25300]objects.csv')
@@ -392,6 +418,47 @@ if __name__ == '__main__':
     # f = MarkerFixer('/home/rafi/logging_nine/2/[37900-40400]markers.csv', '/home/rafi/logging_nine/2/[37900-40400]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[42600-44700]markers.csv', '/home/rafi/logging_nine/2/[42600-44700]objects.csv')
 
+    # Trials
+    # f = MarkerFixer('/home/rafi/logging_five/1/markers.csv', '/home/rafi/logging_five/1/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_five/2/markers.csv', '/home/rafi/logging_five/2/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_five/3/markers.csv', '/home/rafi/logging_five/3/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_five/4/markers.csv', '/home/rafi/logging_five/4/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_six/1/markers.csv', '/home/rafi/logging_six/1/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_six/2/markers.csv', '/home/rafi/logging_six/2/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_six/3/markers.csv', '/home/rafi/logging_six/3/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_six/4/markers.csv', '/home/rafi/logging_six/4/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_six/5/markers.csv', '/home/rafi/logging_six/5/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_six/6/markers.csv', '/home/rafi/logging_six/6/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_seven/1/markers.csv', '/home/rafi/logging_seven/1/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_seven/2/markers.csv', '/home/rafi/logging_seven/2/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_seven/3/markers.csv', '/home/rafi/logging_seven/3/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_seven/4/markers.csv', '/home/rafi/logging_seven/4/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_seven/5/markers.csv', '/home/rafi/logging_seven/5/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_seven/6/markers.csv', '/home/rafi/logging_seven/6/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_seven/7/markers.csv', '/home/rafi/logging_seven/7/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_seven/8/markers.csv', '/home/rafi/logging_seven/8/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_seven/9/markers.csv', '/home/rafi/logging_seven/9/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_seven/10/markers.csv', '/home/rafi/logging_seven/10/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_seven/11/markers.csv', '/home/rafi/logging_seven/11/objects.csv')
+
+
+    # f = MarkerFixer('/home/rafi/logging_eight/1/markers.csv', '/home/rafi/logging_eight/1/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_eight/2/markers.csv', '/home/rafi/logging_eight/2/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_eight/3/markers.csv', '/home/rafi/logging_eight/3/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_eight/4/markers.csv', '/home/rafi/logging_eight/4/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_eight/5/markers.csv', '/home/rafi/logging_eight/5/objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_eight/6/markers.csv', '/home/rafi/logging_eight/6/objects.csv')
+
+    # f = MarkerFixer('/home/rafi/logging_nine/1/markers.csv', '/home/rafi/logging_nine/1/objects.csv')
+
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[1000-3900]markers.csv', '/home/rafi/logging_nine/2/[1000-3900]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[5900-9000]markers.csv', '/home/rafi/logging_nine/2/[5900-9000]objects.csv')
+    f = MarkerFixer('/home/rafi/logging_nine/2/[11700-14800]markers.csv', '/home/rafi/logging_nine/2/[11700-14800]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[22400-25300]markers.csv', '/home/rafi/logging_nine/2/[22400-25300]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[28300-30800]markers.csv', '/home/rafi/logging_nine/2/[28300-30800]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[33000-35700]markers.csv', '/home/rafi/logging_nine/2/[33000-35700]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[37900-40400]markers.csv', '/home/rafi/logging_nine/2/[37900-40400]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[42600-44700]markers.csv', '/home/rafi/logging_nine/2/[42600-44700]objects.csv')
 
     try:
         with Timer() as t:
@@ -416,11 +483,11 @@ if __name__ == '__main__':
             print "Calculating statistics : "
             f.calc_stats()
 
-            print "Trying to smooth markers"
-            f.smooth_markers(5)
+            # print "Trying to smooth markers"
+            # f.smooth_markers(5)
 
-            print "Calculating statistics after smoothing : "
-            f.calc_stats()
+            # print "Calculating statistics after smoothing : "
+            # f.calc_stats()
 
             f.save_file()
 
