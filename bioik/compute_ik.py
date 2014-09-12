@@ -32,6 +32,7 @@ from openravepy import *
 import os
 import sys
 import time
+import socket
 from copy import deepcopy
 from numpy import *
 from numpy import linalg as la
@@ -40,6 +41,9 @@ from rodrigues import *
 from subprocess import call
 
 mapping = [-1, 8, 7, 6, 18, 17, 16, 20, 24, 23, 22]
+
+TCP_IP = '127.0.0.1'
+TCP_PORT = 5005
 
 # Joint and link names
 # -------------------------------------------------------------------------
@@ -112,9 +116,10 @@ class BioHumanIk():
     def get_markers_in_torso_frame(self):
 
         inv_torso = la.inv(self.t_torso)
-        points_3d = array([0, 0, 0])
+        points_3d = len(self.markers)*[array([0, 0, 0])]
 
         for i, p in enumerate(self.markers):
+            print p
             points_3d[i] = array(array(inv_torso).dot(array(append(p, 1.0))))[0:3]
 
         return points_3d
@@ -162,11 +167,10 @@ class BioHumanIk():
 
         self.handles.append(self.env.plot3(points=points_3d, pointsize=0.02, colors=array(colors), drawstyle=1))
 
-        if self.traj is not None:  # Set robot to trajectory configuration if it exists
-            q_cur = self.get_human_configuration()
-            self.human.SetDOFValues(q_cur[0:self.human.GetDOF()])
-            # print "(plane of elevation, ", q_cur[16]*180/pi, " , elevation, ", q_cur[17]*180/pi, \
-            #     " , axial rotation, ", q_cur[18]*180/pi, ")"
+        q_cur = self.get_human_configuration()
+        self.human.SetDOFValues(q_cur[0:self.human.GetDOF()])
+        # print "(plane of elevation, ", q_cur[16]*180/pi, " , elevation, ", q_cur[17]*180/pi, \
+        #     " , axial rotation, ", q_cur[18]*180/pi, ")"
 
         # draws center of joints points
         self.set_model_size()
@@ -180,10 +184,10 @@ class BioHumanIk():
         # Save markers to file
 
         # Call to ik
-        call(["octave", "matlab/run_one_ik.m"])
+        # call(["matlab", "-nodesktop -nojvm -nosplash -r matlab/run_one_ik.m"])
 
-        motion = genfromtxt('./matlab/outputik.csv', delimiter=',')
-        motion = delete(motion, 0, axis=0)  # Remove first row...
+        # motion = genfromtxt('./matlab/outputik.csv', delimiter=',')
+        # motion = delete(motion, 0, axis=0)  # Remove first row...
 
         for configuration in motion:  # motion should be one row. otherwise take the last element
             self.q = self.human.GetDOFValues()
@@ -200,14 +204,38 @@ class BioHumanIk():
 
 if __name__ == "__main__":
 
-    # Load markers from file
-    raw_markers = genfromtxt('points.csv', delimiter=',')
-    raw_markers = delete(raw_markers, 0, axis=0)  # Remove first row
-    raw_markers = delete(raw_markers, s_[0:2], 1)  # Remove two columns
-    raw_markers[0] /= 1000  # Set markers in meters
-    (m,) = raw_markers[0].shape  # number of values in the marker set
-    markers = [raw_markers[0][n:n+3] for n in range(0, m, 3)]  # separate in 3d arrays
-    print markers
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((TCP_IP, TCP_PORT))
 
-    h = BioHumanIk()
-    h.set_markers(markers)
+    if True:
+
+        # Load markers from file
+        raw_markers = genfromtxt('points.csv', delimiter=',')
+        raw_markers = delete(raw_markers, 0, axis=0)  # Remove first row
+        raw_markers = delete(raw_markers, s_[0:2], 1)  # Remove two columns
+
+        h = BioHumanIk()
+
+        nb_sent = 0
+
+        for i in range(raw_markers.shape[0]):
+
+            raw_markers[i] /= 1000  # Set markers in meters
+            (m,) = raw_markers[i].shape  # number of values in the marker set
+            markers = [raw_markers[i][n:n+3] for n in range(0, m, 3)]  # separate in 3d arrays
+
+            # h.set_markers(markers)
+            # h.set_model_size()
+            # h.draw_markers()
+            nb_sent += 1
+            s.send("r")
+            data = s.recv(1)
+
+        nb_sent += 1
+        s.send("c")
+        data = s.recv(1)
+        s.close()
+        print "close socket : ", nb_sent
+
+        print "press enter to exit"
+        sys.stdin.readline()
