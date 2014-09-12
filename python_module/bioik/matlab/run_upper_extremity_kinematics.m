@@ -10,14 +10,16 @@
 % First open and analyze the static trials so that we can determine the
 % offset angles (ie 90 deg elbow flexion, shoulder abduction etc).
 clear all;
-    tr_offsets=[0 0 0];
-    sh_offsets=[0 0 0];
-    elb_offset=0;
-    wrist_offsets=[0 0];
-    % wrist_offsets=[18.5 0]; %this is the angle made by the vectors that go from wrist-center to hand, and wrist-center to marker-center
-    static1yes=0;  %flag for static trial #1
-    static2yes=0;  %flag for static trial #2
-    calibration_flag=0;
+
+tr_offsets=[0 0 0];
+sh_offsets=[0 0 0];
+elb_offset=0;
+wrist_offsets=[0 0];
+% wrist_offsets=[18.5 0]; %this is the angle made by the vectors that go from wrist-center to hand, and wrist-center to marker-center
+static1yes=0;  %flag for static trial #1
+static2yes=0;  %flag for static trial #2
+calibration_flag=0;
+
 %static1yes=input('Do you have a 90 deg. elbow flexion static trial? 1=yes 0=no ');
 if static1yes==1
 [input_file, pathname] = uigetfile('*.trc', 'Select the static trial with 90 deg. elbow flexion, pronated wrist');
@@ -75,9 +77,10 @@ fprintf(fid,'\n');
 input_file = 'RERC1A4_6_short.trc'
 pathname = './'
 open_name=strcat(pathname,input_file);
-    [labels,x,data_all] = readTRCData(open_name,35,6);
-    %% include the line below if you want to ignore the first n rows of
-    %% data
+
+[labels,x,data_all] = readTRCData(open_name,35,6);
+%% include the line below if you want to ignore the first n rows of
+%% data
 %     data_all(1:4000,:)=[];  %deletes the first 4000 rows
 %     numlines=size(data_all,1);
 %     data_all(11600:numlines,:)=[];  % deletes the rows after frame 11600
@@ -90,7 +93,7 @@ fprintf(fid,'Time\t tr_lat_flex_left\t tr_extension\t tr_rot_left\t sh_int_rot\t
 % create an array in which to put the data so we can plot it
 kinematics=0:10;
 for i=1:numlines
-    mean_pos=data_all(i,:);
+    mean_pos=data_all(i,:)
     disp(['ik for line : ' num2str(i)])
     Upper_extremity_kinematics_for_Dmitry;
     kinematics=[kinematics;outputdata];

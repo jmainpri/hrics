@@ -151,14 +151,14 @@ else
     UAZ_offset=[-0.1601   -0.1286    0.0411]; %this is just the offset from one subject.  seems fairly typical.
 end
 
-UAZ=-elb_axis/mag3(elb_axis)-UAZ_offset; % now for non-calibration files we can just
+UAZ=-elb_axis/mag3(elb_axis) -UAZ_offset; % now for non-calibration files we can just
 % use the elbow axis, but we correct for it using this offset, since this
 % is the more reliable measure of the true elbow axis of bending.
 UAX=cross(UAY,UAZ);
-UAX=UAX/mag3(UAX);
-UAY=UAY/mag3(UAY);
-UAZ=UAZ/mag3(UAZ);
-UAE=[UAX;UAY;UAZ];
+UAX=UAX/mag3(UAX)
+UAY=UAY/mag3(UAY)
+UAZ=UAZ/mag3(UAZ)
+UAE=[UAX;UAY;UAZ]
 
 % Ok pretty sure this is correct according to the ISB definitions now
 % 3/23/09
@@ -209,10 +209,12 @@ hand_origin=mean_pos(33:35); % hand origin at 2nd metacarpal for now.
 % to get trunk kinematics we need to reference the trunk global frame,
 % which is the matrix [0 1 0; 0 0 1; 1 0 0]
 globalE=[-1 0 0; 0 0 1; 0 1 0]; %this is simply a reflection of how our subjects were positioned relative to global
-% globalE=[1 0 0; 0 1 0; 0 0 1];
+% globalE=[1 0 0; 0 0 1; 0 -1 0]; % change for points defined in pelvis frame
+% globalE=[0 1 0; 0 0 1; 1 0 0];
 glob_inv=inv(globalE);
 trunk_about_glob=trunkE*glob_inv;
 trunk_about_glob=normalize(trunk_about_glob);
+
 % % Method 1: find euler angles
 [tr_a,tr_b]=rtocarda(trunk_about_glob,1,3,2);
 if calibration_flag==1
@@ -226,14 +228,19 @@ end
 tr_a=tr_a-tr_offsets;
 
 % calculate euler angles for the shoulder
+trunkE
 trunk_inv=inv(trunkE);
 UAE_inv=inv(UAE);
 % normalize to ensure each has a length of one.
 UA_about_trunk=UAE*inv(trunkE);
+
+UA_about_trunk
+
 UA_about_trunk=normalize(UA_about_trunk);
 % Method 1: euler angles (ISB recommendation)
 
 [sh_a,sh_b]=rtocarda(UA_about_trunk,2,1,2);
+
 %disp('SHOULDER')
 %disp('exernal rotation,  elevation angle, plane of elevation')
 %disp(sh_a)
