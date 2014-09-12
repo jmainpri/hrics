@@ -213,6 +213,7 @@ class Drawer():
             self.draw_frame_skeleton(frame)
 
             dt = curr_time - prev_time
+            dt = 0.05
             prev_time = curr_time
             time.sleep(dt)
 
@@ -268,7 +269,8 @@ class Drawer():
 
     def draw_frame_skeleton(self, frame):
         humans = self.isolate_humans(frame)
-        self.draw_frame_axes(frame)
+        # self.draw_frame_axes(frame)
+        self.draw_frame_raw(frame)
 
         for h in humans:
             centers = h.get_center_points()
@@ -373,8 +375,8 @@ class Drawer():
     def draw_object_axes(self, object):
         # tf = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([object.r_w, object.r_x, object.r_y, object.r_z]) )), transpose(matrix([object.x, object.y, object.z])) )
 
-        tf = object.get_rot_matrix()
-        self.handles.append(misc.DrawAxes( self.env, matrix(tf), 0.1 ))
+        tf = object.get_transform()
+        self.handles.append(misc.DrawAxes( self.env, matrix(tf), 0.5 ))
 
     def draw_frame_axes(self, frame):
         for o in frame.object_list:
@@ -394,6 +396,12 @@ if __name__ == '__main__':
 
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
     # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+
+    # m_file = '/home/rafi/Desktop/TEMP/[0580-0680]markers.csv'
+    # o_file = '/home/rafi/Desktop/TEMP/[0580-0680]objects.csv'
+
+    m_file = '/home/rafi/Desktop/TEMP/[1300-1420]markers.csv'
+    o_file = '/home/rafi/Desktop/TEMP/[1300-1420]objects.csv'
 
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1000-3900]markers_fixed.csv'
     # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1000-3900]objects_fixed.csv'
@@ -490,15 +498,4 @@ if __name__ == '__main__':
 
     d =  Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
     d.load_file(m_file, o_file)
-
-    t_cam = array([[ -0.655253290114, -0.106306078558, 0.747891799297, -0.302201271057] , \
-                            [ -0.725788890663, 0.363116971923, -0.584274379801, 2.68592453003] , \
-                            [ -0.209460287369, -0.925659269042, -0.315089361376, 2.25037527084] , \
-                            [ 0.0, 0.0, 0.0, 1.0]])
-    d.env.GetViewer().SetCamera(t_cam)
-
-
-    while True:
-        d.play_skeleton()
-        print "End play motion"
-        sys.stdin.readline()
+    d.play_skeleton()

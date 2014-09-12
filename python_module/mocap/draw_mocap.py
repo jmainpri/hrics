@@ -98,6 +98,7 @@ class DrawMarkers():
                 rw = float(o_cells[i+8])
 
                 object = Object( name, occluded, x, y, z, rx, ry, rz, rw)
+
                 objects.append(object)
 
             # Load Markers
@@ -127,7 +128,11 @@ class DrawMarkers():
         # for frame in self.frames:
         prev_time = self.frames[0].get_time()
 
-        for frame in self.frames:
+        for i, frame in enumerate(self.frames):
+
+            sys.stdout.write("\r\x1b[K"+("frame " + str(i)).__str__())
+            sys.stdout.flush()
+
             curr_time = frame.get_time()
             humans = []
             humans_raw = []
@@ -261,9 +266,17 @@ class DrawMarkers():
 
 if __name__ == "__main__":
 
+    marker_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/markers_fixed_cut.csv'
+    object_file = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/bioik/data/second/objects_fixed_cut.csv'
+
     d = DrawMarkers()
-    # d.load_file('/home/rafi/logging_three/first/markers.csv', '/home/rafi/logging_three/first/objects.csv')
-    d.load_file('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv')
+
+    # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_smoothed.csv', '/home/rafi/logging_data/third/objects.csv')
+    # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv', '/home/rafi/logging_data/fourth/objects_fixed.csv')
+    # d.load_file('/home/rafi/workspace/hrics-or-plugins/examples/markers_fixed.csv', '/home/rafi/workspace/hrics-or-plugins/examples/objects_fixed_fixed.csv')
+    d.load_file(marker_file, object_file)
+
+
     sys.stdin.readline()
     # d.draw_center_points()
     d.draw_frames_raw()

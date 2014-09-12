@@ -61,17 +61,8 @@ class Object:
     def is_occluded(self):
         return self.occluded
 
-    def get_rot_matrix(self):
-        # ''' TEST '''
-        # raw_quaternion = array([self.r_w, self.r_x, self.r_y, self.r_z])
-        # print "Raw quaternion: " + str(raw_quaternion)
-        # raw_quaternion_norm = np.linalg.norm(raw_quaternion)
-        # print "Raw norm: " + str(raw_quaternion_norm)
-        # normalized_quaternion = raw_quaternion / raw_quaternion_norm
-        # print "Normalized quaternion: " + str(normalized_quaternion)
-        # normalized_quaternion_norm = np.linalg.norm(normalized_quaternion)
-        # print "Normalized norm: " + str(normalized_quaternion_norm)
-        # ''' /TEST '''
+    def get_transform(self):
+
         mat =  MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([self.r_w, self.r_x, self.r_y, self.r_z]) )), transpose(matrix([self.x, self.y, self.z])) )
 
         # TODO figure out if this works on all Pelvis frames.  If not, why?
