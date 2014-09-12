@@ -1,7 +1,19 @@
 #include "playMotion.hpp"
+#include <libmove3d/include/P3d-pkg.h>
 
 using std::cout;
 using std::endl;
+
+
+template <class T>
+bool convert_text_to_num(T& t,
+                 const std::string& s,
+                 std::ios_base& (*f)(std::ios_base&))
+{
+  std::istringstream iss(s);
+  return !(iss >> f >> t).fail();
+}
+
 
 PlayMotion::PlayMotion( OpenRAVE::EnvironmentBasePtr env, const std::vector<HRICS::RecordMotion*>& recorders )
 {
@@ -68,6 +80,320 @@ void PlayMotion::play_folder( std::string &folder )
 {
     _motion_recorders[0]->loadFolder(folder);
     runControlled_folder();
+}
+
+std::vector< std::vector<std::string> > PlayMotion::load_csv_to_matrix( std::string &filename )
+{
+    cout << "Loading Data from CSV" << endl;
+    cout << "file: " << filename.c_str() << endl;
+
+    std::ifstream       file( filename.c_str() );
+    std::vector< std::vector<std::string> >   matrix;
+    std::vector< std::string >   row;
+    std::string                 line;
+    std::string                  cell;
+
+    while( file )           //Create matrix from csv
+    {
+        std::getline(file,line);
+        std::stringstream lineStream(line);
+        row.clear();
+
+        while(std::getline( lineStream, cell, ',' ))
+        {
+            row.push_back( cell );
+        }
+
+        if( !row.empty() )
+            matrix.push_back( row );
+    }
+
+    if( matrix.empty() ) {
+        cout << "no data has been loaded" << endl;
+        return matrix;
+    }
+
+    cout << "File fully loaded!" << endl;
+    return matrix;
+
+}
+
+void PlayMotion::play_mocap( std::string &m_filename, std::string &o_filename )
+{
+    std::vector< std::vector<std::string> >   m_matrix;
+    std::vector< std::vector<std::string> >   o_matrix;
+    timeval tim;
+    double last_config_time = 0.0;
+
+    // Load marker data
+    m_matrix = load_csv_to_matrix(m_filename);
+    if( m_matrix.empty() ) {
+        cout << "no marker data has been loaded" << endl;
+        return;
+    }
+
+    // Load object data
+    o_matrix = load_csv_to_matrix(o_filename);
+    if( o_matrix.empty() ) {
+        cout << "no object data has been loaded" << endl;
+        return;
+    }
+
+    cout << "File fully loaded!" << endl;
+
+    int o_size = o_matrix.size();
+    int m_size = m_matrix.size();
+
+    // time sec, time nsec, # of markers, marker id, x, y, z,...
+    for ( int row = 0; row < std::min(o_size, m_size); ++row)
+    {
+        double temp;
+        int nb_markers;
+        int nb_objects;
+
+        convert_text_to_num<time_t>( tim.tv_sec, m_matrix[row][0], std::dec );
+        convert_text_to_num<double>( temp, m_matrix[row][1], std::dec );
+        tim.tv_usec = temp / 1000; //Convert from nsec to usec
+
+        convert_text_to_num<int>( nb_markers, m_matrix[row][2], std::dec );
+        convert_text_to_num<int>( nb_objects, o_matrix[row][2], std::dec );
+
+        double tu = tim.tv_sec+(tim.tv_usec/1000000.0);
+        double dt = 0.0;
+        if( last_config_time != 0.0 )
+            dt = tu - last_config_time;
+        last_config_time = tu;
+
+        // Load and draw markers
+        for ( int col = 3; col <= nb_markers*4; col+=4  )
+        {
+
+            int id;
+            std::string name;
+            double x;
+            double y;
+            double z;
+            double color [4];
+
+            convert_text_to_num<std::string>( name, m_matrix[row][col], std::dec );
+            convert_text_to_num<double>( x, m_matrix[row][col+1], std::dec );
+            convert_text_to_num<double>( y, m_matrix[row][col+2], std::dec );
+            convert_text_to_num<double>( z, m_matrix[row][col+3], std::dec );
+
+
+            id = 0;
+            if (name == "ChestFront")
+                id = 0;
+            if (name ==  "ChestBack")
+                id = 1;
+            if (name == "SternumFront")
+                id = 2;
+            if (name == "SternumBack")
+                id = 3;
+            if (name == "rShoulderFront")
+                id = 4;
+            if (name == "rShoulderBack")
+                id = 5;
+            if (name == "rElbowOuter")
+                id = 6;
+            if (name == "rElbowInner")
+                id = 7;
+            if (name == "rWristOuter")
+                id = 8;
+            if (name == "rWristInner")
+                id = 9;
+            if (name == "rPalm")
+                id = 10;
+            if (name == "lShoulderFront")
+                id = 11;
+            if (name == "lShoulderBack")
+                id = 12;
+            if (name == "lElbowOuter")
+                id = 13;
+            if (name == "lElbowInner")
+                id = 14;
+            if (name == "lWristOuter")
+                id = 15;
+            if (name ==  "lWristInner")
+                id = 16;
+            if (name == "lPalm")
+                id = 17;
+
+            color[3] = 1;
+            double scaled = double (id) / double(18);
+
+//            cout << "id : " << id << endl;
+
+            GroundColorMixGreenToRed( color, scaled );
+            move3d_draw_sphere(x, y, z, 0.01875, color );
+
+        }
+
+        // Load and draw objects + frame
+        for ( int col = 3; col <= nb_objects*9; col+=9  )
+        {
+            double color [4];
+            std::string id;
+            bool occluded;
+            double x;
+            double y;
+            double z;
+            double r_x;
+            double r_y;
+            double r_z;
+            double r_w;
+
+            convert_text_to_num<std::string>( id, o_matrix[row][col], std::dec );
+            convert_text_to_num<bool>( occluded, o_matrix[row+1][col], std::dec );
+            convert_text_to_num<double>( x, o_matrix[row][col+2], std::dec );
+            convert_text_to_num<double>( y, o_matrix[row][col+3], std::dec );
+            convert_text_to_num<double>( z, o_matrix[row][col+4], std::dec );
+            convert_text_to_num<double>( r_x, o_matrix[row][col+5], std::dec );
+            convert_text_to_num<double>( r_y, o_matrix[row][col+6], std::dec );
+            convert_text_to_num<double>( r_z, o_matrix[row][col+7], std::dec );
+            convert_text_to_num<double>( r_w, o_matrix[row][col+8], std::dec );
+
+            if (occluded)
+                continue;
+
+
+            OpenRAVE::RaveTransform<double> tf;
+            tf.trans.x = x;
+            tf.trans.y = y;
+            tf.trans.z = z;
+            tf.rot.x = r_x;
+            tf.rot.y = r_y;
+            tf.rot.z = r_z;
+            tf.rot.w = r_w;
+
+            OpenRAVE::RaveTransformMatrix<double> T(tf);
+
+//            if ( id == "TouchTomorrow3" || id == "ArchieLeftHand")
+            if ( id == "TouchTomorrow3")
+            {
+
+//                for (int i = 0; i < 12; i++)
+//                    cout << T.m[i] << " ";
+//                cout << endl;
+
+                OpenRAVE::RaveVector<double> x_dir;
+                OpenRAVE::RaveVector<double> y_dir;
+                OpenRAVE::RaveVector<double> z_dir;
+
+                x_dir.x = T.m[0]; y_dir.x = T.m[1]; z_dir.x = T.m[2];
+                x_dir.y = T.m[4]; y_dir.y = T.m[5]; z_dir.y = T.m[6];
+                x_dir.z = T.m[8]; y_dir.z = T.m[9]; z_dir.z = T.m[10];
+
+
+//                T.m[0] = - z_dir.x; T.m[1]  = 0; T.m[2] = 0; T.m[3] = x;
+//                T.m[4] = - z_dir.y; T.m[5]  = 0; T.m[6] = 0; T.m[7] = y;
+//                T.m[8] = - z_dir.z; T.m[9]  = 0; T.m[10] = 1; T.m[11] = z;
+//                T.m[12] =        0; T.m[13] = 0; T.m[14] = 0; T.m[15] = 1;
+                //Fix y
+                OpenRAVE::RaveVector<double> new_x = -z_dir;
+                new_x.z = 0;
+                new_x /= sqrt(new_x.lengthsqr3());
+                OpenRAVE::RaveVector<double> new_z(0,0,1);
+                OpenRAVE::RaveVector<double> new_y = new_x.cross(new_z);
+                new_y /= sqrt(new_y.lengthsqr3());
+
+                new_y = -new_y;
+
+                T.m[0]  = new_x.x; T.m[1]  = new_y.x; T.m[2]  = new_z.x;
+                T.m[4]  = new_x.y; T.m[5]  = new_y.y; T.m[6]  = new_z.y;
+                T.m[8]  = new_x.z; T.m[9]  = new_y.z; T.m[10] = new_z.z;
+
+//                for (int k = 0; k < 12; k+=4)
+//                {
+//                    cout << T.m[k] << ", " << T.m[k+1] << ", " << T.m[k+2] << endl;
+//                }
+//                cout << T.trans << endl;
+
+
+                drawFrame(T);
+            }
+
+            if ( id == "ArchieLeftHand")
+            {
+
+//                for (int i = 0; i < 12; i++)
+//                    cout << T.m[i] << " ";
+//                cout << endl;
+
+                OpenRAVE::RaveVector<double> x_dir;
+                OpenRAVE::RaveVector<double> y_dir;
+                OpenRAVE::RaveVector<double> z_dir;
+
+                x_dir.x = T.m[0]; y_dir.x = T.m[1]; z_dir.x = T.m[2];
+                x_dir.y = T.m[4]; y_dir.y = T.m[5]; z_dir.y = T.m[6];
+                x_dir.z = T.m[8]; y_dir.z = T.m[9]; z_dir.z = T.m[10];
+
+
+//                T.m[0] = - z_dir.x; T.m[1]  = 0; T.m[2] = 0; T.m[3] = x;
+//                T.m[4] = - z_dir.y; T.m[5]  = 0; T.m[6] = 0; T.m[7] = y;
+//                T.m[8] = - z_dir.z; T.m[9]  = 0; T.m[10] = 1; T.m[11] = z;
+//                T.m[12] =        0; T.m[13] = 0; T.m[14] = 0; T.m[15] = 1;
+
+                OpenRAVE::RaveVector<double> new_x = -z_dir;
+                new_x.z = 0;
+                new_x /= sqrt(new_x.lengthsqr3());
+                OpenRAVE::RaveVector<double> new_z(0,0,1);
+                OpenRAVE::RaveVector<double> new_y = new_x.cross(new_z);
+                new_y /= sqrt(new_y.lengthsqr3());
+
+                new_y = -new_y;
+
+                T.m[0]  = new_x.x; T.m[1]  = new_y.x; T.m[2]  = new_z.x;
+                T.m[4]  = new_x.y; T.m[5]  = new_y.y; T.m[6]  = new_z.y;
+                T.m[8]  = new_x.z; T.m[9]  = new_y.z; T.m[10] = new_z.z;
+
+//                for (int k = 0; k < 12; k+=4)
+//                {
+//                    cout << T.m[k] << ", " << T.m[k+1] << ", " << T.m[k+2] << endl;
+//                }
+//                cout << T.trans << endl;
+
+                drawFrame(T);
+            }
+
+            color[0] = 1;
+            color[1] = 0;
+            color[2] = 0;
+            color[3] = 1;
+
+            move3d_draw_sphere(x, y, z, 0.01875, color );
+        }
+
+
+
+
+
+
+
+
+
+//        row = 0;
+//        sleep(2);
+        usleep(dt*1000000.0);
+        move3d_draw_clear_handles();
+        graphptrs_.clear();
+    }
+}
+
+void PlayMotion::drawFrame(OpenRAVE::RaveTransformMatrix<double> T)
+{
+    OpenRAVE::GraphHandlePtr fig1,fig2,fig3;
+    OpenRAVE::Vector right,up,dir, pos;
+
+    T.Extract( right, up, dir, pos );
+
+    fig1 = env_->drawarrow( pos, pos+0.5*right, 0.01, OpenRAVE::Vector(1,0,0,1));
+    fig2 = env_->drawarrow( pos, pos+0.5*up,    0.01, OpenRAVE::Vector(0,1,0,1));
+    fig3 = env_->drawarrow( pos, pos+0.5*dir,   0.01, OpenRAVE::Vector(0,0,1,1));
+
+    graphptrs_.push_back( fig1 );
+    graphptrs_.push_back( fig2 );
+    graphptrs_.push_back( fig3 );
 }
 
 void PlayMotion::runRealTime()

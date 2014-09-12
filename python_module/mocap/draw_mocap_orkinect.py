@@ -42,6 +42,7 @@ from wiimote.msg import*
 import keystroke
 from time import sleep
 import segment_file
+import transformation_helper
 
 play_folder = False
 show_images = 1 # 0 to not show
@@ -54,32 +55,11 @@ trajectories_files = ["motion_saved_00000_00000.csv", "motion_saved_00001_00000.
 
 #in order to use the wiimote, create a wiimote subscriber object and call run.
 
-class wiimote_subscriber():
-    def __init__(self, a_prob):
-        self.record_state = False
-        self.is_pressed = False
-        self.a_prob = a_prob
-
-    def callback(self, State):
-        if State.buttons[4] == True and self.is_pressed == False:
-            self.record_state = False
-            self.is_pressed = True
-            cmdout = self.a_prob.SendCommand('SetButtonState 1')
-
-        if State.buttons[4] == False and self.is_pressed == True:
-            self.is_pressed = False
-            cmdout = self.a_prob.SendCommand('SetButtonState 0')
-
-    def run(self):
-        rospy.init_node('wii_listener')
-        rospy.Subscriber("/wiimote/state", State, self.callback)
-        rospy.spin()
-
 class kinect_subscriber():
     def __init__(self):
         self.orEnv = Environment()
         self.prob = None
-        self.h = None
+        self.h = [None]
         self.orEnv.SetViewer('qtcoin')
 
         self.dir = trajectories_directory
@@ -91,22 +71,47 @@ class kinect_subscriber():
         self.orEnv.SetDebugLevel(DebugLevel.Verbose)
         self.orEnv.Reset()
 
-        # self.orEnv.Load("../ormodels/human_wpi.xml")
         self.orEnv.Load("../ormodels/human_wpi_new.xml")
         if len(self.files) > 1 :
             self.orEnv.Load("../ormodels/human_wpi_blue.xml")
 
-        self.orEnv.Load("../ormodels/env.xml")
+        #self.orEnv.Load("../ormodels/env.xml")
+
+        T_h = MakeTransform( eye(3), transpose(matrix([0,0,-10])))
+        human1 = self.orEnv.GetRobots()[0].SetTransform(array(T_h))
+        human2 = self.orEnv.GetRobots()[1].SetTransform(array(T_h))
 
         print "draw frame"
         T = MakeTransform( eye(3), transpose(matrix([0,0,0])))
-        self.h = misc.DrawAxes( self.orEnv, matrix(T), 1 )
+
+        # Second Run
+        # CalBlock = MakeTransform( rotationMatrixFromQuat(array([0.7188404833, 0.2970505392, -0.4412091838, 0.4476201435 ])), transpose(matrix([1.8211836689, 1.0781754454, 1.7937961156])))
+        # TouchTomorrow3 =  MakeTransform( rotationMatrixFromQuat(array([0.1457896082, -0.4695454709, 0.8700436823, 0.0360059973])), transpose(matrix([1.9327413784, 1.3481940541, 1.0716016861])))
+
+
+        # Third Run
+        ArchieLeftHand = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([-0.0565983288, 0.6551985404, -0.0308211559, 0.7527028352]) )), transpose(matrix([ 2.2630624073, 1.5024087108, 1.0334129255 ])) )
+        ArchieRightHand = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([0.8364161312, -0.0441252319, -0.5430014612, -0.0600868744])) ), transpose(matrix([2.0138498402, 1.5327076092, 1.7597781595])) )
+        CalBlock = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([0.7334740645, -0.2377743781, -0.4547046476, -0.4457833838]) )), transpose(matrix([1.3887227848, 0.894679857, 1.7826058767])) )
+        TouchTomorrow3 = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([0.0351806021, 0.7399746771, 0.6593515387, -0.1282784114]) )), transpose(matrix([1.4964491222, 0.6294067075, 1.046128491])) )
+
+
+
+        self.h.append(misc.DrawAxes( self.orEnv, matrix(T), 1 ))
+        # H1 Head
+        # self.h.append(misc.DrawAxes( self.orEnv, matrix(CalBlock), 1 ))
+        # H1 Pelv
+        # self.h.append(misc.DrawAxes( self.orEnv, matrix(TouchTomorrow3), 1 ))
+        # H2 Pelv
+        # self.h.append(misc.DrawAxes( self.orEnv, matrix(ArchieLeftHand), 1 ))
+        # H2 Head
+        # self.h.append(misc.DrawAxes( self.orEnv, matrix(ArchieRightHand), 1 ))
 
         print "try to create problem"
         self.prob = RaveCreateProblem(self.orEnv,'Kinect')
 
         print "try to init move3d"
-        #self.prob.SendCommand('InitMove3D')
+        self.prob.SendCommand('InitMove3D')
 
     def listen(self):
         print "Trying to listen"
@@ -116,8 +121,6 @@ class kinect_subscriber():
 
         print "Trying to set kinect frame"
         #Dual Kinect Across Setup.
-        #self.prob.SendCommand('SetKinectFrame 0 -0.3556 -0.8636 1.3208 62.0 7.0')
-        #self.prob.SendCommand('SetKinectFrame 1 1.1938 0.7493 1.2446 -125 0.0') 
         self.prob.SendCommand('UsePR2Frame 0')
 
         #Single Kinect
@@ -138,51 +141,10 @@ class kinect_subscriber():
 
         self.prob.SendCommand('SetPlayType 1')
 
-        if play_folder :
-            self.prob.SendCommand('PlayTrajectoryFolder /home/rafi/workspace/experiment/1/Run0/')
-        else :
-            self.prob.SendCommand('PlayTrajectoryFiles')
+        # self.prob.SendCommand('DrawMocapFile /home/rafi/workspace/hrics-or-plugins/examples/markers_smoothed.csv /home/rafi/logging_data/third/objects_fixed.csv')
+        self.prob.SendCommand('DrawMocapFile /home/rafi/logging_data/fifth/markers.csv /home/rafi/logging_data/fifth/objects.csv')
 
-        if controlled:
-            sleep(1)
-            print "\n \n"
-            print "Controlls:     u   i    o   p      q         space            1            2          s"
-            print "              <<<  <<  >>  >>>    exit    current frame  split start  split end    segment"
-            print "Enter character:"
-            self.keyboardControll()
-
-    def keyboardControll(self):
-        currentFrame = 0
-        while True:
-            #print "Enter new character"
-            c = keystroke.getch(-1)
-            #print c
-            if c == 'q':
-                sys.exit()
-            if c == 'u':
-                self.prob.SendCommand('ControlTrajectoryPlayback -25')
-            if c == 'i':
-                self.prob.SendCommand('ControlTrajectoryPlayback -1')
-            if c == 'o':
-                self.prob.SendCommand('ControlTrajectoryPlayback 1')
-            if c == 'p':
-                self.prob.SendCommand('ControlTrajectoryPlayback 25')
-            if c == ' ':
-                currentFrame = int(self.prob.SendCommand('GetPlaybackFrame'))
-                print "Current Frame: " + str(currentFrame)
-            if c == '1':
-                currentFrame = int(self.prob.SendCommand('GetPlaybackFrame'))
-                self.split[0] = currentFrame
-                print "Set split beginning to: " + str(self.split[0])
-            if c == '2':
-                currentFrame = int(self.prob.SendCommand('GetPlaybackFrame'))
-                self.split[1] = currentFrame
-                print "Set split ending to: " + str(self.split[1])
-            if c == 's':
-                for file in self.files:
-                    print "Segmenting file: " + file + " from: " + str(self.split[0]) + " to: " + str(self.split[1])
-                    segment_file.segment([(self.split[0], self.split[1])], self.dir+file)
-
+        return
 
     def loadFiles(self, dir, files):
         for file in files:
@@ -202,14 +164,11 @@ class kinect_subscriber():
 if __name__ == "__main__":
     print "main function"
     k = kinect_subscriber()
-    #sys.stdin.readline()
+    print "press return to run"
+    sys.stdin.readline()
     k.play(1)
-    #    k.listen()
 
-    #    w = wiimote_subscriber(k.prob)
-    #    w.run()
-
-    print "Press return to run "
+    print "Press return to exit "
     sys.stdin.readline()
     
 
