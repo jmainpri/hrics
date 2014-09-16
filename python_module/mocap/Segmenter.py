@@ -69,11 +69,11 @@ if __name__ == '__main__':
 
     d =  MocapDrawer.Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
 
-    dirr = '/home/rafi/logging_nine/2/'
+    dirr = '/home/rafi/logging_ten/0/'
 
-
+    run = ''
     # run = '[1000-3900]'
-    run = '[5900-9000]'
+    # run = '[5900-9000]'
     # run = '[11700-14800]'
     # run = '[22400-25300]'
     # run = '[28300-30800]'

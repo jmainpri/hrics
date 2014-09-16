@@ -256,7 +256,7 @@ class MarkerFixer:
                 pelv_frames = []
                 for object in frame.object_list:
                     if object and 'Pelvis' in object.id and not object.is_occluded():
-                        pelv_frames.append(object.get_rot_matrix())
+                        pelv_frames.append(object.get_transform())
 
                 if len(pelv_frames) is not NB_HUMAN:
                     continue
@@ -453,12 +453,24 @@ if __name__ == '__main__':
 
     # f = MarkerFixer('/home/rafi/logging_nine/2/[1000-3900]markers.csv', '/home/rafi/logging_nine/2/[1000-3900]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[5900-9000]markers.csv', '/home/rafi/logging_nine/2/[5900-9000]objects.csv')
-    f = MarkerFixer('/home/rafi/logging_nine/2/[11700-14800]markers.csv', '/home/rafi/logging_nine/2/[11700-14800]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_nine/2/[11700-14800]markers.csv', '/home/rafi/logging_nine/2/[11700-14800]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[22400-25300]markers.csv', '/home/rafi/logging_nine/2/[22400-25300]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[28300-30800]markers.csv', '/home/rafi/logging_nine/2/[28300-30800]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[33000-35700]markers.csv', '/home/rafi/logging_nine/2/[33000-35700]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[37900-40400]markers.csv', '/home/rafi/logging_nine/2/[37900-40400]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[42600-44700]markers.csv', '/home/rafi/logging_nine/2/[42600-44700]objects.csv')
+
+
+
+    # name = '[12316-15618]'
+    # name = '[18618-22433]'
+    # name = '[25966-28893]'
+
+    f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0000-4000]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0000-4000]objects.csv')
+    # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[7167-10115]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[7167-10115]objects.csv')
+    # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[12316-15618]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[12316-15618]objects.csv')
+    # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[19500-22433]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[19500-22433]objects.csv')
+    # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[25966-28893]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[25966-28893]objects.csv')
 
     try:
         with Timer() as t:
@@ -483,11 +495,11 @@ if __name__ == '__main__':
             print "Calculating statistics : "
             f.calc_stats()
 
-            # print "Trying to smooth markers"
-            # f.smooth_markers(5)
+            print "Trying to smooth markers"
+            f.smooth_markers(7)
 
-            # print "Calculating statistics after smoothing : "
-            # f.calc_stats()
+            print "Calculating statistics after smoothing : "
+            f.calc_stats()
 
             f.save_file()
 

@@ -59,7 +59,7 @@ NB_MARKERS  = MocapCommon.get_nb_markers(True, True)
 
 
 # drops = numpy.genfromtxt('/home/rafi/logging_nine/2/[5900-9000]markers_dropped.csv', delimiter=',')
-drops = numpy.genfromtxt('/home/rafi/Desktop/trials/6/[1188-1256]markers_dropped.csv', delimiter=',')
+drops = numpy.genfromtxt('/home/rafi/Desktop/trials/4/[0489-0589]markers_dropped.csv', delimiter=',')
 humans = []
 
 
@@ -95,12 +95,13 @@ rPalm = drops[:,8]
 fig = plt.figure()
 for m in range(NB_MARKERS):
     ax = fig.add_subplot(NB_MARKERS, 1, m)
+    ax.tick_params(axis='y', labelsize=6)
     for h in range(NB_HUMAN):
         # Hack for color.  Should change later
         if h < 1:
-            ax.plot(humans[h][m], 'r')
+            ax.plot(humans[h][m], 'r', label="Active")
         else:
-            ax.plot(humans[h][m], 'g')
+            ax.plot(humans[h][m], 'g', label="Passive")
 
 
 # # fig.ylim([0, numpy.amax(drops) ])
@@ -162,9 +163,9 @@ for h in range(NB_HUMAN):
 
 
     if h < 1:
-        ax.plot(drop_max, 'r')
+        ax.plot(drop_max, 'r', label="Active")
     else:
-        ax.plot(drop_max, 'g')
+        ax.plot(drop_max, 'g', label="Passive")
 
 fig.savefig('/home/rafi/Desktop/[1188-1256]max.png', bbox_inches='tight')
 

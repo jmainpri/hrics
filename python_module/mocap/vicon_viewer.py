@@ -137,7 +137,7 @@ class Tracker:
             pelv_frames = []
             for object in frame.object_list:
                 if object and 'Pelvis' in object.id and not object.is_occluded():
-                    pelv_frames.append(object.get_rot_matrix())
+                    pelv_frames.append(object.get_transform())
 
             if len(pelv_frames) is not NB_HUMAN:
                 return

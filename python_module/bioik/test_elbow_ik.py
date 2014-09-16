@@ -248,12 +248,49 @@ class TestBioHumanIk(BioHumanIk):
         self.traj_human1 = []
         self.traj_human2 = []
 
+
+        # IMAGE PUBLISHER
+        folder = "/home/rafi/logging_ten/1"
+        images = [ f for f in listdir(folder) if isfile(join(folder,f)) and '.png' in f ]
+        print "Num images : ", len(images)
+        times = []
+
+        for img in images:
+            sec, nsec = img.split('_')
+            times.append( rospy.Time(int(sec), int(nsec.split('.')[0]) ).to_sec() )
+
+        tuple_list = zip(times, images)
+        sorted_images = sorted(tuple_list, key = lambda p : p[0])
+
+
         for i, frame in enumerate(self.drawer.frames):
 
             curr_time = frame.get_time()
             dt = curr_time - prev_time
             prev_time = curr_time
             time.sleep(dt)
+
+            try:
+                for t, img in sorted_images:
+                    if t > curr_time:
+                        # image_name = folder + "/" + img
+                        break
+
+                    last = img
+
+                if last:
+                    image_name = folder + "/" + last
+                    print image_name
+
+                    cv_image = cv2.imread( image_name, 1)
+                    cv2.imshow('Camera Data', cv_image)
+                    # print image_name
+            except e:
+                print e
+
+            if i == 5:
+                print "Press enter to play motion"
+                sys.stdin.readline()
 
             del self.handles[:]
             self.drawer.clear()
@@ -375,6 +412,15 @@ if __name__ == "__main__":
 
     m_file = folder + name + 'markers_raw.csv'
     o_file = folder + name + 'objects_raw.csv'
+
+    folder = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/'
+    name = '[0000-4000]'
+    # name = '[7167-10115]'
+    # name = '[12316-15618]'
+    # name = '[19500-22433]'
+    # name = '[25966-28893]'
+    m_file = folder + name + 'markers_fixed.csv'
+    o_file = folder + name + 'objects_fixed.csv'
 
     print "try to load file : ", m_file
     print "try to load file : ", o_file

@@ -10,10 +10,10 @@ import SegmentCSV
 # 0446, 0578), (0780,0871), (2554, 2671)
 
 
-splits = [(2172,2249),(889,945), (1188,1256)]
+splits = [(0,4000),]
 
-s = SegmentCSV.Segmenter('/home/rafi/logging_nine/2/[11700-14800]markers_fixed.csv', './markers.csv')
+s = SegmentCSV.Segmenter('/home/rafi/logging_ten/1/markers.csv', './markers.csv')
 s.segment(splits)
 
-s = SegmentCSV.Segmenter('/home/rafi/logging_nine/2/[11700-14800]markers_dropped.csv', './markers_dropped.csv')
+s = SegmentCSV.Segmenter('/home/rafi/logging_ten/1/objects.csv', './objects.csv')
 s.segment(splits)

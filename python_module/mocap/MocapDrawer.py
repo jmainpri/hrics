@@ -172,7 +172,7 @@ class Drawer():
         prev_time = self.frames[0].get_time()
 
         # IMAGE PUBLISHER
-        folder = "/home/rafi/logging_nine/2"
+        folder = "/home/rafi/logging_ten/0"
         images = [ f for f in listdir(folder) if isfile(join(folder,f)) and '.png' in f ]
         print "Num images : ", len(images)
         times = []
@@ -213,7 +213,7 @@ class Drawer():
             self.draw_frame_skeleton(frame)
 
             dt = curr_time - prev_time
-            dt = 0.05
+            # dt = 0.05
             prev_time = curr_time
             time.sleep(dt)
 
@@ -400,8 +400,8 @@ if __name__ == '__main__':
     # m_file = '/home/rafi/Desktop/TEMP/[0580-0680]markers.csv'
     # o_file = '/home/rafi/Desktop/TEMP/[0580-0680]objects.csv'
 
-    m_file = '/home/rafi/Desktop/TEMP/[1300-1420]markers.csv'
-    o_file = '/home/rafi/Desktop/TEMP/[1300-1420]objects.csv'
+    # m_file = '/home/rafi/Desktop/TEMP/[1300-1420]markers.csv'
+    # o_file = '/home/rafi/Desktop/TEMP/[1300-1420]objects.csv'
 
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1000-3900]markers_fixed.csv'
     # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1000-3900]objects_fixed.csv'
@@ -455,11 +455,11 @@ if __name__ == '__main__':
     # prefix = '[2711-2823]'
 
     # Recording 9 Run 3
-    run = '3/'
+    # run = '3/'
     # prefix = '[0444-0585]'
     # prefix = '[1064-1140]'
     # prefix = '[1342-1451]'
-    prefix = '[1882-1981]'
+    # prefix = '[1882-1981]'
     # prefix = '[2172-2249]'
     # prefix = '[2646-2737]'
 
@@ -481,8 +481,8 @@ if __name__ == '__main__':
 
 
 
-    m_file = dirr+run+prefix+'markers.csv'
-    o_file = dirr+run+prefix+'objects.csv'
+    # m_file = dirr+run+prefix+'markers.csv'
+    # o_file = dirr+run+prefix+'objects.csv'
 
 
     # f = MarkerFixer('/home/rafi/logging_nine/2/[5900-9000]markers.csv', '/home/rafi/logging_nine/2/[5900-9000]objects.csv')
@@ -493,8 +493,8 @@ if __name__ == '__main__':
     # f = MarkerFixer('/home/rafi/logging_nine/2/[37900-40400]markers.csv', '/home/rafi/logging_nine/2/[37900-40400]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[42600-44700]markers.csv', '/home/rafi/logging_nine/2/[42600-44700]objects.csv')
 
-    # m_file = '/home/rafi/logging_five/1/markers.csv'
-    # o_file = '/home/rafi/logging_five/1/objects.csv'
+    m_file = '/home/rafi/logging_ten/0/markers_fixed.csv'
+    o_file = '/home/rafi/logging_ten/0/objects_fixed.csv'
 
     d =  Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
     d.load_file(m_file, o_file)
