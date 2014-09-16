@@ -11,6 +11,7 @@ from openravepy import *
 import transformation_helper
 import rospy
 import copy
+import csv
 
 class Timer:
     def __enter__(self):
@@ -396,3 +397,14 @@ def get_nb_objects(elbow_pads, r_arm_only):
         nb_objects = 2
 
     return nb_objects
+
+def read_setup(folder):
+    setup = []
+
+    with open(folder + 'Setup.csv', 'r') as s_file:
+        matrix = [row for row in csv.reader(s_file, delimiter=',')]
+        for line in matrix:
+            setup.append( int(line[0]) )
+
+    return setup
+

@@ -81,7 +81,6 @@ class Drawer():
 
         self.frames = []
 
-
         t_cam = array([[ -0.655253290114, -0.106306078558, 0.747891799297, -0.302201271057] , \
                                 [ -0.725788890663, 0.363116971923, -0.584274379801, 2.68592453003] , \
                                 [ -0.209460287369, -0.925659269042, -0.315089361376, 2.25037527084] , \
@@ -389,9 +388,11 @@ class Drawer():
 
 if __name__ == '__main__':
 
-    NB_HUMAN    = 2
-    ELBOW_PADS  = True
-    RARM_ONLY   = True
+    setup = read_setup('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/')
+
+    NB_HUMAN    = setup[0]
+    ELBOW_PADS  = setup[1]
+    RARM_ONLY   = setup[2]
     NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)
 
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
