@@ -7,6 +7,8 @@ import rospy
 import cv2
 from os import listdir
 from os.path import isfile, join
+import os
+
 
 class Segmenter():
 
@@ -21,6 +23,7 @@ class Segmenter():
 
 
         self.split = [0,0]
+        self.splits = []
 
         self.images = []
         self.img_dir = img_dir
@@ -57,6 +60,18 @@ class Segmenter():
         tuple_list = zip(times, images)
         sorted_images = sorted(tuple_list, key = lambda p : p[0])
         self.images = sorted_images
+
+    def save_splits(self):
+        #  Get the out filename
+        dir, path = os.path.split(self.m_file)
+        split_outpath = dir+'/'+'Splits.csv'
+
+        print "saving splits to : ", split_outpath
+
+        with open(split_outpath, 'a') as s_file:
+            for split in self.splits:
+                out_str = str(split[0]) + ',' + str(split[1])+'\n'
+                s_file.write(out_str)
 
 
 if __name__ == '__main__':
@@ -113,10 +128,20 @@ if __name__ == '__main__':
         if c == 's':
             print "Segmenting files from: " + str(s.split[0]) + " to: " + str(s.split[1])
 
-            temp = SegmentCSV.Segmenter(s.m_file, './markers.csv')
-            temp.segment([(s.split[0], s.split[1])])
-            temp = SegmentCSV.Segmenter(s.o_file, './objects.csv')
-            temp.segment([(s.split[0], s.split[1])])
+            s.splits.append((s.split[0], s.split[1]))
+            print "Current splits : "
+            print s.splits
+
+            # temp = SegmentCSV.Segmenter(s.m_file, './markers.csv')
+            # temp.segment([(s.split[0], s.split[1])])
+            # temp = SegmentCSV.Segmenter(s.o_file, './objects.csv')
+            # temp.segment([(s.split[0], s.split[1])])
+
+        if c == 'x':
+            s.save_splits()
+            # Reset all splits
+            s.splits = []
+            print "Saved splits to Splits.csv. Current splits : ", s.splits
 
         # TODO Should only be done if we updated a frame.  Get rid of continues
         cv_image = cv2.imread( s.curr_img, 1)

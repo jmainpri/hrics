@@ -389,6 +389,10 @@ class Drawer():
 if __name__ == '__main__':
 
     setup = read_setup('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/')
+    splits = read_splits('/home/rafi/logging_ten/0/')
+
+    print splits
+
 
     NB_HUMAN    = setup[0]
     ELBOW_PADS  = setup[1]
@@ -498,5 +502,7 @@ if __name__ == '__main__':
     o_file = '/home/rafi/logging_ten/0/objects_fixed.csv'
 
     d =  Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
+
+    # for split in splits
     d.load_file(m_file, o_file)
     d.play_skeleton()

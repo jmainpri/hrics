@@ -408,3 +408,12 @@ def read_setup(folder):
 
     return setup
 
+def read_splits(folder):
+    splits = []
+
+    with open(folder + 'Splits.csv', 'r') as s_file:
+        matrix = [row for row in csv.reader(s_file, delimiter=',')]
+        for line in matrix:
+            splits.append( (int(line[0]), int(line[1])) )
+
+    return splits
