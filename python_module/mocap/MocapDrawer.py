@@ -148,6 +148,68 @@ class Drawer():
 
             self.frames.append( Frame(sec, nsec, count, markers, objects) )
 
+    # Split is a tuple of the form (start_frame, end_frame)
+    def load_range(self, m_filepath, o_filepath, split):
+        print "Trying to open file"
+        # global NB_HUMAN # TODO fix global to be class member
+
+        marker_file = []
+        object_file = []
+
+        with open(m_filepath, 'r') as m_file:
+            with open(o_filepath, 'r') as o_file:
+
+                marker_file = [row for row in csv.reader(m_file, delimiter=',')]
+                object_file = [row for row in csv.reader(o_file, delimiter=',')]
+
+        nb_lines = min(len(marker_file), len(object_file))
+        self.last_frame = nb_lines
+
+        for row in range(split[0], split[1]):
+
+            markers = []
+            objects = []
+
+            m_cells = marker_file[row]
+            o_cells = object_file[row]
+
+            # Load Objects
+            count = int(o_cells[2])
+
+            # Assuming only using Pelv/Head objects per person and nothing else in the scene
+            # NB_HUMAN = count/2
+
+            for i in range(3, count*9, 9):
+                name = str(o_cells[i])
+                occluded = int(o_cells[i+1])
+                x = float(o_cells[i+2])
+                y = float(o_cells[i+3])
+                z = float(o_cells[i+4])
+                r_x = float(o_cells[i+5])
+                r_y = float(o_cells[i+6])
+                r_z = float(o_cells[i+7])
+                r_w = float(o_cells[i+8])
+
+                object = Object( name, occluded, x, y, z, r_x, r_y, r_z, r_w )
+                objects.append(object)
+
+            # Load Markers
+            sec = float(m_cells[0])
+            nsec = float(m_cells[1])
+            count = int(m_cells[2])
+
+            for i in range(3, count*4, 4):
+                id = m_cells[i]
+                x = float(m_cells[i+1])
+                y = float(m_cells[i+2])
+                z = float(m_cells[i+3])
+
+                marker = Marker(id, x, y, z)
+                markers.append(marker)
+
+
+            self.frames.append( Frame(sec, nsec, count, markers, objects) )
+
     def play_raw(self):
         # for frame in self.frames:
         prev_time = self.frames[0].get_time()
@@ -504,5 +566,9 @@ if __name__ == '__main__':
     d =  Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
 
     # for split in splits
-    d.load_file(m_file, o_file)
-    d.play_skeleton()
+    for split in splits:
+        print "Playing split : ", split
+        d.load_range(m_file, o_file, split)
+        d.play_skeleton()
+        print "Finished playing split.  Press enter to continue"
+        sys.stdin.readline()
