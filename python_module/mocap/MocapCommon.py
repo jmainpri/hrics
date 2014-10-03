@@ -10,6 +10,7 @@ import time
 from openravepy import *
 import transformation_helper
 import rospy
+import copy
 
 class Timer:
     def __enter__(self):
@@ -61,7 +62,16 @@ class Object:
         return self.occluded
 
     def get_transform(self):
-
+        # ''' TEST '''
+        # raw_quaternion = array([self.r_w, self.r_x, self.r_y, self.r_z])
+        # print "Raw quaternion: " + str(raw_quaternion)
+        # raw_quaternion_norm = np.linalg.norm(raw_quaternion)
+        # print "Raw norm: " + str(raw_quaternion_norm)
+        # normalized_quaternion = raw_quaternion / raw_quaternion_norm
+        # print "Normalized quaternion: " + str(normalized_quaternion)
+        # normalized_quaternion_norm = np.linalg.norm(normalized_quaternion)
+        # print "Normalized norm: " + str(normalized_quaternion_norm)
+        # ''' /TEST '''
         mat =  MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([self.r_w, self.r_x, self.r_y, self.r_z]) )), transpose(matrix([self.x, self.y, self.z])) )
 
         # TODO figure out if this works on all Pelvis frames.  If not, why?
@@ -235,8 +245,13 @@ class Frame:
 
         for i in range(0, prev_frame.count):
             if new_markers[i] is None:  # Marker dropped!
-                new_markers[i] = prev_frame.get_marker_by_id(i)
+                new_markers[i] = copy.deepcopy(prev_frame.get_marker_by_id(i))
                 new_markers[i].times_dropped += 1
+
+        # Fix occluded objects
+        for i, o in enumerate(self.object_list):
+            if o.is_occluded():
+                self.object_list[i] = prev_frame.object_list[i]
 
 
         temp = Frame(self.sec, self.nsec, len(new_markers), new_markers, self.object_list)

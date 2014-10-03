@@ -82,6 +82,12 @@ class Drawer():
         self.frames = []
 
 
+        t_cam = array([[ -0.655253290114, -0.106306078558, 0.747891799297, -0.302201271057] , \
+                                [ -0.725788890663, 0.363116971923, -0.584274379801, 2.68592453003] , \
+                                [ -0.209460287369, -0.925659269042, -0.315089361376, 2.25037527084] , \
+                                [ 0.0, 0.0, 0.0, 1.0]])
+        self.env.GetViewer().SetCamera(t_cam)
+
     def load_file(self, m_filepath, o_filepath):
         print "Trying to open file"
         # global NB_HUMAN # TODO fix global to be class member
@@ -200,40 +206,47 @@ class Drawer():
         #         cv2.imshow('my_picture',cv_image)
         #         sys.stdin.readline()
 
-        sys.stdin.readline()
+
         for i, frame in enumerate(self.frames):
             curr_time = frame.get_time()
 
             self.draw_frame_skeleton(frame)
 
             dt = curr_time - prev_time
-            dt = 0.05
             prev_time = curr_time
             time.sleep(dt)
 
-            print "press enter to continue"
-            sys.stdin.readline()
-            # if True:
+
+            if True:
             # if i % 20 == 0 :
+                last = None
 
-            #     try:
-            #         for t, img in sorted_images:
-            #             if t > curr_time:
-            #                 image_name = folder + "/" + img
-            #                 break
+                try:
+                    for t, img in sorted_images:
+                        if t > curr_time:
+                            # image_name = folder + "/" + img
+                            break
 
-            #         cv_image = cv2.imread( image_name, 1)
-            #         cv2.imshow('my_picture', cv_image)
-            #         # print image_name
-            #     except e:
-            #         print e
+                        last = img
 
-            #     sys.stdin.readline()
+                    if last:
+                        image_name = folder + "/" + last
+                        print image_name
+
+                        cv_image = cv2.imread( image_name, 1)
+                        cv2.imshow('Camera Data', cv_image)
+                        # print image_name
+                except e:
+                    print e
+
+
+                if i == 0:
+                    sys.stdin.readline()
 
             #     # print "blocking?"
             #     # rospy.spin()
 
-            #     print "Frame : ", i , " press enter"
+                # print "Frame : ", i , " press enter"
 
             self.clear()
 
@@ -250,6 +263,9 @@ class Drawer():
             humans.append( Human(temp_markers, temp_objects, self.elbow_pads, self.r_arm_only) )
 
         return humans
+
+    def get_frame(self, frame_id):
+        return self.frames[frame_id]
 
     def draw_frame_skeleton(self, frame):
         humans = self.isolate_humans(frame)
@@ -381,17 +397,26 @@ if __name__ == '__main__':
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
     # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
 
-    # m_file = '/home/rafi/Desktop/TEMP/[0580-0680]markers.csv'
-    # o_file = '/home/rafi/Desktop/TEMP/[0580-0680]objects.csv'
-
-    m_file = '/home/rafi/Desktop/TEMP/[1300-1420]markers.csv'
-    o_file = '/home/rafi/Desktop/TEMP/[1300-1420]objects.csv'
-
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1000-3900]markers_fixed.csv'
     # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1000-3900]objects_fixed.csv'
 
-    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
-    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[5900-9000]markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[5900-9000]objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[22400-25300]markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[22400-25300]objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[28300-30800]markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[28300-30800]objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[33000-35700]markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[33000-35700]objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[37900-40400]markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[37900-40400]objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[42600-44700]markers_fixed.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[42600-44700]objects_fixed.csv'
 
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
     # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
@@ -408,14 +433,50 @@ if __name__ == '__main__':
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
     # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
 
-    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
-    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
 
-    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
-    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+    dirr = '/home/rafi/Desktop/trials/'
+
+    # Recording 9 Run 1
+    # run = '1/'
+    # prefix = '[0446-0578]'
+    # prefix = '[0780-0871]'
+    # prefix = '[2554-2671]'
+
+    # Recording 9 Run 2
+    # run = '2/'
+    # prefix = '[0525-0657]'
+    # prefix = '[2197-2343]'
+    # prefix = '[2711-2823]'
+
+    # Recording 9 Run 3
+    run = '3/'
+    # prefix = '[0444-0585]'
+    # prefix = '[1064-1140]'
+    # prefix = '[1342-1451]'
+    prefix = '[1882-1981]'
+    # prefix = '[2172-2249]'
+    # prefix = '[2646-2737]'
+
+    # # Recording 9 Run 4
+    # run = '4/'
+    # prefix = '[0489-0589]'
+    # prefix = '[1537-1608]'
+    # prefix = '[2018-2099]'
+
+    # Recording 9 Run 5
+    # Empty
+
+    # Recording 9 Run 6
+    # run = '6/'
+    # prefix = '[0408-0491]'
+    # prefix = '[0889-0945]'
+    # prefix = '[1188-1256]'
 
 
 
+
+    m_file = dirr+run+prefix+'markers.csv'
+    o_file = dirr+run+prefix+'objects.csv'
 
 
     # f = MarkerFixer('/home/rafi/logging_nine/2/[5900-9000]markers.csv', '/home/rafi/logging_nine/2/[5900-9000]objects.csv')
@@ -431,4 +492,16 @@ if __name__ == '__main__':
 
     d =  Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
     d.load_file(m_file, o_file)
-    d.play_skeleton()
+
+    t_cam = array([[ -0.655253290114, -0.106306078558, 0.747891799297, -0.302201271057] , \
+                            [ -0.725788890663, 0.363116971923, -0.584274379801, 2.68592453003] , \
+                            [ -0.209460287369, -0.925659269042, -0.315089361376, 2.25037527084] , \
+                            [ 0.0, 0.0, 0.0, 1.0]])
+    d.env.GetViewer().SetCamera(t_cam)
+
+
+    while True:
+        d.play_skeleton()
+        print "End play motion"
+        sys.stdin.readline()
+
