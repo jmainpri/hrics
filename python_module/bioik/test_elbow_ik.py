@@ -327,7 +327,9 @@ if __name__ == "__main__":
     # m_file = folder + '[0600-1000]markers.csv'
     # o_file = folder + '[0600-1000]objects.csv'
 
-    folder = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/data/vacation/four_motions/'
+    data_folder = '/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/data/'
+
+    folder = data_folder + 'vacation/four_motions/'
 
     # m_file = folder + '[0580-0680]markers.csv'
     # o_file = folder + '[0580-0680]objects.csv'
@@ -350,8 +352,10 @@ if __name__ == "__main__":
     # m_file = folder + '[1500-1680]markers.csv'
     # o_file = folder + '[1500-1680]objects.csv'
 
-    # LATEST ------------------------------------
+    # VACTION ------------------------------------
+  
     name = '[0440-0580]'
+
     m_file = folder + name + 'markers.csv'
     o_file = folder + name + 'objects.csv'
 
@@ -367,14 +371,67 @@ if __name__ == "__main__":
     # o_file = folder + '[1800-1980]objects.csv'
     #
     name = '[1460-1620]'
-    m_file = folder + name + 'markers.csv'
-    o_file = folder + name + 'objects.csv'
+#    m_file = folder + name + 'markers.csv'
+#    o_file = folder + name + 'objects.csv'
 
-    m_file = folder + name + 'markers_new_smooth.csv'
-    o_file = folder + name + 'objects_new_smooth.csv'
+#    m_file = folder + name + 'markers_new_smooth.csv'
+#    o_file = folder + name + 'objects_new_smooth.csv'
 
     m_file = folder + name + 'markers_raw.csv'
     o_file = folder + name + 'objects_raw.csv'
+
+    # LATEST ------------------------------------
+
+    # Folder 1
+    folder_num = '1'
+    name = '[0446-0578]'
+    name = '[0780-0871]'
+    name = '[2554-2671]' # stopping
+
+    # Folder 2
+    folder_num = '2'
+    name = '[0525-0657]'
+    name = '[2197-2343]'
+    name = '[2711-2823]'
+
+    # Folder 3
+    folder_num = '3'
+    name = '[0444-0585]'
+    name = '[1064-1140]'
+    name = '[1342-1451]'
+    name = '[1882-1981]' # regrasp
+    name = '[2172-2249]'
+    name = '[2646-2737]' # second human too noisy
+
+    # Folder 4
+    folder_num = '4'
+    name = '[0489-0589]'
+    name = '[1537-1608]'
+    name = '[2018-2099]'
+
+    # Folder 5
+    # name = ll
+
+    # Folder 6
+    folder_num = '6'
+    name = '[0408-0491]' # Perfect!!!
+    name = '[0889-0945]' # too short
+    name = '[1188-1256]'
+
+    # Folder 7
+    # name = ll
+
+    # Folder 6
+    folder_num = '8'
+    name = '[0629-0768]' # Replan
+
+    folder = data_folder + 'ten_runs/trials/' + folder_num + '/'
+    m_file = folder + name + 'markers.csv'
+    o_file = folder + name + 'objects.csv'
+
+
+#    m_file = folder + '[2554-2671]markers.csv'
+#    o_file = folder + '[2554-2671]objects.csv'
 
     print "try to load file : ", m_file
     print "try to load file : ", o_file
@@ -386,3 +443,4 @@ if __name__ == "__main__":
         test.save_file()
         print "press enter to exit"
         sys.stdin.readline()
+
