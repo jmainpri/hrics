@@ -62,6 +62,7 @@ class Object:
         return self.occluded
 
     def get_transform(self):
+
         # ''' TEST '''
         # raw_quaternion = array([self.r_w, self.r_x, self.r_y, self.r_z])
         # print "Raw quaternion: " + str(raw_quaternion)
@@ -72,6 +73,7 @@ class Object:
         # normalized_quaternion_norm = np.linalg.norm(normalized_quaternion)
         # print "Normalized norm: " + str(normalized_quaternion_norm)
         # ''' /TEST '''
+
         mat =  MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([self.r_w, self.r_x, self.r_y, self.r_z]) )), transpose(matrix([self.x, self.y, self.z])) )
 
         # TODO figure out if this works on all Pelvis frames.  If not, why?

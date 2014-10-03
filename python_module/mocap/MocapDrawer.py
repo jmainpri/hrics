@@ -213,6 +213,7 @@ class Drawer():
             self.draw_frame_skeleton(frame)
 
             dt = curr_time - prev_time
+            dt = 0.05
             prev_time = curr_time
             time.sleep(dt)
 
@@ -396,6 +397,12 @@ if __name__ == '__main__':
 
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
     # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/objects_fixed.csv'
+
+    # m_file = '/home/rafi/Desktop/TEMP/[0580-0680]markers.csv'
+    # o_file = '/home/rafi/Desktop/TEMP/[0580-0680]objects.csv'
+
+    m_file = '/home/rafi/Desktop/TEMP/[1300-1420]markers.csv'
+    o_file = '/home/rafi/Desktop/TEMP/[1300-1420]objects.csv'
 
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1000-3900]markers_fixed.csv'
     # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1000-3900]objects_fixed.csv'
