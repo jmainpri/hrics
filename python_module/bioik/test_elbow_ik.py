@@ -248,12 +248,24 @@ class TestBioHumanIk(BioHumanIk):
         self.traj_human1 = []
         self.traj_human2 = []
 
+        t0_prev_time = time.clock()
+        t0_end = time.time()
+        dt = 0.
+
         for i, frame in enumerate(self.drawer.frames):
+
+            t0 = time.time()
+            dt_0 = t0 - t0_prev_time
+            t0_prev_time = t0
+
+            time.sleep(max(dt-(dt_0), 0.))
 
             curr_time = frame.get_time()
             dt = curr_time - prev_time
             prev_time = curr_time
-            time.sleep(dt)
+            
+            #print "dt " , dt , " dt0 : ", dt_0
+
 
             del self.handles[:]
             self.drawer.clear()
@@ -309,13 +321,15 @@ class TestBioHumanIk(BioHumanIk):
 
                 traj.append([[dt], h.GetDOFValues()])
 
+
 #                print curr_time
 
             # if i % 3 == 0:
             #     print "press enter to continue"
             #     sys.stdin.readline()
-            for h in self.humans:
-                print "robot in collision ", h.CheckSelfCollision()
+            
+            #for h in self.humans:
+            #    print "robot in collision ", h.CheckSelfCollision()
 
     def run(self):
 
@@ -383,47 +397,47 @@ if __name__ == "__main__":
     # LATEST ------------------------------------
 
     # Folder 1
-    folder_num = '1'
-    name = '[0446-0578]'
-    name = '[0780-0871]'
-    name = '[2554-2671]' # stopping
+#    folder_num = '1'
+#    name = '[0446-0578]'
+#    name = '[0780-0871]'
+#    name = '[2554-2671]' # stopping
 
-    # Folder 2
-    folder_num = '2'
-    name = '[0525-0657]'
-    name = '[2197-2343]'
-    name = '[2711-2823]'
+#    # Folder 2
+#    folder_num = '2'
+#    name = '[0525-0657]'
+#    name = '[2197-2343]'
+#    name = '[2711-2823]'
 
     # Folder 3
     folder_num = '3'
     name = '[0444-0585]'
-    name = '[1064-1140]'
-    name = '[1342-1451]'
-    name = '[1882-1981]' # regrasp
-    name = '[2172-2249]'
-    name = '[2646-2737]' # second human too noisy
+    #name = '[1064-1140]'
+    #name = '[1342-1451]'
+    #name = '[1882-1981]' # regrasp
+    #name = '[2172-2249]'
+    #name = '[2646-2737]' # second human too noisy
 
     # Folder 4
-    folder_num = '4'
-    name = '[0489-0589]'
-    name = '[1537-1608]'
-    name = '[2018-2099]'
+    #folder_num = '4'
+    #name = '[0489-0589]'
+    #name = '[1537-1608]'
+    #name = '[2018-2099]'
 
     # Folder 5
     # name = ll
 
     # Folder 6
-    folder_num = '6'
-    name = '[0408-0491]' # Perfect!!!
-    name = '[0889-0945]' # too short
-    name = '[1188-1256]'
+    #folder_num = '6'
+    #name = '[0408-0491]' # Perfect!!!
+    #name = '[0889-0945]' # too short
+    #name = '[1188-1256]'
 
     # Folder 7
     # name = ll
 
     # Folder 6
-    folder_num = '8'
-    name = '[0629-0768]' # Replan
+    #folder_num = '8'
+    # name = '[0629-0768]' # Replan
 
     folder = data_folder + 'ten_runs/trials/' + folder_num + '/'
     m_file = folder + name + 'markers.csv'
@@ -433,6 +447,11 @@ if __name__ == "__main__":
 #    m_file = folder + '[2554-2671]markers.csv'
 #    o_file = folder + '[2554-2671]objects.csv'
 
+    folder = data_folder + 'ten_runs/video/'
+    name = ""
+    m_file = folder + name + 'markers_fixed.csv'
+    o_file = folder + name + 'objects_fixed.csv'
+    
     print "try to load file : ", m_file
     print "try to load file : ", o_file
 
