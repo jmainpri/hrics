@@ -31,6 +31,7 @@ class PlayFile():
                         [ 0.0, 0.0, 0.0, 1.0]])
         self.env.GetViewer().SetCamera(t_cam)
 
+
     def PrintView(self):
 
         while True:
@@ -54,29 +55,21 @@ class PlayFile():
             print "Press return to get view matrix."
             sys.stdin.readline()
 
+
     def load_files(self, h1_filepath, h2_filepath):
+        
         print "Trying to open file"
 
+        # Parse CSV files
         with open(h1_filepath, 'r') as h1_file:
             with open(h2_filepath, 'r') as h2_file:
-
                 self.traj_human1 = [row for row in csv.reader(h1_file, delimiter=',')]
                 self.traj_human2 = [row for row in csv.reader(h2_file, delimiter=',')]
 
-        traj1_tmp = []
-        traj2_tmp = []
-        for row1, row2 in zip(self.traj_human1, self.traj_human2):
-            row1_tmp = []
-            row2_tmp = []
-            for cell1, cell2 in zip(row1,row2):
-                row1_tmp.append( float(cell1) )
-                row2_tmp.append( float(cell2) )
-            traj1_tmp.append(row1_tmp)
-            traj2_tmp.append(row2_tmp)
+        # Convert to floats
+        self.traj_human1 = [map(float, row) for row in self.traj_human1]
+        self.traj_human2 = [map(float, row) for row in self.traj_human2]
 
-        self.traj_human1 = traj1_tmp
-        self.traj_human2 = traj2_tmp
-		
 
     def play_skeleton(self):
         # for frame in self.frames:
@@ -88,7 +81,7 @@ class PlayFile():
             curr_time = row1[0]
             dt = curr_time - prev_time
             prev_time = curr_time
-            print dt
+            #print dt
             time.sleep(0.05)
 
             del self.handles[:]
@@ -99,8 +92,8 @@ class PlayFile():
             # if i % 3 == 0:
             #     print "press enter to continue"
             #     sys.stdin.readline()
-            for h in self.humans:
-                print "robot in collision ", h.CheckSelfCollision()
+            #for h in self.humans:
+            #    print "robot in collision ", h.CheckSelfCollision()
 
     def run(self):
 
@@ -108,7 +101,8 @@ class PlayFile():
 
 if __name__ == "__main__":
 
-    folder = '/home/ruikun/workspace/gmm-gmr-gesture-recognition/data_ten_motions_mocap_1016/'
+    # folder = '/home/ruikun/workspace/gmm-gmr-gesture-recognition/data_ten_motions_mocap_1016/'
+    folder = 'ten_motions/'
 
     name = '[0408-0491]'
     h1_file = folder + "human_one/" + name + '_human1_.csv'

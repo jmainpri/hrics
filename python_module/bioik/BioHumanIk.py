@@ -199,10 +199,11 @@ class BioHumanIk():
         elb_a = elb_a * 180/math.pi
 
         # calculate euler angles for the wrist
-        hand_about_LA = la.inv(LAE) * handE
-        hand_about_LA = normalize(hand_about_LA)
-        wrist_a = euler_from_matrix(hand_about_LA, 'rzxy')
-        wrist_a = wrist_a * 180/math.pi
+        wrist_a = array([0., 0., -0.])
+#        hand_about_LA = la.inv(LAE) * handE
+#        hand_about_LA = normalize(hand_about_LA)
+#        wrist_a = euler_from_matrix(hand_about_LA, 'rzxy')
+#        wrist_a = wrist_a * 180/math.pi
 
         # --------------------------------------------------------------------
         # Pack arm configuration in degrees
@@ -221,3 +222,4 @@ class BioHumanIk():
         q[11] = wrist_a[1]
         q[12] = wrist_a[2]
         return [q, d_torso, d_shoulder_elbow, d_elbow_wrist]
+
