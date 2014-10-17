@@ -79,9 +79,6 @@ class PlayFile():
             self.humans[0].SetDOFValues(row1[1:self.humans[0].GetDOF()+1])
             self.humans[1].SetDOFValues(row2[1:self.humans[1].GetDOF()+1])
 
-    def run(self):
-
-        self.play_skeleton()
 
 if __name__ == "__main__":
 
