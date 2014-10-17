@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
 from openravepy import *
+from numpy import *
 import sys
 import time
 from copy import deepcopy
+import csv
 
 mapping = [-1, 6, 7, 8, 16, 17, 18, 20, 21, 22, 24, 25, 26]
 
@@ -12,12 +14,16 @@ class PlayFile():
     def __init__(self):
 
         self.env = Environment()
+        self.env.SetViewer('qtcoin')
+        self.env.SetDebugLevel(DebugLevel.Verbose)
+        self.env.Reset()
         self.env.Load("../../ormodels/humans_bio_env.xml")
         self.humans = self.env.GetRobots()
         self.handles = []
 
         self.traj_human1 = []
         self.traj_human2 = []
+        self.offset_pelvis_torso_init = self.humans[0].GetJoint("TorsoX").GetHierarchyChildLink().GetTransform()[0:3, 3]
 
         t_cam = array([[ -0.655253290114, -0.106306078558, 0.747891799297, -0.302201271057] , \
                         [ -0.725788890663, 0.363116971923, -0.584274379801, 2.68592453003] , \
@@ -51,27 +57,44 @@ class PlayFile():
     def load_files(self, h1_filepath, h2_filepath):
         print "Trying to open file"
 
-        with open(h1_filepath, 'r') as m_file:
-            with open(h2_filepath, 'r') as o_file:
+        with open(h1_filepath, 'r') as h1_file:
+            with open(h2_filepath, 'r') as h2_file:
 
-                self.traj_human1 = [row for row in csv.reader(m_file, delimiter=',')]
-                self.traj_human2 = [row for row in csv.reader(o_file, delimiter=',')]
+                self.traj_human1 = [row for row in csv.reader(h1_file, delimiter=',')]
+                self.traj_human2 = [row for row in csv.reader(h2_file, delimiter=',')]
+
+        traj1_tmp = []
+        traj2_tmp = []
+        for row1, row2 in zip(self.traj_human1, self.traj_human2):
+            row1_tmp = []
+            row2_tmp = []
+            for cell1, cell2 in zip(row1,row2):
+                row1_tmp.append( float(cell1) )
+                row2_tmp.append( float(cell2) )
+            traj1_tmp.append(row1_tmp)
+            traj2_tmp.append(row2_tmp)
+
+        self.traj_human1 = traj1_tmp
+        self.traj_human2 = traj2_tmp
+		
 
     def play_skeleton(self):
         # for frame in self.frames:
-        prev_time = self.drawer.frames[0].get_time()
+        print len(self.traj_human1)
+        prev_time = self.traj_human1[0][0]
 
         for row1, row2 in zip(self.traj_human1, self.traj_human2):
 
             curr_time = row1[0]
             dt = curr_time - prev_time
             prev_time = curr_time
-            time.sleep(dt)
+            print dt
+            time.sleep(0.05)
 
             del self.handles[:]
-
-            self.humans[0].SetDOFValues(row1[1:h.GetDOF()])
-	    self.humans[1].SetDOFValues(row2[1:h.GetDOF()])
+           
+            self.humans[0].SetDOFValues(row1[1:self.humans[0].GetDOF()+1])
+            self.humans[1].SetDOFValues(row2[1:self.humans[1].GetDOF()+1])
 
             # if i % 3 == 0:
             #     print "press enter to continue"
@@ -97,8 +120,7 @@ if __name__ == "__main__":
     test = PlayFile()
 
     while True:
-        test.run()
         test.load_files(h1_file, h2_file)
-	test.play_skeleton()
+        test.play_skeleton()
         print "press enter to exit"
         sys.stdin.readline()
