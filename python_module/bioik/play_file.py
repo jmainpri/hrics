@@ -28,6 +28,27 @@ class PlayFile():
         self.traj_human1 = []
         self.traj_human2 = []
 
+        self.change_color_human()
+
+    def change_color_human(self):
+
+        if len(self.humans) <= 1:
+            return
+
+        links = []
+        for jIdx, j in enumerate(self.humans[1].GetJoints()):
+            # print "%s, \t%.3f, \t%.3f" % (j.GetName(), j.GetLimits()[0], j.GetLimits()[1])
+            l = j.GetFirstAttached()
+            if l is not None : links.append(l)
+            l = j.GetSecondAttached()
+            if l is not None : links.append(l)
+
+        for l in links:
+            for g in l.GetGeometries():
+                print g.GetDiffuseColor()
+                if set(g.GetDiffuseColor()) & set([0.80000001, 0., 0.01]):
+                    g.SetDiffuseColor([0., 0., 0.8])
+
 
     def print_view(self):
 
