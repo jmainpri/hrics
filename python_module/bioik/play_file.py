@@ -30,6 +30,7 @@ class PlayFile():
 
         self.change_color_human()
 
+
     def change_color_human(self):
 
         if len(self.humans) <= 1:
