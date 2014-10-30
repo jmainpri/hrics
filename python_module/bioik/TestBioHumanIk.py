@@ -8,6 +8,7 @@ import sys
 import time
 from copy import deepcopy
 
+
 class TestBioHumanIk(BioHumanIk):
 
     def __init__(self, name):
@@ -173,23 +174,36 @@ class TestBioHumanIk(BioHumanIk):
 
         # Get joint centers
         p_torso_origin = (markers[0] + markers[1])/2
-        p_shoulder_center = array([markers[4][0], markers[4][1], markers[5][2]])
 
+        p_r_shoulder_center = array([markers[4][0], markers[4][1], markers[5][2]])
         if self.use_elbow_pads:
-            p_elbow_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
+            p_r_elbow_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
         else:
-            p_elbow_center = array([0, 0, 0])
-
-        p_wrist_center = (markers[6] + markers[7])/2
+            p_r_elbow_center = array([0, 0, 0])
+        p_r_wrist_center = (markers[6] + markers[7])/2
 
         # Get the points in the global frame
         # inv_pelvis = la.inv(t_pelvis)
         inv_pelvis = eye(4)
 
         p0 = array(array(inv_pelvis).dot(append(p_torso_origin, 1)))[0:3]
-        p1 = array(array(inv_pelvis).dot(append(p_shoulder_center, 1)))[0:3]
-        p2 = array(array(inv_pelvis).dot(append(p_elbow_center, 1)))[0:3]
-        p3 = array(array(inv_pelvis).dot(append(p_wrist_center, 1)))[0:3]
+
+        p1r = array(array(inv_pelvis).dot(append(p_r_shoulder_center, 1)))[0:3]
+        p2r = array(array(inv_pelvis).dot(append(p_r_elbow_center, 1)))[0:3]
+        p3r = array(array(inv_pelvis).dot(append(p_r_wrist_center, 1)))[0:3]
+
+        if self.compute_left_arm:
+
+            p_l_shoulder_center = array([markers[11][0], markers[11][1], markers[12][2]])
+            if self.use_elbow_pads:
+                p_l_elbow_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
+            else:
+                p_l_elbow_center = array([0, 0, 0])
+            p_l_wrist_center = (markers[13] + markers[14])/2
+
+            p1l = array(array(inv_pelvis).dot(append(p_l_shoulder_center, 1)))[0:3]
+            p2l = array(array(inv_pelvis).dot(append(p_l_elbow_center, 1)))[0:3]
+            p3l = array(array(inv_pelvis).dot(append(p_l_wrist_center, 1)))[0:3]
 
         dist = 0.0
 
@@ -208,22 +222,45 @@ class TestBioHumanIk(BioHumanIk):
                 self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
                 # l = self.human.GetLink("TorsoDummyY")
                 # self.handles.append(misc.DrawAxes(self.env, j.GetHierarchyChildLink().GetTransform(), 1.0))
+
+
             if j.GetName() == "rShoulderX":
                 # self.handles.append(self.env.plot3(p_link, pointsize=0.05, colors=array([0, 0, 0]), drawstyle=1))
-                dist = la.norm(p_link - p1)
+                dist = la.norm(p_link - p1r)
                 if print_dist:
                     print "dist shoulder : ", dist
                 self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
             if j.GetName() == "rElbowZ":
-                dist = la.norm(p_link - p2)
+                dist = la.norm(p_link - p2r)
                 if print_dist:
                     print "dist elbow : ", dist
                 self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
             if j.GetName() == "rWristX":
-                dist = la.norm(p_link - p3)
+                dist = la.norm(p_link - p3r)
                 self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
                 if print_dist:
                     print "dist wrist : ", dist
+
+
+            if j.GetName() == "lShoulderX":
+                # self.handles.append(self.env.plot3(p_link, pointsize=0.05, colors=array([0, 0, 0]), drawstyle=1))
+                dist = la.norm(p_link - p1l)
+                if print_dist:
+                    print "dist shoulder : ", dist
+                self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
+            if j.GetName() == "lElbowZ":
+                dist = la.norm(p_link - p2l)
+                if print_dist:
+                    print "dist elbow : ", dist
+                self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
+            if j.GetName() == "lWristX":
+                dist = la.norm(p_link - p3l)
+                self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
+                if print_dist:
+                    print "dist wrist : ", dist
+
+
+
             #if j.GetName() == "rShoulderZ":
             #    self.handles.append(misc.DrawAxes(self.env, j.GetHierarchyChildLink().GetTransform(), 0.3))
 
@@ -304,7 +341,7 @@ class TestBioHumanIk(BioHumanIk):
                 h2_file.write(line_str)
         print "End writing !!!"
 
-    def play_skeleton(self):
+    def play_skeleton(self, max_frame=None):
         # for frame in self.frames:
         prev_time = self.drawer.frames[0].get_time()
 
@@ -329,8 +366,11 @@ class TestBioHumanIk(BioHumanIk):
             
             #print "dt " , dt , " dt0 : ", dt_0
 
+            if max_frame is not None:
+                if i > max_frame:
+                    break
 
-            if i % 2 == 0:
+            if i % 4 == 0:
                 del self.handles[:]
             self.drawer.clear()
             self.drawer.draw_frame_skeleton(frame)

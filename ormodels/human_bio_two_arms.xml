@@ -433,7 +433,7 @@
         <offsetfrom>lElbowDummy3</offsetfrom>
         <translation>0 0 0</translation>
         <geom type="cylinder">
-            <translation>0.010577 0.135251 0.001946</translation>
+            <translation>0.010577 -0.135251 0.001946</translation>
             <!--<rotationaxis>1 0 0 90</rotationaxis> -->
             <radius>0.053</radius>
             <height>0.281</height>
@@ -473,27 +473,27 @@
     
     <body name="lHand">
         <offsetfrom>lWristDummyY</offsetfrom>
-        <translation>0 1 0 -90</translation>
-        <geom type="box">    
-            <translation>0.006131 0.056806 0.01241</translation>
+        <rotationaxis>0 1 0 -90</rotationaxis>
+        <geom type="box">
+            <translation> 0.006131 -0.06293 0.01241</translation>
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.068800 0.048000 0.027500</extents>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
-            <transparency>0.8</transparency>
+            <transparency>0.5</transparency>
         </geom>
-        <geom type="box">    
-            <translation>0.006131 0.160954 0.037292</translation>
+        <geom type="box">
+            <translation>0.006131 -0.167078 0.037292</translation>
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.045150 0.049350 0.015200</extents>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
-            <transparency>0.8</transparency>
+            <transparency>0.5</transparency>
         </geom>
-        <geom type="box">    
-            <translation>0.06748 0.08632 0.002815</translation>
+        <geom type="box">
+            <translation>0.06748 -0.092444 0.002815</translation>
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.044700 0.012400 0.015600</extents>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
-            <transparency>0.8</transparency>
+            <transparency>0.5</transparency>
         </geom>
     </body>
 

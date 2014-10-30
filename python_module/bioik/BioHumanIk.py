@@ -107,7 +107,7 @@ class BioHumanIk():
         else:
 
             elb_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
-            elb_axis = array(transpose(t_elbow[:, 2]).tolist()[0][:3])
+            elb_axis = -array(transpose(t_elbow[:, 2]).tolist()[0][:3])
             # print "t_elbow : "
             # print t_elbow
             # print "elb_axis : "
@@ -139,8 +139,8 @@ class BioHumanIk():
 
         # SHOULDER
         UAY = gleno_center - elb_center
-        UAZ = cross(UAY, elb_axis)  # / la.norm(elb_axis)  # - UAZ_offset
-        UAX = cross(UAY, UAZ)
+        UAX = cross(UAY, -elb_axis)  # / la.norm(elb_axis)  # - UAZ_offset
+        UAZ = cross(UAX, UAY)
         UAE = normalize(transpose(matrix([UAX, UAY, UAZ])))
 
         # ELBOW
@@ -257,6 +257,7 @@ class BioHumanIk():
 
                 # ELBOW
                 elb_axis = markers[13] - markers[14]
+                # elb_axis = - elb_axis
                 elb_center = markers[14] + 0.5 * elb_axis  # p_elbow_center
 
                 # HAND
@@ -269,7 +270,7 @@ class BioHumanIk():
             else:
 
                 elb_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
-                elb_axis = array(transpose(t_elbow[:, 2]).tolist()[0][:3])
+                elb_axis = -array(transpose(t_elbow[:, 2]).tolist()[0][:3])
                 # print "t_elbow : "
                 # print t_elbow
                 # print "elb_axis : "
@@ -287,22 +288,14 @@ class BioHumanIk():
             # --------------------------------------------------------------------
             # Define matrices
 
-            # TRUNK
-            trunkY = c7s_midpt-trunk_center
-            trunkZ = cross(trunkY, xyphoid_T8)
-            trunkX = cross(trunkY, trunkZ)
-            trunkX *= - 1.0
-            trunkZ *= - 1.0
-            trunkE = normalize(transpose(matrix([trunkX, trunkY, trunkZ])))
-
             # for each rotation matrix verify U*Ut = eye(3)
             # print "trunkE"
             # print trunkE * transpose(trunkE)
 
             # SHOULDER
             UAY = gleno_center - elb_center
-            UAZ = cross(UAY, elb_axis)  # / la.norm(elb_axis)  # - UAZ_offset
-            UAX = cross(UAY, UAZ)
+            UAX = cross(UAY, -elb_axis)  # / la.norm(elb_axis)  # - UAZ_offset
+            UAZ = cross(UAX, UAY)
             UAE = normalize(transpose(matrix([UAX, UAY, UAZ])))
 
             # ELBOW

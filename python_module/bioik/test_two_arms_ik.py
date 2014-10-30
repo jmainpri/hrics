@@ -49,7 +49,7 @@ if __name__ == "__main__":
     print len(test.mapping)
 
     while True:
-        test.run()
+        test.play_skeleton()
         test.save_file()
         print "press enter to exit"
         sys.stdin.readline()
