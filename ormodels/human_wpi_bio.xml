@@ -44,14 +44,6 @@
             <transparency>1</transparency>
         </geom>
     </body>
-    <body name="PlevisDummyRotX">
-        <offsetfrom>PlevisDummyTransZ</offsetfrom>
-        <translation>0.0 0.0 0.0</translation>
-        <geom type="sphere">
-            <radius>0.02</radius>
-            <transparency>1</transparency>
-        </geom>
-    </body>
     <body name="PlevisDummyRotY">
         <offsetfrom>PlevisDummyRotX</offsetfrom>
         <translation>0.0 0.0 0.0</translation>
@@ -60,6 +52,14 @@
             <transparency>1</transparency>
         </geom>
     </body>
+<!--    <body name="PlevisDummyRotZ">-->
+<!--        <offsetfrom>PlevisDummyRotY</offsetfrom>-->
+<!--        <translation>0.0 0.0 0.0</translation>-->
+<!--        <geom type="sphere">-->
+<!--            <radius>0.02</radius>-->
+<!--            <transparency>1</transparency>-->
+<!--        </geom>-->
+<!--    </body>-->
      
     <body name="PelvisBody">
         <!--Body_Torso Parent Center of Mass to Base -->
@@ -211,15 +211,14 @@
             <transparency>1</transparency>
         </geom>
     </body>
-        <body name="rShoulderDummyY">
-        <offsetfrom>rShoulderDummyZ</offsetfrom>
-        <!-- <rotationaxis>1 0 0 -90</rotationaxis> -->
-        <translation>0 0 0</translation>
-        <geom type="sphere">
-            <radius>0.02</radius>
-            <transparency>1</transparency>
-        </geom>
-    </body>
+<!--    <body name="rShoulderDummyY">-->
+<!--        <offsetfrom>rShoulderDummyZ</offsetfrom>-->
+<!--        <translation>0 0 0</translation>-->
+<!--        <geom type="sphere">-->
+<!--            <radius>0.02</radius>-->
+<!--            <transparency>1</transparency>-->
+<!--        </geom>-->
+<!--    </body>-->
 
     <body name="rHumerus">
         <offsetfrom>rShoulderDummyZ</offsetfrom>

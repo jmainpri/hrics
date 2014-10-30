@@ -241,25 +241,24 @@ class TestBioHumanIk(BioHumanIk):
                 if print_dist:
                     print "dist wrist : ", dist
 
-
-            if j.GetName() == "lShoulderX":
-                # self.handles.append(self.env.plot3(p_link, pointsize=0.05, colors=array([0, 0, 0]), drawstyle=1))
-                dist = la.norm(p_link - p1l)
-                if print_dist:
-                    print "dist shoulder : ", dist
-                self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
-            if j.GetName() == "lElbowZ":
-                dist = la.norm(p_link - p2l)
-                if print_dist:
-                    print "dist elbow : ", dist
-                self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
-            if j.GetName() == "lWristX":
-                dist = la.norm(p_link - p3l)
-                self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
-                if print_dist:
-                    print "dist wrist : ", dist
-
-
+            if self.compute_left_arm:
+                
+                if j.GetName() == "lShoulderX":
+                    # self.handles.append(self.env.plot3(p_link, pointsize=0.05, colors=array([0, 0, 0]), drawstyle=1))
+                    dist = la.norm(p_link - p1l)
+                    if print_dist:
+                        print "dist shoulder : ", dist
+                    self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
+                if j.GetName() == "lElbowZ":
+                    dist = la.norm(p_link - p2l)
+                    if print_dist:
+                        print "dist elbow : ", dist
+                    self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
+                if j.GetName() == "lWristX":
+                    dist = la.norm(p_link - p3l)
+                    self.handles.append(self.env.plot3(p_link, pointsize=0.03, colors=array([0, 0, 1]), drawstyle=1))
+                    if print_dist:
+                        print "dist wrist : ", dist
 
             #if j.GetName() == "rShoulderZ":
             #    self.handles.append(misc.DrawAxes(self.env, j.GetHierarchyChildLink().GetTransform(), 0.3))
