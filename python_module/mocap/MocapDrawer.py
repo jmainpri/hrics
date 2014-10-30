@@ -5,6 +5,7 @@
 from openravepy import *
 from MocapCommon import *
 import transformation_helper
+# from bioik.BioHumanIk import *
 import csv
 import sys
 
@@ -15,6 +16,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import cv2
 from os import listdir
 from os.path import isfile, join
+
 
 class Human():
 
@@ -76,7 +78,6 @@ class Drawer():
         self.env.Reset()
         # self.env.Load("../../ormodels/human_wpi_bio.xml")
 
-        # self.human = self.env.GetRobots()[0]
         self.handles = []
 
         self.frames = []
@@ -233,7 +234,7 @@ class Drawer():
         prev_time = self.frames[0].get_time()
 
         # IMAGE PUBLISHER
-        folder = "/home/rafi/logging_ten/0"
+        folder = "/home/rafi/logging_ten/1"
         images = [ f for f in listdir(folder) if isfile(join(folder,f)) and '.png' in f ]
         print "Num images : ", len(images)
         times = []
@@ -450,15 +451,19 @@ class Drawer():
 
 if __name__ == '__main__':
 
-    setup = read_setup('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/')
-    splits = read_splits('/home/rafi/logging_ten/0/')
-
-    print splits
+    setup = read_setup('/home/rafi/Desktop/trials/')
+    # splits = read_splits('/home/rafi/logging_ten/0/')
 
 
-    NB_HUMAN    = setup[0]
-    ELBOW_PADS  = setup[1]
-    RARM_ONLY   = setup[2]
+    # NB_HUMAN    = setup[0]
+    # ELBOW_PADS  = setup[1]
+    # RARM_ONLY   = setup[2]
+    # NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)
+
+    # NB_HUMAN    = setup[0]
+    NB_HUMAN    = 1
+    ELBOW_PADS  = False
+    RARM_ONLY   = False
     NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)
 
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
@@ -531,8 +536,8 @@ if __name__ == '__main__':
     # prefix = '[2646-2737]'
 
     # # Recording 9 Run 4
-    # run = '4/'
-    # prefix = '[0489-0589]'
+    run = '4/'
+    prefix = '[0489-0589]'
     # prefix = '[1537-1608]'
     # prefix = '[2018-2099]'
 
@@ -548,8 +553,8 @@ if __name__ == '__main__':
 
 
 
-    # m_file = dirr+run+prefix+'markers.csv'
-    # o_file = dirr+run+prefix+'objects.csv'
+    m_file = dirr+run+prefix+'markers.csv'
+    o_file = dirr+run+prefix+'objects.csv'
 
 
     # f = MarkerFixer('/home/rafi/logging_nine/2/[5900-9000]markers.csv', '/home/rafi/logging_nine/2/[5900-9000]objects.csv')
@@ -560,15 +565,39 @@ if __name__ == '__main__':
     # f = MarkerFixer('/home/rafi/logging_nine/2/[37900-40400]markers.csv', '/home/rafi/logging_nine/2/[37900-40400]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[42600-44700]markers.csv', '/home/rafi/logging_nine/2/[42600-44700]objects.csv')
 
-    m_file = '/home/rafi/logging_ten/0/markers_fixed.csv'
-    o_file = '/home/rafi/logging_ten/0/objects_fixed.csv'
+    # m_file = '/home/rafi/logging_ten/0/markers_fixed.csv'
+    # o_file = '/home/rafi/logging_ten/0/objects_fixed.csv'
+
+    folder = '/home/rafi/logging_eleven/0/'
+    # name = '[0001-3406]'
+    # name = '[8657-11482]'
+    # name = '[13712-17083]'
+    name = '[19458-22078]'
+    # name = '[24495-27070]'
+
+    m_file = folder + name + 'markers_fixed.csv'
+    o_file = folder + name + 'objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0629-0768]markers.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0629-0768]objects.csv'
+
+    # block = '1'
+    # run = '0'
+    # m_file = '/home/rafi/aterm_experiment/block'+str(block)+'/'+str(run)+'/markers_fixed.csv'
+    # o_file = '/home/rafi/aterm_experiment/block'+str(block)+'/'+str(run)+'/objects_fixed.csv'
+
+    m_file = '/home/rafi/two_arm_test_data/[0800-3511]markers.csv'
+    o_file = '/home/rafi/two_arm_test_data/[0800-3511]objects.csv'
+
+
 
     d =  Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
+    d.load_file(m_file, o_file)
+    d.play_skeleton()
 
-    # for split in splits
-    for split in splits:
-        print "Playing split : ", split
-        d.load_range(m_file, o_file, split)
-        d.play_skeleton()
-        print "Finished playing split.  Press enter to continue"
-        sys.stdin.readline()
+    # for split in splits:
+    #     print "Playing split : ", split
+    #     d.load_range(m_file, o_file, split)
+    #     d.play_skeleton()
+    #     print "Finished playing split.  Press enter to continue"
+    #     sys.stdin.readline()

@@ -21,7 +21,6 @@ class Segmenter():
         self.max = len(self.drawer.frames)
         self.curr = 0
 
-
         self.split = [0,0]
         self.splits = []
 
@@ -34,7 +33,7 @@ class Segmenter():
 
         if self.curr < 0:
             self.curr = 0
-        if self.curr > max:
+        if self.curr >= max:
             self.curr = max
 
         # Load image
@@ -76,15 +75,15 @@ class Segmenter():
 
 if __name__ == '__main__':
 
-    NB_HUMAN    = 2
-    ELBOW_PADS  = True
-    RARM_ONLY   = True
+    NB_HUMAN    = 1
+    ELBOW_PADS  = False
+    RARM_ONLY   = False
     NB_MARKERS = MocapDrawer.get_nb_markers(ELBOW_PADS, RARM_ONLY)
-
 
     d =  MocapDrawer.Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
 
-    dirr = '/home/rafi/logging_ten/0/'
+    # dirr = '/home/rafi/logging_drop/0/'
+    dirr = '/home/rafi/two_arm_test_data/'
 
     run = ''
     # run = '[1000-3900]'
@@ -95,9 +94,16 @@ if __name__ == '__main__':
     # run = '[33000-35700]'
     # run = '[37900-40400]'
 
+    # run = '[0001-3406]'
+    # run = '[8657-11482]'
+    # run = '[13712-17083]'
+    # run = '[19458-22078]'
+    # run = '[24495-27070]'
+
     m_file = dirr+run+'markers_fixed.csv'
     o_file = dirr+run+'objects_fixed.csv'
-    img_dir = dirr
+
+    img_dir = '/home/rafi/logging_ten/0/'
 
     s = Segmenter(m_file, o_file, img_dir, d)
     s.load_images()
@@ -144,8 +150,8 @@ if __name__ == '__main__':
             print "Saved splits to Splits.csv. Current splits : ", s.splits
 
         # TODO Should only be done if we updated a frame.  Get rid of continues
-        cv_image = cv2.imread( s.curr_img, 1)
-        cv2.imshow('Camera Data', cv_image)
+        # cv_image = cv2.imread( s.curr_img, 1)
+        # cv2.imshow('Camera Data', cv_image)
 
         s.drawer.clear()
         frame = s.drawer.get_frame(s.curr)

@@ -9,9 +9,9 @@ import os
 import time
 import math
 import sys
-import copy
 from MocapCommon import *
 from MarkerMapper import *
+from copy import deepcopy
 
 class MarkerFixer:
 
@@ -393,14 +393,85 @@ class MarkerFixer:
         print "# of deltas > 2cm : ", two_count, " > 3cm : ", three_count, " > 5cm : ", five_count
         print "Max distance : ", max_dist
 
+    def interp_drops(self):
+        frame_list = deepcopy(self.frames)
+        # Build matrix of frames
+        # Each row is a frame, each col is an individual marker
+        mat = np.empty( (self.last_frame-self.first_frame,len(frame_list[self.first_frame].marker_list)), dtype=object )
+        print "Config shape"
+        print mat.shape
+
+        for i in range(self.first_frame, self.last_frame):
+            frame = frame_list[i]
+            for m, marker in enumerate(frame.marker_list):
+                mat[i-self.first_frame,m] = marker
+
+        # Iterate over cols of new matrix
+        # This is a list of all frames for a single marker.
+        for col in range(mat.shape[1]):
+            prev = self.first_frame #The last marker before a drop
+            start_drop = None #The start of a drop range
+            for index, marker in enumerate(mat[:,col]): #Iterate over all frames of one marker i.e. rWrist
+                if marker.times_dropped is 1:
+                    start_drop = index
+                    prev = index-1
+                if start_drop and marker.times_dropped is 0:
+                    # Found full drop range
+                    end_drop = index
+                    # print 'Found drop range.  prev : ', prev, ' start : ', start_drop, ' end : ', end_drop
+                    a = frame_list[prev].marker_list[col]
+                    b = frame_list[end_drop].marker_list[col]
+                    t0 = frame_list[prev].get_time()
+                    t1 = frame_list[end_drop].get_time()
+
+                    # for k, marker in enumerate(mat[start_drop:end_drop, col]):
+                    #     print 'trying to fix marker : ', k
+                    #     t_curr = self.frames[k].get_time()
+                    #     alpha = (t_curr - t0) / (t1-t0)
+
+                    #     new = interpolate(marker.array, b.array, alpha*marker.get_true_dist(b))
+                    #     marker.array = new
+                    #     marker.x = new[0]
+                    #     marker.y = new[1]
+                    #     marker.z = new[2]
+
+                    # print 'interpolating between : ', a.array, ' ', b.array
+                    for k in range(start_drop,end_drop):
+                        marker = deepcopy(frame_list[k].marker_list[col])
+                        # print 'trying to fix marker : ', k, ' for range : ', start_drop, ' : ', end_drop
+                        t_curr = frame_list[k].get_time()
+                        alpha = (t_curr - t0) / (t1-t0)
+
+                        new = interpolate(a.array, b.array, alpha)
+                        marker.x = new[0]
+                        marker.y = new[1]
+                        marker.z = new[2]
+                        marker.times_dropped = 0
+                        frame_list[k].marker_list[col] = marker
+
+                        # print 'new : ', marker.array, ' dist to goal : ', marker.get_true_dist(b)
+
+
+                    start_drop = None
+
+
+        return frame_list
+            # for marker in frame.marker_list:
+            #     print len(frame.marker_list)
+
 if __name__ == '__main__':
+    # Default
+    # THRESHOLD   = 0.0025
+    # ELBOW_PADS  = True
+    # RARM_ONLY   = True
+    # NB_MARKERS  = get_nb_markers(ELBOW_PADS, RARM_ONLY)
+    # NB_HUMAN    = 2
 
     THRESHOLD   = 0.0025
-    ELBOW_PADS  = True
-    RARM_ONLY   = True
+    ELBOW_PADS  = False
+    RARM_ONLY   = False
     NB_MARKERS  = get_nb_markers(ELBOW_PADS, RARM_ONLY)
-    NB_HUMAN    = 2
-
+    NB_HUMAN    = 1
 
     # f = MarkerFixer('/home/rafi/logging_six/2/markers.csv', '/home/rafi/logging_six/2/objects.csv')
     # f = MarkerFixer('/home/rafi/logging_five/1/markers.csv', '/home/rafi/logging_five/1/objects.csv')
@@ -466,11 +537,27 @@ if __name__ == '__main__':
     # name = '[18618-22433]'
     # name = '[25966-28893]'
 
-    f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0000-4000]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0000-4000]objects.csv')
+    # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0000-4000]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0000-4000]objects.csv')
     # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[7167-10115]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[7167-10115]objects.csv')
     # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[12316-15618]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[12316-15618]objects.csv')
     # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[19500-22433]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[19500-22433]objects.csv')
     # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[25966-28893]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[25966-28893]objects.csv')
+
+    # f = MarkerFixer('/home/rafi/logging_eleven/0/[0001-3406]markers.csv', '/home/rafi/logging_eleven/0/[0001-3406]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_eleven/0/[8657-11482]markers.csv', '/home/rafi/logging_eleven/0/[8657-11482]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_eleven/0/[13712-17083]markers.csv', '/home/rafi/logging_eleven/0/[13712-17083]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_eleven/0/[19458-22078]markers.csv', '/home/rafi/logging_eleven/0/[19458-22078]objects.csv')
+    # f = MarkerFixer('/home/rafi/logging_eleven/0/[24495-27070]markers.csv', '/home/rafi/logging_eleven/0/[24495-27070]objects.csv')
+
+    # f = MarkerFixer('/home/rafi/logging_twelve/0/markers.csv', '/home/rafi/logging_twelve/0/objects.csv')
+    # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[6800-8000]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[6800-8000]objects.csv')
+
+
+    # block = '1'
+    # run = '0'
+    # f = MarkerFixer('/home/rafi/aterm_experiment/block'+str(block)+'/'+str(run)+'/markers.csv', '/home/rafi/aterm_experiment/block'+str(block)+'/'+str(run)+'/objects.csv')
+
+    f = MarkerFixer('/home/rafi/two_arm_test_data/markers.csv', '/home/rafi/two_arm_test_data/objects.csv')
 
     try:
         with Timer() as t:
@@ -495,11 +582,29 @@ if __name__ == '__main__':
             print "Calculating statistics : "
             f.calc_stats()
 
-            print "Trying to smooth markers"
-            f.smooth_markers(7)
 
-            print "Calculating statistics after smoothing : "
-            f.calc_stats()
+            # num_drops = 0
+            # for frame in f.frames:
+            #     for marker in frame.marker_list:
+            #         if marker.times_dropped > 0:
+            #             num_drops += 1
+
+            # print 'drops in og data : ', num_drops
+            # num_drops = 0
+
+            # new = f.interp_drops()
+            # for frame in new:
+            #     for marker in frame.marker_list:
+            #         if marker.times_dropped > 0:
+            #             num_drops += 1
+
+            # print 'drops in fixed data : ', num_drops
+
+            # print "Trying to smooth markers"
+            # f.smooth_markers(7)
+
+            # print "Calculating statistics after smoothing : "
+            # f.calc_stats()
 
             f.save_file()
 
