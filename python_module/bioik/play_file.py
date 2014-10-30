@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
     folder = '/home/ruikun/workspace/gmm-gmr-gesture-recognition/data_ten_motions_mocap_1016/'
 
-    name = '[0408-0491]'
+    name = '[7395-7595]'
     h1_file = folder + "human_one/" + name + '_human1_.csv'
     h2_file = folder + "human_two/" + name + '_human2_.csv'
 
