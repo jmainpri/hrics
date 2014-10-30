@@ -14,7 +14,7 @@ import subprocess
 import Queue
 import threading
 from openravepy import *
-
+import bioik/TestBioHumanIk
 
 class Tracker:
 
@@ -45,6 +45,8 @@ class Tracker:
         # 4
         # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_five/4/2014-08-06-12-24-52.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
 
+        self.bag = subprocess.Popen('rosbag play /home/rafi/two_arm_test_data/2014-10-28-16-47-39.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+
 
         self.frames = []
         self.last_frame = None
@@ -54,6 +56,8 @@ class Tracker:
         self.marker_q = Queue.Queue()
 
         self.viewer = MocapDrawer.Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
+        self.ik = TestBioHumanIk()
+        self.ik.initialize()
 
         if not (marker_topic and object_topic):
             print "At least one topic needed to subscribe to"
@@ -125,10 +129,10 @@ class Tracker:
 
             # Draw the skeleton
             self.viewer.clear()
-            self.viewer.draw_frame_skeleton(frame)
-            self.viewer.draw_frame_raw(frame)
+            # self.viewer.draw_frame_skeleton(frame)
+            # self.viewer.draw_frame_raw(frame)
             # self.viewer.draw_frame_axes(frame)
-
+            self.ik.draw_frame(frame)
 
         # self.frames.append(frame)
 
