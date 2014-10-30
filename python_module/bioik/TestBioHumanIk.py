@@ -519,7 +519,6 @@ if __name__ == "__main__":
     m_file = folder + name + 'markers_raw.csv'
     o_file = folder + name + 'objects_raw.csv'
 
-<<<<<<< HEAD:python_module/bioik/TestBioHumanIk.py
     # LATEST ------------------------------------
 
     # Folder 1
@@ -578,19 +577,6 @@ if __name__ == "__main__":
     m_file = folder + name + 'markers_fixed.csv'
     o_file = folder + name + 'objects_fixed.csv'
 
-<<<<<<< Updated upstream
-=======
-    folder = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/'
-    name = '[0000-4000]'
-    # name = '[7167-10115]'
-    # name = '[12316-15618]'
-    # name = '[19500-22433]'
-    # name = '[25966-28893]'
-    m_file = folder + name + 'markers_fixed.csv'
-    o_file = folder + name + 'objects_fixed.csv'
-
->>>>>>> 67c91e7539876a76f1f353e17a2b14b20e458908:python_module/bioik/test_elbow_ik.py
-=======
     # ------
     data_folder = '/home/rafi/logging_twelve/0/'
     folder = data_folder
@@ -598,7 +584,6 @@ if __name__ == "__main__":
     m_file = folder + name + 'markers_fixed.csv'
     o_file = folder + name + 'objects_fixed.csv'
 
->>>>>>> Stashed changes
     print "try to load file : ", m_file
     print "try to load file : ", o_file
 
