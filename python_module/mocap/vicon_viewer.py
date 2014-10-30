@@ -137,7 +137,7 @@ class Tracker:
             pelv_frames = []
             for object in frame.object_list:
                 if object and 'Pelvis' in object.id and not object.is_occluded():
-                    pelv_frames.append(object.get_rot_matrix())
+                    pelv_frames.append(object.get_transform())
 
             if len(pelv_frames) is not NB_HUMAN:
                 return
@@ -178,15 +178,13 @@ class Tracker:
         # self.save_file()
         print "done"
 
-
-
 if __name__ == '__main__':
 
     THRESHOLD   = 0.0025
     # NB_MARKERS  = 18
-    NB_HUMAN    = 2
-    ELBOW_PADS  = True
-    RARM_ONLY   = True
+    NB_HUMAN    = 1
+    ELBOW_PADS  = False
+    RARM_ONLY   = False
     NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)
 
 

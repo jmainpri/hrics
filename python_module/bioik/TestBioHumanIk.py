@@ -242,7 +242,7 @@ class TestBioHumanIk(BioHumanIk):
                     print "dist wrist : ", dist
 
             if self.compute_left_arm:
-                
+
                 if j.GetName() == "lShoulderX":
                     # self.handles.append(self.env.plot3(p_link, pointsize=0.05, colors=array([0, 0, 0]), drawstyle=1))
                     dist = la.norm(p_link - p1l)
@@ -362,15 +362,14 @@ class TestBioHumanIk(BioHumanIk):
             curr_time = frame.get_time()
             dt = curr_time - prev_time
             prev_time = curr_time
-            
+
             #print "dt " , dt , " dt0 : ", dt_0
 
             if max_frame is not None:
                 if i > max_frame:
                     break
 
-            if i % 4 == 0:
-                del self.handles[:]
+
             self.drawer.clear()
             self.drawer.draw_frame_skeleton(frame)
 
@@ -445,7 +444,7 @@ class TestBioHumanIk(BioHumanIk):
             # if i % 3 == 0:
             #     print "press enter to continue"
             #     sys.stdin.readline()
-            
+
             #for h in self.humans:
             #    print "robot in collision ", h.CheckSelfCollision()
 
@@ -485,7 +484,7 @@ if __name__ == "__main__":
     # o_file = folder + '[1500-1680]objects.csv'
 
     # VACTION ------------------------------------
-  
+
     name = '[0440-0580]'
 
     m_file = folder + name + 'markers.csv'
@@ -512,6 +511,7 @@ if __name__ == "__main__":
     m_file = folder + name + 'markers_raw.csv'
     o_file = folder + name + 'objects_raw.csv'
 
+<<<<<<< HEAD:python_module/bioik/TestBioHumanIk.py
     # LATEST ------------------------------------
 
     # Folder 1
@@ -569,7 +569,18 @@ if __name__ == "__main__":
     name = ""
     m_file = folder + name + 'markers_fixed.csv'
     o_file = folder + name + 'objects_fixed.csv'
-    
+
+=======
+    folder = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/'
+    name = '[0000-4000]'
+    # name = '[7167-10115]'
+    # name = '[12316-15618]'
+    # name = '[19500-22433]'
+    # name = '[25966-28893]'
+    m_file = folder + name + 'markers_fixed.csv'
+    o_file = folder + name + 'objects_fixed.csv'
+
+>>>>>>> 67c91e7539876a76f1f353e17a2b14b20e458908:python_module/bioik/test_elbow_ik.py
     print "try to load file : ", m_file
     print "try to load file : ", o_file
 
