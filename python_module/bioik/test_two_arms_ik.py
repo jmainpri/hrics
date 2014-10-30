@@ -29,22 +29,12 @@ if __name__ == "__main__":
     name = "[0800-3511]"
     m_file = folder + name + 'markers.csv'
     o_file = folder + name + 'objects.csv'
-    
+
     print "try to load file : ", m_file
     print "try to load file : ", o_file
 
     test = TestTwoArmIk(name)
     test.initialize(m_file, o_file)
-
-    test.mapping.append(test.humans[0].GetJoint("lShoulderY1").GetDOFIndex())
-    test.mapping.append(test.humans[0].GetJoint("lShoulderX").GetDOFIndex())
-    test.mapping.append(test.humans[0].GetJoint("lShoulderY2").GetDOFIndex())
-    test.mapping.append(test.humans[0].GetJoint("lElbowZ").GetDOFIndex())
-    test.mapping.append(test.humans[0].GetJoint("lElbowX").GetDOFIndex())
-    test.mapping.append(test.humans[0].GetJoint("lElbowY").GetDOFIndex())
-    test.mapping.append(test.humans[0].GetJoint("lWristZ").GetDOFIndex())
-    test.mapping.append(test.humans[0].GetJoint("lWristX").GetDOFIndex())
-    test.mapping.append(test.humans[0].GetJoint("lWristY").GetDOFIndex())
 
     print len(test.mapping)
 

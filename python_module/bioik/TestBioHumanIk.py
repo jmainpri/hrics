@@ -44,10 +44,12 @@ class TestBioHumanIk(BioHumanIk):
 
         self.env = self.drawer.env
         self.env.Load(self.environment_file)
+        print "loading ", self.environment_file
 
-        if self.nb_humans > 1:
-            self.humans = self.env.GetRobots()
-        else:
+        self.humans = self.env.GetRobots()
+        self.change_color_human()
+
+        if self.nb_humans == 1:
             self.humans = [self.env.GetRobots()[0]]
 
         self.mapping = []
@@ -65,6 +67,18 @@ class TestBioHumanIk(BioHumanIk):
         self.mapping.append(self.humans[0].GetJoint("rWristX").GetDOFIndex())
         self.mapping.append(self.humans[0].GetJoint("rWristY").GetDOFIndex())
 
+        if not self.rarm_only:
+            self.mapping.append(self.humans[0].GetJoint("lShoulderY1").GetDOFIndex())
+            self.mapping.append(self.humans[0].GetJoint("lShoulderX").GetDOFIndex())
+            self.mapping.append(self.humans[0].GetJoint("lShoulderY2").GetDOFIndex())
+            self.mapping.append(self.humans[0].GetJoint("lElbowZ").GetDOFIndex())
+            self.mapping.append(self.humans[0].GetJoint("lElbowX").GetDOFIndex())
+            self.mapping.append(self.humans[0].GetJoint("lElbowY").GetDOFIndex())
+            self.mapping.append(self.humans[0].GetJoint("lWristZ").GetDOFIndex())
+            self.mapping.append(self.humans[0].GetJoint("lWristX").GetDOFIndex())
+            self.mapping.append(self.humans[0].GetJoint("lWristY").GetDOFIndex())
+            self.compute_left_arm = True
+
         # Get torso offset
         self.offset_pelvis_torso_init = self.humans[0].GetJoint("TorsoX").GetHierarchyChildLink().GetTransform()[0:3, 3]
 
@@ -81,7 +95,7 @@ class TestBioHumanIk(BioHumanIk):
 
         links = []
         for jIdx, j in enumerate(self.humans[1].GetJoints()):
-            # print "%s, \t%.3f, \t%.3f" % (j.GetName(), j.GetLimits()[0], j.GetLimits()[1])
+            print "%s, \t%.3f, \t%.3f" % (j.GetName(), j.GetLimits()[0], j.GetLimits()[1])
             l = j.GetFirstAttached()
             if l is not None : links.append(l)
             l = j.GetSecondAttached()
@@ -345,6 +359,7 @@ class TestBioHumanIk(BioHumanIk):
 
     def draw_frame(self,frame,dt=None):
 
+        del self.handles[:]
         self.drawer.clear()
         self.drawer.draw_frame_skeleton(frame)
 
