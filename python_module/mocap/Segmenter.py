@@ -2,7 +2,7 @@ import MocapDrawer
 import keystroke
 import sys
 import SegmentCSV
-
+import MocapCommon
 import rospy
 import cv2
 from os import listdir
@@ -33,8 +33,11 @@ class Segmenter():
 
         if self.curr < 0:
             self.curr = 0
-        if self.curr >= max:
-            self.curr = max
+        if self.curr >= self.max:
+            self.curr = self.max-1
+
+
+        last = ''
 
         # Load image
         frame = self.drawer.get_frame(self.curr)
@@ -42,10 +45,10 @@ class Segmenter():
 
         for t, img in self.images:
             if t > curr_time:
+                last = img
                 break
 
-        last = img
-        self.curr_img = self.img_dir + "/" + last
+        self.curr_img = os.path.join(self.img_dir, last)
 
     def load_images(self):
         images = [ f for f in listdir(self.img_dir) if isfile(join(self.img_dir,f)) and '.png' in f ]
@@ -74,88 +77,85 @@ class Segmenter():
 
 
 if __name__ == '__main__':
+    base_dir = '/home/rafi/aterm_experiment/'
 
-    NB_HUMAN    = 1
-    ELBOW_PADS  = False
-    RARM_ONLY   = False
-    NB_MARKERS = MocapDrawer.get_nb_markers(ELBOW_PADS, RARM_ONLY)
+    setup = MocapCommon.read_setup(base_dir)
+    NB_HUMAN    = setup[0]
+    ELBOW_PADS  = setup[1]
+    RARM_ONLY   = setup[2]
+    NB_MARKERS  = MocapCommon.get_nb_markers(ELBOW_PADS, RARM_ONLY)
 
     d =  MocapDrawer.Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
 
-    # dirr = '/home/rafi/logging_drop/0/'
-    dirr = '/home/rafi/two_arm_test_data/'
+    blocks = sorted([ name for name in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, name)) ])
+    for block in blocks:
+        path = os.path.join(base_dir, block)
+        runs = sorted([ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ])
 
-    run = ''
-    # run = '[1000-3900]'
-    # run = '[5900-9000]'
-    # run = '[11700-14800]'
-    # run = '[22400-25300]'
-    # run = '[28300-30800]'
-    # run = '[33000-35700]'
-    # run = '[37900-40400]'
+        for run in runs:
+            file_path = os.path.join(path, run)
+            print
+            print 'Trying to fix block : ', block, ' run : ', run
+            print 'in folder : ', file_path
+            print'================================================'
+            print
+            m_file = os.path.join(file_path,'markers_fixed.csv')
+            o_file = os.path.join(file_path,'objects_fixed.csv')
 
-    # run = '[0001-3406]'
-    # run = '[8657-11482]'
-    # run = '[13712-17083]'
-    # run = '[19458-22078]'
-    # run = '[24495-27070]'
+            s = Segmenter(m_file, o_file, file_path, d)
+            s.load_images()
 
-    m_file = dirr+run+'markers_fixed.csv'
-    o_file = dirr+run+'objects_fixed.csv'
+            while True:
+                c = keystroke.getch(-1)
 
-    img_dir = '/home/rafi/logging_ten/0/'
+                if c == 'q':
+                    sys.exit()
+                if c == 'u':
+                    s.change_frame(-25)
+                if c == 'i':
+                    s.change_frame(-1)
+                if c == 'o':
+                    s.change_frame(1)
+                if c == 'p':
+                    s.change_frame(25)
+                if c == ' ':
+                    print "Current Frame: ", s.curr
+                if c == '1':
+                    s.split[0] = s.curr
+                    print "Set split beginning to: " + str(s.split[0])
+                    continue
+                if c == '2':
+                    s.split[1] = s.curr
+                    print "Set split ending to: " + str(s.split[1])
+                    continue
+                if c == 's':
+                    print "Segmenting files from: " + str(s.split[0]) + " to: " + str(s.split[1])
 
-    s = Segmenter(m_file, o_file, img_dir, d)
-    s.load_images()
+                    s.splits.append((s.split[0], s.split[1]))
+                    print "Current splits : "
+                    print s.splits
 
-    while True:
-        c = keystroke.getch(-1)
+                    # temp = SegmentCSV.Segmenter(s.m_file, './markers.csv')
+                    # temp.segment([(s.split[0], s.split[1])])
+                    # temp = SegmentCSV.Segmenter(s.o_file, './objects.csv')
+                    # temp.segment([(s.split[0], s.split[1])])
 
-        if c == 'q':
-            sys.exit()
-        if c == 'u':
-            s.change_frame(-25)
-        if c == 'i':
-            s.change_frame(-1)
-        if c == 'o':
-            s.change_frame(1)
-        if c == 'p':
-            s.change_frame(25)
-        if c == ' ':
-            print "Current Frame: ", s.curr
-        if c == '1':
-            s.split[0] = s.curr
-            print "Set split beginning to: " + str(s.split[0])
-            continue
-        if c == '2':
-            s.split[1] = s.curr
-            print "Set split ending to: " + str(s.split[1])
-            continue
-        if c == 's':
-            print "Segmenting files from: " + str(s.split[0]) + " to: " + str(s.split[1])
+                if c == 'x':
+                    if len(s.splits) > 0:
+                        s.save_splits()
+                    # Reset all splits
+                    s.splits = []
+                    print "Saved splits to Splits.csv, clearing splits"
+                    break
 
-            s.splits.append((s.split[0], s.split[1]))
-            print "Current splits : "
-            print s.splits
+                # TODO Should only be done if we updated a frame.  Get rid of continues
+                cv_image = cv2.imread( s.curr_img, 1)
+                if cv_image is not None:
+                    cv2.imshow('Camera Data', cv_image)
 
-            # temp = SegmentCSV.Segmenter(s.m_file, './markers.csv')
-            # temp.segment([(s.split[0], s.split[1])])
-            # temp = SegmentCSV.Segmenter(s.o_file, './objects.csv')
-            # temp.segment([(s.split[0], s.split[1])])
-
-        if c == 'x':
-            s.save_splits()
-            # Reset all splits
-            s.splits = []
-            print "Saved splits to Splits.csv. Current splits : ", s.splits
-
-        # TODO Should only be done if we updated a frame.  Get rid of continues
-        # cv_image = cv2.imread( s.curr_img, 1)
-        # cv2.imshow('Camera Data', cv_image)
-
-        s.drawer.clear()
-        frame = s.drawer.get_frame(s.curr)
-        s.drawer.draw_frame_skeleton(frame)
+                s.drawer.clear()
+                frame = s.drawer.get_frame(s.curr)
+                s.drawer.draw_frame_skeleton(frame)
 
 
 

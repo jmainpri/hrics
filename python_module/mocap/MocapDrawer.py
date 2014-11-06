@@ -463,8 +463,8 @@ if __name__ == '__main__':
 
     # NB_HUMAN    = setup[0]
     NB_HUMAN    = 1
-    ELBOW_PADS  = False
-    RARM_ONLY   = False
+    ELBOW_PADS  = True
+    RARM_ONLY   = True
     NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)
 
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/markers_fixed.csv'
@@ -587,8 +587,8 @@ if __name__ == '__main__':
     # m_file = '/home/rafi/aterm_experiment/block'+str(block)+'/'+str(run)+'/markers_fixed.csv'
     # o_file = '/home/rafi/aterm_experiment/block'+str(block)+'/'+str(run)+'/objects_fixed.csv'
 
-    m_file = '/home/rafi/two_arm_test_data/[0800-3511]markers.csv'
-    o_file = '/home/rafi/two_arm_test_data/[0800-3511]objects.csv'
+    m_file = '/home/rafi/logging_drop/0/markers_fixed.csv'
+    o_file = '/home/rafi/logging_drop/0/objects_fixed.csv'
 
 
 

@@ -384,6 +384,10 @@ class Frame:
         # return self.sec + (self.nsec/1e10)
         return rospy.Time(int(self.sec), int(self.nsec)).to_sec()
 
+    def get_rostime(self):
+        # return self.sec + (self.nsec/1e10)
+        return rospy.Time(int(self.sec), int(self.nsec))
+
     def get_dist_between_frames(self, other):
         dist_list = []
 
