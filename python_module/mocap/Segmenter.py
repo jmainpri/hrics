@@ -34,6 +34,7 @@ class Segmenter():
         if self.curr < 0:
             self.curr = 0
         if self.curr >= self.max:
+            print "Reached EOF"
             self.curr = self.max-1
 
 
@@ -120,6 +121,7 @@ if __name__ == '__main__':
                     s.change_frame(25)
                 if c == ' ':
                     print "Current Frame: ", s.curr
+                    print "Current Splits : ", s.splits
                 if c == '1':
                     s.split[0] = s.curr
                     print "Set split beginning to: " + str(s.split[0])
@@ -139,7 +141,9 @@ if __name__ == '__main__':
                     # temp.segment([(s.split[0], s.split[1])])
                     # temp = SegmentCSV.Segmenter(s.o_file, './objects.csv')
                     # temp.segment([(s.split[0], s.split[1])])
-
+                if c == 'r':
+                    print "Removing split : ", s.splits.pop()
+                    continue
                 if c == 'x':
                     if len(s.splits) > 0:
                         s.save_splits()
