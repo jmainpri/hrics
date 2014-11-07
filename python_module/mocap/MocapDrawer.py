@@ -88,6 +88,9 @@ class Drawer():
                                 [ 0.0, 0.0, 0.0, 1.0]])
         self.env.GetViewer().SetCamera(t_cam)
 
+    def clear_frames(self):
+        self.frames = []
+
     def load_file(self, m_filepath, o_filepath):
         print "Trying to open file"
         # global NB_HUMAN # TODO fix global to be class member

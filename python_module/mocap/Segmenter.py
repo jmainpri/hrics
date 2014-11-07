@@ -88,6 +88,8 @@ if __name__ == '__main__':
 
     d =  MocapDrawer.Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
 
+    cv2.namedWindow('Camera Data', cv2.WINDOW_NORMAL)
+
     blocks = sorted([ name for name in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, name)) ])
     for block in blocks:
         path = os.path.join(base_dir, block)
@@ -103,6 +105,7 @@ if __name__ == '__main__':
             m_file = os.path.join(file_path,'markers_fixed.csv')
             o_file = os.path.join(file_path,'objects_fixed.csv')
 
+            d.clear_frames()
             s = Segmenter(m_file, o_file, file_path, d)
             s.load_images()
 
@@ -120,7 +123,9 @@ if __name__ == '__main__':
                 if c == 'p':
                     s.change_frame(25)
                 if c == ' ':
-                    print "Current Frame: ", s.curr
+                    print
+                    print "Current Frame: ", s.curr, ' / ', s.max
+                    print "Begin / End : ", s.split[0], ' / ', s.split[1]
                     print "Current Splits : ", s.splits
                 if c == '1':
                     s.split[0] = s.curr
@@ -131,7 +136,7 @@ if __name__ == '__main__':
                     print "Set split ending to: " + str(s.split[1])
                     continue
                 if c == 's':
-                    print "Segmenting files from: " + str(s.split[0]) + " to: " + str(s.split[1])
+                    print "Adding split from: " + str(s.split[0]) + " to: " + str(s.split[1])
 
                     s.splits.append((s.split[0], s.split[1]))
                     print "Current splits : "
