@@ -11,6 +11,13 @@ from openravepy import *
 import transformation_helper
 import rospy
 import copy
+import csv
+
+
+global NB_HUMAN
+global ELBOW_PADS
+global RARM_ONLY
+global NB_MARKERS
 
 class Timer:
     def __enter__(self):
@@ -45,6 +52,10 @@ class Marker:
         diff = self.array - other.array
         return np.dot(diff, diff.conj())
 
+    def get_true_dist(self, other):
+        diff = self.array - other.array
+        return np.sqrt(np.dot(diff,diff))
+
 class Object:
     def __init__(self, id, occluded, x, y, z, r_x, r_y, r_z, r_w):
         self.id = id
@@ -62,6 +73,17 @@ class Object:
         return self.occluded
 
     def get_transform(self):
+
+        # ''' TEST '''
+        # raw_quaternion = array([self.r_w, self.r_x, self.r_y, self.r_z])
+        # print "Raw quaternion: " + str(raw_quaternion)
+        # raw_quaternion_norm = np.linalg.norm(raw_quaternion)
+        # print "Raw norm: " + str(raw_quaternion_norm)
+        # normalized_quaternion = raw_quaternion / raw_quaternion_norm
+        # print "Normalized quaternion: " + str(normalized_quaternion)
+        # normalized_quaternion_norm = np.linalg.norm(normalized_quaternion)
+        # print "Normalized norm: " + str(normalized_quaternion_norm)
+        # ''' /TEST '''
 
         mat =  MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([self.r_w, self.r_x, self.r_y, self.r_z]) )), transpose(matrix([self.x, self.y, self.z])) )
 
@@ -362,6 +384,10 @@ class Frame:
         # return self.sec + (self.nsec/1e10)
         return rospy.Time(int(self.sec), int(self.nsec)).to_sec()
 
+    def get_rostime(self):
+        # return self.sec + (self.nsec/1e10)
+        return rospy.Time(int(self.sec), int(self.nsec))
+
     def get_dist_between_frames(self, other):
         dist_list = []
 
@@ -396,3 +422,39 @@ def get_nb_objects(elbow_pads, r_arm_only):
         nb_objects = 2
 
     return nb_objects
+
+def read_setup(folder):
+    setup = []
+
+    with open(folder + 'Setup.csv', 'r') as s_file:
+        matrix = [row for row in csv.reader(s_file, delimiter=',')]
+        for line in matrix:
+            setup.append( int(line[0]) )
+
+    return setup
+
+def set_constants(folder):
+    setup = read_setup(folder)
+    # splits = read_splits('/home/rafi/logging_ten/0/')
+
+    NB_HUMAN    = setup[0]
+    ELBOW_PADS  = setup[1]
+    RARM_ONLY   = setup[2]
+    NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)
+
+def read_splits(folder):
+    splits = []
+
+    with open(folder + 'Splits.csv', 'r') as s_file:
+        matrix = [row for row in csv.reader(s_file, delimiter=',')]
+        for line in matrix:
+            splits.append( (int(line[0]), int(line[1])) )
+
+    return splits
+# a : a numpy array of [x,y,z]
+# b : a numpy array of [x,y,z]
+def interpolate( a, b, u ):
+     out = copy.deepcopy(a)
+     for i in range(len(out)):
+         out[i] += u*(b[i]-a[i])
+     return out

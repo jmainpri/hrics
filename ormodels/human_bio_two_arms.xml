@@ -103,7 +103,7 @@
         </geom>
     </body>
 
-    <body name="TorsoDummyTransX">
+    <body name="rTorsoDummyTransX">
         <offsetfrom>TorsoDummyZ</offsetfrom>
         <translation>0 0 0</translation>
         <geom type="sphere">
@@ -111,16 +111,42 @@
             <transparency>1</transparency>
         </geom>
     </body>
-    <body name="TorsoDummyTransY">
-        <offsetfrom>TorsoDummyTransX</offsetfrom>
+    <body name="rTorsoDummyTransY">
+        <offsetfrom>rTorsoDummyTransX</offsetfrom>
         <translation>0 0 0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
             <transparency>1</transparency>
         </geom>
     </body>
-    <body name="TorsoDummyTransZ">
-        <offsetfrom>TorsoDummyTransY</offsetfrom>
+    <body name="rTorsoDummyTransZ">
+        <offsetfrom>rTorsoDummyTransY</offsetfrom>
+        <translation>0 0 0</translation>
+        <geom type="sphere">
+            <radius>0.02</radius>
+            <transparency>1</transparency>
+        </geom>
+    </body>
+
+
+    <body name="lTorsoDummyTransX">
+        <offsetfrom>TorsoDummyZ</offsetfrom>
+        <translation>0 0 0</translation>
+        <geom type="sphere">
+            <radius>0.02</radius>
+            <transparency>1</transparency>
+        </geom>
+    </body>
+    <body name="lTorsoDummyTransY">
+        <offsetfrom>lTorsoDummyTransX</offsetfrom>
+        <translation>0 0 0</translation>
+        <geom type="sphere">
+            <radius>0.02</radius>
+            <transparency>1</transparency>
+        </geom>
+    </body>
+    <body name="lTorsoDummyTransZ">
+        <offsetfrom>lTorsoDummyTransY</offsetfrom>
         <translation>0 0 0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
@@ -192,7 +218,7 @@
     <!-- *********************************************************** -->
     
     <body name="rShoulderDummyX"> 
-        <offsetfrom>TorsoDummyTransZ</offsetfrom>
+        <offsetfrom>rTorsoDummyTransZ</offsetfrom>
         <!--<rotationaxis>1 0 0 90</rotationaxis>-->
         <!--<rotationaxis>0 0 1 -90</rotationaxis>-->
         <!--<translation>-0.048632 -0.23982 0.288822</translation>-->
@@ -211,14 +237,14 @@
             <transparency>1</transparency>
         </geom>
     </body>
-<!--    <body name="rShoulderDummyY">-->
-<!--        <offsetfrom>rShoulderDummyZ</offsetfrom>-->
-<!--        <translation>0 0 0</translation>-->
-<!--        <geom type="sphere">-->
-<!--            <radius>0.02</radius>-->
-<!--            <transparency>1</transparency>-->
-<!--        </geom>-->
-<!--    </body>-->
+        <body name="rShoulderDummyY">
+        <offsetfrom>rShoulderDummyZ</offsetfrom>
+        <translation>0 0 0</translation>
+        <geom type="sphere">
+            <radius>0.02</radius>
+            <transparency>1</transparency>
+        </geom>
+    </body>
 
     <body name="rHumerus">
         <offsetfrom>rShoulderDummyZ</offsetfrom>
@@ -275,7 +301,7 @@
         </geom>
     </body>
 
-    <body name="rWristDummy">
+    <body name="rWristDummy1">
         <!--<rotationaxis>0 1 0 90</rotationaxis>-->
         <translation>0 0 0</translation>
         <offsetfrom>rRadius</offsetfrom>
@@ -284,8 +310,9 @@
             <transparency>1</transparency>
         </geom>
     </body>
-    <body name="rWristDummyX">
-        <offsetfrom>rWristDummy</offsetfrom>
+
+    <body name="rWristDummy2">
+        <offsetfrom>rWristDummy1</offsetfrom>
         <translation>0 0 0</translation>
 <!--        <translation>0 0 0</translation>-->
         <!--<translation>0.002774 -0.250572  0.004556</translation>-->
@@ -294,8 +321,9 @@
             <transparency>1</transparency>
         </geom>
     </body>
-    <body name="rWristDummyY">
-        <offsetfrom>rWristDummyX</offsetfrom>
+
+    <body name="rWristDummy3">
+        <offsetfrom>rWristDummy2</offsetfrom>
         <translation>0 0 0</translation>
         <!--<rotationaxis>0 1 0 -90</rotationaxis>-->
         <geom type="sphere">
@@ -305,7 +333,7 @@
     </body>
     
     <body name="rHand">
-        <offsetfrom>rWristDummyY</offsetfrom>
+        <offsetfrom>rWristDummy3</offsetfrom>
         <rotationaxis>0 1 0 -90</rotationaxis>
         <geom type="box">
             <translation> 0.006131 -0.06293 0.01241</translation>
@@ -332,19 +360,31 @@
     
     <!-- ******************* LEFT ARM ***************************** -->
     <!-- *********************************************************** -->
-    
+
     <body name="lShoulderDummyX">
-        <offsetfrom>torso</offsetfrom>
-        <rotationaxis>1 0 0 -90</rotationaxis>
-        <translation>-0.048632  0.23982 0.288822</translation>
+        <offsetfrom>lTorsoDummyTransZ</offsetfrom>
+        <!--<rotationaxis>1 0 0 90</rotationaxis>-->
+        <!--<rotationaxis>0 0 1 -90</rotationaxis>-->
+        <!--<translation>-0.048632 -0.23982 0.288822</translation>-->
+        <!--<rotationaxis>1 0 0 90</rotationaxis>-->
         <geom type="sphere">
             <radius>0.02</radius>
             <transparency>1</transparency>
         </geom>
-    </body>    
+    </body>
     <body name="lShoulderDummyZ">
         <offsetfrom>lShoulderDummyX</offsetfrom>
-        <translation>0.0 0.0 0.0</translation>
+        <!--<rotationaxis>1 0 0 -90</rotationaxis>-->
+        <translation>0 0 0</translation>
+        <geom type="sphere">
+            <radius>0.02</radius>
+            <transparency>1</transparency>
+        </geom>
+    </body>
+        <body name="lShoulderDummyY">
+        <offsetfrom>lShoulderDummyZ</offsetfrom>
+        <!-- <rotationaxis>1 0 0 -90</rotationaxis> -->
+        <translation>0 0 0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
             <transparency>1</transparency>
@@ -355,8 +395,7 @@
         <offsetfrom>lShoulderDummyZ</offsetfrom>
         <translation>0 0 0</translation>
         <geom type="cylinder">
-            <translation>0 .08 0</translation> <!-- Why ??? ... -->            
-<!--            <translation>0.0112 -0.428571 0.23982</translation>-->
+            <translation>0 -.17 0</translation> <!-- Why ??? ... -->
             <radius>0.053</radius>
             <height>0.2475</height>
             <diffuseColor>0.800 0.000 0.0100</diffuseColor>
@@ -364,9 +403,25 @@
         </geom>
     </body>
 
-    <body name="lElbowDummy">
+    <body name="lElbowDummy1">
         <offsetfrom>lHumerus</offsetfrom>
-        <translation>0.004167 0.206608 0.001653</translation>
+        <translation>0 0 0</translation>
+        <geom type="sphere">
+            <radius>0.02</radius>
+            <transparency>1</transparency>
+        </geom>
+    </body>
+    <body name="lElbowDummy2">
+        <offsetfrom>lElbowDummy1</offsetfrom>
+        <translation>0 0 0</translation>
+        <geom type="sphere">
+            <radius>0.02</radius>
+            <transparency>1</transparency>
+        </geom>
+    </body>
+    <body name="lElbowDummy3">
+        <offsetfrom>lElbowDummy2</offsetfrom>
+        <translation>0 0 0</translation>
         <geom type="sphere">
             <radius>0.02</radius>
             <transparency>1</transparency>
@@ -374,10 +429,10 @@
     </body>
     
     <body name="lRadius">
-        <offsetfrom>lElbowDummy</offsetfrom>
+        <offsetfrom>lElbowDummy3</offsetfrom>
         <translation>0 0 0</translation>
         <geom type="cylinder">
-            <translation>0.010577 0.129127 0.001946</translation>
+            <translation>0.010577 -0.135251 0.001946</translation>
             <!--<rotationaxis>1 0 0 90</rotationaxis> -->
             <radius>0.053</radius>
             <height>0.281</height>
@@ -386,48 +441,58 @@
         </geom>
     </body>
 
-    <body name="lWristDummyX">
+    <body name="lWristDummy1">
+        <!--<rotationaxis>0 1 0 90</rotationaxis>-->
+        <translation>0 0 0</translation>
         <offsetfrom>lRadius</offsetfrom>
-        <translation>0.002774 0.250572 0.004556</translation>
         <geom type="sphere">
             <radius>0.02</radius>
             <transparency>1</transparency>
-            <transparency>0.8</transparency>
         </geom>
-    </body>    
-    <body name="lWristDummyY">
-        <offsetfrom>lWristDummyX</offsetfrom>
-        <translation>0.0 0.0 0.0</translation>
+    </body>
+    <body name="lWristDummy2">
+        <offsetfrom>lWristDummy1</offsetfrom>
+        <translation>0 0 0</translation>
+<!--        <translation>0 0 0</translation>-->
+        <!--<translation>0.002774 -0.250572  0.004556</translation>-->
         <geom type="sphere">
             <radius>0.02</radius>
             <transparency>1</transparency>
-            <transparency>0.8</transparency>
+        </geom>
+    </body>
+    <body name="lWristDummy3">
+        <offsetfrom>lWristDummy2</offsetfrom>
+        <translation>0 0 0</translation>
+        <!--<rotationaxis>0 1 0 -90</rotationaxis>-->
+        <geom type="sphere">
+            <radius>0.02</radius>
+            <transparency>1</transparency>
         </geom>
     </body>
     
     <body name="lHand">
-        <offsetfrom>lWristDummyY</offsetfrom>
-        <translation>0 0 0</translation>
-        <geom type="box">    
-            <translation>0.006131 0.056806 0.01241</translation>
+        <offsetfrom>lWristDummy3</offsetfrom>
+        <rotationaxis>0 1 0 -90</rotationaxis>
+        <geom type="box">
+            <translation> 0.006131 -0.06293 0.01241</translation>
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.068800 0.048000 0.027500</extents>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
-            <transparency>0.8</transparency>
+            <transparency>0.5</transparency>
         </geom>
-        <geom type="box">    
-            <translation>0.006131 0.160954 0.037292</translation>
+        <geom type="box">
+            <translation>0.006131 -0.167078 0.037292</translation>
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.045150 0.049350 0.015200</extents>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
-            <transparency>0.8</transparency>
+            <transparency>0.5</transparency>
         </geom>
-        <geom type="box">    
-            <translation>0.06748 0.08632 0.002815</translation>
+        <geom type="box">
+            <translation>0.06748 -0.092444 0.002815</translation>
             <rotationaxis>0 0 1 90</rotationaxis>
             <extents>0.044700 0.012400 0.015600</extents>
             <diffuseColor>0.901961 0.772549 0.694118</diffuseColor>
-            <transparency>0.8</transparency>
+            <transparency>0.5</transparency>
         </geom>
     </body>
 
@@ -681,22 +746,44 @@
 
     <joint name="rShoulderTransX" type="slider">
         <body>TorsoDummyZ</body>
-        <body>TorsoDummyTransX</body>
-        <offsetfrom>TorsoDummyTransX</offsetfrom>
+        <body>rTorsoDummyTransX</body>
+        <offsetfrom>rTorsoDummyTransX</offsetfrom>
         <axis>1 0 0</axis>
         <limits>-0.50 0.50</limits>
     </joint>
     <joint name="rShoulderTransY" type="slider">
-        <body>TorsoDummyTransX</body>
-        <body>TorsoDummyTransY</body>
-        <offsetfrom>TorsoDummyTransY</offsetfrom>
+        <body>rTorsoDummyTransX</body>
+        <body>rTorsoDummyTransY</body>
+        <offsetfrom>rTorsoDummyTransY</offsetfrom>
         <axis>0 1 0</axis>
         <limits>-0.50 0.50</limits>
     </joint>
     <joint name="rShoulderTransZ" type="slider">
-        <body>TorsoDummyTransY</body>
-        <body>TorsoDummyTransZ</body>
-        <offsetfrom>TorsoDummyTransZ</offsetfrom>
+        <body>rTorsoDummyTransY</body>
+        <body>rTorsoDummyTransZ</body>
+        <offsetfrom>rTorsoDummyTransZ</offsetfrom>
+        <axis>0 0 1</axis>
+        <limits>-0.50 0.50</limits>
+    </joint>
+
+     <joint name="lShoulderTransX" type="slider">
+        <body>TorsoDummyZ</body>
+        <body>lTorsoDummyTransX</body>
+        <offsetfrom>lTorsoDummyTransX</offsetfrom>
+        <axis>1 0 0</axis>
+        <limits>-0.50 0.50</limits>
+    </joint>
+    <joint name="lShoulderTransY" type="slider">
+        <body>lTorsoDummyTransX</body>
+        <body>lTorsoDummyTransY</body>
+        <offsetfrom>rTorsoDummyTransY</offsetfrom>
+        <axis>0 1 0</axis>
+        <limits>-0.50 0.50</limits>
+    </joint>
+    <joint name="lShoulderTransZ" type="slider">
+        <body>lTorsoDummyTransY</body>
+        <body>lTorsoDummyTransZ</body>
+        <offsetfrom>lTorsoDummyTransZ</offsetfrom>
         <axis>0 0 1</axis>
         <limits>-0.50 0.50</limits>
     </joint>
@@ -739,7 +826,7 @@
     <!-- *********************************************************** -->
 
     <joint name="rShoulderY1" type="hinge">
-        <body>TorsoDummyTransZ</body>
+        <body>rTorsoDummyTransZ</body>
         <body>rShoulderDummyX</body>
         <offsetfrom>rShoulderDummyX</offsetfrom>
 <!--        <anchor>-0.0112 -0.23982 0.428571</anchor>-->
@@ -795,30 +882,30 @@
     </joint>
     <joint name="rForeArmTrans" type="slider">
         <body>rRadius</body>
-        <body>rWristDummy</body>
-        <offsetfrom>rWristDummy</offsetfrom>
+        <body>rWristDummy1</body>
+        <offsetfrom>rWristDummy1</offsetfrom>
         <axis>0 -1 0</axis>
         <limits>-0.50 0.50</limits>
     </joint>
 
     <joint name="rWristZ" type="hinge">
-        <body>rWristDummy</body>
-        <body>rWristDummyX</body>
-        <offsetfrom>rWristDummyX</offsetfrom>
+        <body>rWristDummy1</body>
+        <body>rWristDummy2</body>
+        <offsetfrom>rWristDummy2</offsetfrom>
 <!--        <anchor>-0.004259 -0.697 0.43478</anchor>-->
         <axis>0 0 1</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
     <joint name="rWristX" type="hinge">
-        <body>rWristDummyX</body>
-        <body>rWristDummyY</body>
-        <offsetfrom>rWristDummyY</offsetfrom>
+        <body>rWristDummy2</body>
+        <body>rWristDummy3</body>
+        <offsetfrom>rWristDummy3</offsetfrom>
 <!--        <anchor>-0.004259 -0.697 0.43478</anchor>-->
         <axis>1 0 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
     <joint name="rWristY" type="hinge">
-        <body>rWristDummyY</body>
+        <body>rWristDummy3</body>
         <body>rHand</body>
         <offsetfrom>rHand</offsetfrom>
 <!--        <anchor>-0.004259 -0.697 0.43478</anchor>-->
@@ -830,73 +917,92 @@
     <!-- *********************************************************** -->
     
       
-    <joint name="lShoulderX" type="hinge">
-        <body>torso</body>
+    <joint name="lShoulderY1" type="hinge">
+        <body>lTorsoDummyTransZ</body>
         <body>lShoulderDummyX</body>
         <offsetfrom>lShoulderDummyX</offsetfrom>
-<!--        <anchor>-0.0112 0.23982 0.428571</anchor>-->
-        <axis>1 0 0</axis>
+<!--        <anchor>-0.0112 -0.23982 0.428571</anchor>-->
+        <axis>0 1 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
-    <joint name="lShoulderZ" type="hinge">
+    <joint name="lShoulderX" type="hinge">
         <body>lShoulderDummyX</body>
         <body>lShoulderDummyZ</body>
         <offsetfrom>lShoulderDummyZ</offsetfrom>
-<!--        <anchor>-0.0112 0.23982 0.428571</anchor>-->
-        <axis>0 0 1</axis>
+<!--        <anchor>-0.0112 -0.23982 0.428571</anchor>-->
+        <axis>1 0 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
-    <joint name="lShoulderY" type="hinge">
+    <joint name="lShoulderY2" type="hinge">
         <body>lShoulderDummyZ</body>
+        <!--<body>rShoulderDummyY</body>-->
         <body>lHumerus</body>
         <offsetfrom>lHumerus</offsetfrom>
-<!--        <anchor>-0.0112 0.23982 0.428571</anchor>-->
-        <axis>0 -1 0</axis>
+<!--        <anchor>-0.0112 -0.23982 0.428571</anchor>-->
+        <axis>0 1 0</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
 
     <joint name="lArmTrans" type="slider">
         <body>lHumerus</body>
-        <body>lElbowDummy</body>
-        <offsetfrom>lElbowDummy</offsetfrom>
-<!--        <anchor>-0.007033 0.446428 0.430224</anchor>-->
-        <axis>0 1 0</axis>
+        <body>lElbowDummy1</body>
+        <offsetfrom>lElbowDummy1</offsetfrom>
+<!--        <anchor>-0.007033 -0.446428 0.430224</anchor>-->
+        <axis>0 -1 0</axis>
         <limits>-0.50 0.50</limits>
     </joint>
     <joint name="lElbowZ" type="hinge">
-        <body>lElbowDummy</body>
-        <body>lRadius</body>
-        <offsetfrom>lRadius</offsetfrom>
-<!--        <anchor>-0.007033 0.446428 0.430224</anchor>-->
+        <body>lElbowDummy1</body>
+        <body>lElbowDummy2</body>
+        <offsetfrom>lElbowDummy2</offsetfrom>
         <axis>0 0 1</axis>
         <limitsdeg>-180 180</limitsdeg>
     </joint>
-    
-   
-    <joint name="lWristX" type="hinge">
+    <joint name="lElbowX" type="hinge">
+        <body>lElbowDummy2</body>
+        <body>lElbowDummy3</body>
+        <offsetfrom>lElbowDummy3</offsetfrom>
+        <axis>1 0 0</axis>
+        <limitsdeg>-180 180</limitsdeg>
+    </joint>
+    <joint name="lElbowY" type="hinge">
+        <body>lElbowDummy3</body>
         <body>lRadius</body>
-        <body>lWristDummyX</body>
-        <offsetfrom>lWristDummyX</offsetfrom>
-<!--        <anchor>-0.004259 0.697 0.43478</anchor>-->
-        <axis>-1 0 0</axis>
-        <limitsdeg>-90 90</limitsdeg>
+        <offsetfrom>lRadius</offsetfrom>
+        <axis>0 1 0</axis>
+        <limitsdeg>-180 180</limitsdeg>
+    </joint>
+    <joint name="lForeArmTrans" type="slider">
+        <body>lRadius</body>
+        <body>lWristDummy1</body>
+        <offsetfrom>lWristDummy1</offsetfrom>
+        <axis>0 -1 0</axis>
+        <limits>-0.50 0.50</limits>
     </joint>
 
-    <joint name="lWristY" type="hinge">
-        <body>lWristDummyX</body>
-        <body>lWristDummyY</body>
-        <offsetfrom>lWristDummyY</offsetfrom>
-<!--        <anchor>-0.004259 0.697 0.43478</anchor>-->
-        <axis>0 -1 0</axis>
-        <limitsdeg>-180 0</limitsdeg>
-    </joint>
     <joint name="lWristZ" type="hinge">
-        <body>lWristDummyY</body>
+        <body>lWristDummy1</body>
+        <body>lWristDummy2</body>
+        <offsetfrom>lWristDummy2</offsetfrom>
+<!--        <anchor>-0.004259 -0.697 0.43478</anchor>-->
+        <axis>0 0 1</axis>
+        <limitsdeg>-180 180</limitsdeg>
+    </joint>
+    <joint name="lWristX" type="hinge">
+        <body>lWristDummy2</body>
+        <body>lWristDummy3</body>
+        <offsetfrom>lWristDummy3</offsetfrom>
+<!--        <anchor>-0.004259 -0.697 0.43478</anchor>-->
+        <axis>1 0 0</axis>
+        <limitsdeg>-180 180</limitsdeg>
+    </joint>
+    <joint name="lWristY" type="hinge">
+        <body>lWristDummy3</body>
         <body>lHand</body>
         <offsetfrom>lHand</offsetfrom>
-<!--        <anchor>-0.004259 0.697 0.43478</anchor>-->
-        <axis>0 0 -1</axis>
-        <limitsdeg>-40 40</limitsdeg>
+<!--        <anchor>-0.004259 -0.697 0.43478</anchor>-->
+        <axis>0 1 0</axis>
+        <limitsdeg>-180 180</limitsdeg>
     </joint>
     
     <!-- ******************* RIGHT LEG ***************************** -->

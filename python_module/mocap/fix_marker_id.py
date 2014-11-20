@@ -9,9 +9,9 @@ import os
 import time
 import math
 import sys
-import copy
 from MocapCommon import *
 from MarkerMapper import *
+from copy import deepcopy
 
 class MarkerFixer:
 
@@ -256,7 +256,7 @@ class MarkerFixer:
                 pelv_frames = []
                 for object in frame.object_list:
                     if object and 'Pelvis' in object.id and not object.is_occluded():
-                        pelv_frames.append(object.get_rot_matrix())
+                        pelv_frames.append(object.get_transform())
 
                 if len(pelv_frames) is not NB_HUMAN:
                     continue
@@ -393,107 +393,156 @@ class MarkerFixer:
         print "# of deltas > 2cm : ", two_count, " > 3cm : ", three_count, " > 5cm : ", five_count
         print "Max distance : ", max_dist
 
+    def interp_drops(self):
+        # Build matrix of frames
+        # Each row is a frame, each col is an individual marker
+        mat = np.empty( (self.last_frame-self.first_frame,len(self.frames[self.first_frame].marker_list)), dtype=object )
+        times = []
+        print "Config shape"
+        print mat.shape
+
+        for i in range(self.first_frame, self.last_frame):
+            frame = self.frames[i]
+            times.append(frame.get_rostime())
+            for m, marker in enumerate(frame.marker_list):
+                mat[i-self.first_frame,m] = marker
+
+        # Iterate over cols of new matrix
+        # This is a list of all frames for a single marker.
+        for col in range(mat.shape[1]):
+            prev = self.first_frame #The last marker before a drop
+            start_drop = None #The start of a drop range
+            for index, marker in enumerate(mat[:,col]): #Iterate over all frames of one marker i.e. rWrist
+                if marker.times_dropped is 1:
+                    start_drop = index
+                    prev = index-1
+                    continue
+                if start_drop and marker.times_dropped is 0:
+                    # Found full drop range
+                    end_drop = index
+                    print 'Found drop range.  prev : ', prev, ' start : ', start_drop, ' end : ', end_drop
+                    a = mat[prev,col]
+                    b = mat[end_drop,col]
+                    # a = frame_list[prev].marker_list[col]
+                    # b = frame_list[end_drop].marker_list[col]
+                    # t0 = frame_list[prev].get_time()
+                    # t1 = frame_list[end_drop].get_time()
+                    t0 = times[prev]
+                    t1 = times[end_drop]
+
+                    # for k, marker in enumerate(mat[start_drop:end_drop, col]):
+                    #     print 'trying to fix marker : ', k
+                    #     t_curr = self.frames[k].get_time()
+                    #     alpha = (t_curr - t0) / (t1-t0)
+
+                    #     new = interpolate(marker.array, b.array, alpha*marker.get_true_dist(b))
+                    #     marker.array = new
+                    #     marker.x = new[0]
+                    #     marker.y = new[1]
+                    #     marker.z = new[2]
+
+                    interp_interval = float((t1-t0).to_nsec())
+
+                    # print 'interpolating between : ', a.array, ' ', b.array
+                    print 'interpolation interval is : ', interp_interval
+                    for k in range(start_drop,end_drop):
+                        print 'trying to fix marker : ', k, ' for range : ', start_drop, ' : ', end_drop
+                        t_curr = times[k]
+                        alpha = float((t_curr - t0).to_nsec()) / interp_interval
+                        # print (t_curr - t0).to_nsec(), ' / ', (t1-t0).to_nsec()
+
+                        new = interpolate(a.array, b.array, alpha)
+                        mat[k,col].x = new[0]
+                        mat[k,col].y = new[1]
+                        mat[k,col].z = new[2]
+                        mat[k,col].array = new
+                        mat[k,col].times_dropped = 0
+
+                    start_drop = None
+
+            # for marker in frame.marker_list:
+            #     print len(frame.marker_list)
+
 if __name__ == '__main__':
+    base_dir = '/home/rafi/aterm_experiment/'
 
-    THRESHOLD   = 0.0025
-    ELBOW_PADS  = True
-    RARM_ONLY   = True
+    # Set constants based on setup csv
+    setup = read_setup(base_dir)
+    NB_HUMAN    = setup[0]
+    ELBOW_PADS  = setup[1]
+    RARM_ONLY   = setup[2]
     NB_MARKERS  = get_nb_markers(ELBOW_PADS, RARM_ONLY)
-    NB_HUMAN    = 2
+    THRESHOLD   = 0.0025
+
+    # Run fixer on all directories in the base experiment_dir
+    # Heirarchy is base / block / run
+    # Where a block is a set of runs with the same pair collaborating
+    # a run is an individual run of the ball placing experiment.
+    blocks = sorted([ name for name in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, name)) ])
+    for block in blocks:
+        path = os.path.join(base_dir, block)
+        runs = sorted([ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ])
+
+        for run in runs:
+            file_path = os.path.join(path, run)
+            print 'Trying to fix ', os.path.join(path, run)
 
 
-    # f = MarkerFixer('/home/rafi/logging_six/2/markers.csv', '/home/rafi/logging_six/2/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_five/1/markers.csv', '/home/rafi/logging_five/1/objects.csv')
 
-    # f = MarkerFixer('/home/rafi/logging_three/first/markers.csv', '/home/rafi/logging_three/first/objects.csv')
-    # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0000-1700]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0000-1700]objects.csv')
-    # f = MarkerFixer('/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1750-3200]markers.csv', '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1750-3200]objects.csv')
+            f = MarkerFixer(os.path.join(file_path,'markers.csv'), os.path.join(file_path,'objects.csv'))
 
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[1000-3900]markers.csv', '/home/rafi/logging_nine/2/[1000-3900]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[5900-9000]markers.csv', '/home/rafi/logging_nine/2/[5900-9000]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[11700-14800]markers.csv', '/home/rafi/logging_nine/2/[11700-14800]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[22400-25300]markers.csv', '/home/rafi/logging_nine/2/[22400-25300]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[28300-30800]markers.csv', '/home/rafi/logging_nine/2/[28300-30800]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[33000-35700]markers.csv', '/home/rafi/logging_nine/2/[33000-35700]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[37900-40400]markers.csv', '/home/rafi/logging_nine/2/[37900-40400]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[42600-44700]markers.csv', '/home/rafi/logging_nine/2/[42600-44700]objects.csv')
+            try:
+                with Timer() as t:
+                    f.load_file()
 
-    # Trials
-    # f = MarkerFixer('/home/rafi/logging_five/1/markers.csv', '/home/rafi/logging_five/1/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_five/2/markers.csv', '/home/rafi/logging_five/2/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_five/3/markers.csv', '/home/rafi/logging_five/3/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_five/4/markers.csv', '/home/rafi/logging_five/4/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_six/1/markers.csv', '/home/rafi/logging_six/1/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_six/2/markers.csv', '/home/rafi/logging_six/2/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_six/3/markers.csv', '/home/rafi/logging_six/3/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_six/4/markers.csv', '/home/rafi/logging_six/4/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_six/5/markers.csv', '/home/rafi/logging_six/5/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_six/6/markers.csv', '/home/rafi/logging_six/6/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_seven/1/markers.csv', '/home/rafi/logging_seven/1/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_seven/2/markers.csv', '/home/rafi/logging_seven/2/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_seven/3/markers.csv', '/home/rafi/logging_seven/3/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_seven/4/markers.csv', '/home/rafi/logging_seven/4/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_seven/5/markers.csv', '/home/rafi/logging_seven/5/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_seven/6/markers.csv', '/home/rafi/logging_seven/6/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_seven/7/markers.csv', '/home/rafi/logging_seven/7/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_seven/8/markers.csv', '/home/rafi/logging_seven/8/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_seven/9/markers.csv', '/home/rafi/logging_seven/9/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_seven/10/markers.csv', '/home/rafi/logging_seven/10/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_seven/11/markers.csv', '/home/rafi/logging_seven/11/objects.csv')
+                    # Filter bad markers
+
+                    # avg = f.get_average_position()
+                    # f.filter_threshold_outside(avg, 1.8)
+                    # f.filter_negative_x()
+                    # f.filter_pillar()
+
+                    # Reorder marker ids to fill gaps
+                    f.reorder_ids()
+
+                    print "Try to find start frame"
+                    f.init_first_frame()
+
+                    print "starting to track ids"
+                    f.track_indices()
+
+                    print "Calculating statistics : "
+                    f.calc_stats()
 
 
-    # f = MarkerFixer('/home/rafi/logging_eight/1/markers.csv', '/home/rafi/logging_eight/1/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_eight/2/markers.csv', '/home/rafi/logging_eight/2/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_eight/3/markers.csv', '/home/rafi/logging_eight/3/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_eight/4/markers.csv', '/home/rafi/logging_eight/4/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_eight/5/markers.csv', '/home/rafi/logging_eight/5/objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_eight/6/markers.csv', '/home/rafi/logging_eight/6/objects.csv')
+                    # num_drops = 0
+                    # for frame in f.frames:
+                    #     for marker in frame.marker_list:
+                    #         if marker.times_dropped > 0:
+                    #             num_drops += 1
 
-    # f = MarkerFixer('/home/rafi/logging_nine/1/markers.csv', '/home/rafi/logging_nine/1/objects.csv')
+                    # print 'drops in og data : ', num_drops
+                    # num_drops = 0
 
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[1000-3900]markers.csv', '/home/rafi/logging_nine/2/[1000-3900]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[5900-9000]markers.csv', '/home/rafi/logging_nine/2/[5900-9000]objects.csv')
-    f = MarkerFixer('/home/rafi/logging_nine/2/[11700-14800]markers.csv', '/home/rafi/logging_nine/2/[11700-14800]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[22400-25300]markers.csv', '/home/rafi/logging_nine/2/[22400-25300]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[28300-30800]markers.csv', '/home/rafi/logging_nine/2/[28300-30800]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[33000-35700]markers.csv', '/home/rafi/logging_nine/2/[33000-35700]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[37900-40400]markers.csv', '/home/rafi/logging_nine/2/[37900-40400]objects.csv')
-    # f = MarkerFixer('/home/rafi/logging_nine/2/[42600-44700]markers.csv', '/home/rafi/logging_nine/2/[42600-44700]objects.csv')
+                    # f.interp_drops()
+                    # for frame in f.frames:
+                    #     for marker in frame.marker_list:
+                    #         if marker.times_dropped > 0:
+                    #             num_drops += 1
 
-    try:
-        with Timer() as t:
-            f.load_file()
+                    # print 'drops in fixed data : ', num_drops
 
-            # Filter bad markers
+                    # print "Trying to smooth markers"
+                    # f.smooth_markers(7)
 
-            # avg = f.get_average_position()
-            # f.filter_threshold_outside(avg, 1.8)
-            # f.filter_negative_x()
-            # f.filter_pillar()
+                    # print "Calculating statistics after smoothing : "
+                    # f.calc_stats()
 
-            # Reorder marker ids to fill gaps
-            f.reorder_ids()
+                    f.save_file()
 
-            print "Try to find start frame"
-            f.init_first_frame()
-
-            print "starting to track ids"
-            f.track_indices()
-
-            print "Calculating statistics : "
-            f.calc_stats()
-
-            # print "Trying to smooth markers"
-            # f.smooth_markers(5)
-
-            # print "Calculating statistics after smoothing : "
-            # f.calc_stats()
-
-            f.save_file()
-
-            t.file_runtime = f.get_runtime()
-    finally:
-        if t.file_runtime:
-            print 'Marker matching took,', t.interval, ' sec, ', (t.interval/t.file_runtime)*100, '% of total runtime'
-        else:
-            print 'Marker matching took %.03f sec.' % t.interval
+                    t.file_runtime = f.get_runtime()
+            finally:
+                if t.file_runtime:
+                    print 'Marker matching took,', t.interval, ' sec, ', (t.interval/t.file_runtime)*100, '% of total runtime'
+                else:
+                    print 'Marker matching took %.03f sec.' % t.interval

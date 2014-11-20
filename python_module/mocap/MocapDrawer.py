@@ -5,6 +5,7 @@
 from openravepy import *
 from MocapCommon import *
 import transformation_helper
+# from bioik.BioHumanIk import *
 import csv
 import sys
 
@@ -15,6 +16,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import cv2
 from os import listdir
 from os.path import isfile, join
+
 
 class Human():
 
@@ -76,17 +78,18 @@ class Drawer():
         self.env.Reset()
         # self.env.Load("../../ormodels/human_wpi_bio.xml")
 
-        # self.human = self.env.GetRobots()[0]
         self.handles = []
 
         self.frames = []
-
 
         t_cam = array([[ -0.655253290114, -0.106306078558, 0.747891799297, -0.302201271057] , \
                                 [ -0.725788890663, 0.363116971923, -0.584274379801, 2.68592453003] , \
                                 [ -0.209460287369, -0.925659269042, -0.315089361376, 2.25037527084] , \
                                 [ 0.0, 0.0, 0.0, 1.0]])
         self.env.GetViewer().SetCamera(t_cam)
+
+    def clear_frames(self):
+        self.frames = []
 
     def load_file(self, m_filepath, o_filepath):
         print "Trying to open file"
@@ -105,6 +108,68 @@ class Drawer():
         self.last_frame = nb_lines
 
         for row in range(nb_lines):
+
+            markers = []
+            objects = []
+
+            m_cells = marker_file[row]
+            o_cells = object_file[row]
+
+            # Load Objects
+            count = int(o_cells[2])
+
+            # Assuming only using Pelv/Head objects per person and nothing else in the scene
+            # NB_HUMAN = count/2
+
+            for i in range(3, count*9, 9):
+                name = str(o_cells[i])
+                occluded = int(o_cells[i+1])
+                x = float(o_cells[i+2])
+                y = float(o_cells[i+3])
+                z = float(o_cells[i+4])
+                r_x = float(o_cells[i+5])
+                r_y = float(o_cells[i+6])
+                r_z = float(o_cells[i+7])
+                r_w = float(o_cells[i+8])
+
+                object = Object( name, occluded, x, y, z, r_x, r_y, r_z, r_w )
+                objects.append(object)
+
+            # Load Markers
+            sec = float(m_cells[0])
+            nsec = float(m_cells[1])
+            count = int(m_cells[2])
+
+            for i in range(3, count*4, 4):
+                id = m_cells[i]
+                x = float(m_cells[i+1])
+                y = float(m_cells[i+2])
+                z = float(m_cells[i+3])
+
+                marker = Marker(id, x, y, z)
+                markers.append(marker)
+
+
+            self.frames.append( Frame(sec, nsec, count, markers, objects) )
+
+    # Split is a tuple of the form (start_frame, end_frame)
+    def load_range(self, m_filepath, o_filepath, split):
+        print "Trying to open file"
+        # global NB_HUMAN # TODO fix global to be class member
+
+        marker_file = []
+        object_file = []
+
+        with open(m_filepath, 'r') as m_file:
+            with open(o_filepath, 'r') as o_file:
+
+                marker_file = [row for row in csv.reader(m_file, delimiter=',')]
+                object_file = [row for row in csv.reader(o_file, delimiter=',')]
+
+        nb_lines = min(len(marker_file), len(object_file))
+        self.last_frame = nb_lines
+
+        for row in range(split[0], split[1]):
 
             markers = []
             objects = []
@@ -172,7 +237,7 @@ class Drawer():
         prev_time = self.frames[0].get_time()
 
         # IMAGE PUBLISHER
-        folder = "/home/rafi/logging_nine/2"
+        folder = "/home/rafi/logging_ten/1"
         images = [ f for f in listdir(folder) if isfile(join(folder,f)) and '.png' in f ]
         print "Num images : ", len(images)
         times = []
@@ -213,9 +278,10 @@ class Drawer():
             self.draw_frame_skeleton(frame)
 
             dt = curr_time - prev_time
-            dt = 0.05
+            # dt = 0.05
             prev_time = curr_time
             time.sleep(dt)
+
 
             if True:
             # if i % 20 == 0 :
@@ -389,7 +455,17 @@ class Drawer():
 
 if __name__ == '__main__':
 
-    NB_HUMAN    = 2
+    setup = read_setup('/home/rafi/Desktop/trials/')
+    # splits = read_splits('/home/rafi/logging_ten/0/')
+
+
+    # NB_HUMAN    = setup[0]
+    # ELBOW_PADS  = setup[1]
+    # RARM_ONLY   = setup[2]
+    # NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)
+
+    # NB_HUMAN    = setup[0]
+    NB_HUMAN    = 1
     ELBOW_PADS  = True
     RARM_ONLY   = True
     NB_MARKERS = get_nb_markers(ELBOW_PADS, RARM_ONLY)
@@ -400,8 +476,8 @@ if __name__ == '__main__':
     # m_file = '/home/rafi/Desktop/TEMP/[0580-0680]markers.csv'
     # o_file = '/home/rafi/Desktop/TEMP/[0580-0680]objects.csv'
 
-    m_file = '/home/rafi/Desktop/TEMP/[1300-1420]markers.csv'
-    o_file = '/home/rafi/Desktop/TEMP/[1300-1420]objects.csv'
+    # m_file = '/home/rafi/Desktop/TEMP/[1300-1420]markers.csv'
+    # o_file = '/home/rafi/Desktop/TEMP/[1300-1420]objects.csv'
 
     # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1000-3900]markers_fixed.csv'
     # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[1000-3900]objects_fixed.csv'
@@ -455,17 +531,17 @@ if __name__ == '__main__':
     # prefix = '[2711-2823]'
 
     # Recording 9 Run 3
-    run = '3/'
+    # run = '3/'
     # prefix = '[0444-0585]'
     # prefix = '[1064-1140]'
     # prefix = '[1342-1451]'
-    prefix = '[1882-1981]'
+    # prefix = '[1882-1981]'
     # prefix = '[2172-2249]'
     # prefix = '[2646-2737]'
 
     # # Recording 9 Run 4
-    # run = '4/'
-    # prefix = '[0489-0589]'
+    run = '4/'
+    prefix = '[0489-0589]'
     # prefix = '[1537-1608]'
     # prefix = '[2018-2099]'
 
@@ -493,9 +569,43 @@ if __name__ == '__main__':
     # f = MarkerFixer('/home/rafi/logging_nine/2/[37900-40400]markers.csv', '/home/rafi/logging_nine/2/[37900-40400]objects.csv')
     # f = MarkerFixer('/home/rafi/logging_nine/2/[42600-44700]markers.csv', '/home/rafi/logging_nine/2/[42600-44700]objects.csv')
 
-    # m_file = '/home/rafi/logging_five/1/markers.csv'
-    # o_file = '/home/rafi/logging_five/1/objects.csv'
+    # m_file = '/home/rafi/logging_ten/0/markers_fixed.csv'
+    # o_file = '/home/rafi/logging_ten/0/objects_fixed.csv'
+
+    folder = '/home/rafi/logging_eleven/0/'
+    # name = '[0001-3406]'
+    # name = '[8657-11482]'
+    # name = '[13712-17083]'
+    name = '[19458-22078]'
+    # name = '[24495-27070]'
+
+    m_file = folder + name + 'markers_fixed.csv'
+    o_file = folder + name + 'objects_fixed.csv'
+
+    # m_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0629-0768]markers.csv'
+    # o_file = '/home/rafi/workspace/hrics-or-plugins/python_module/mocap/[0629-0768]objects.csv'
+
+    # block = '1'
+    # run = '0'
+    # m_file = '/home/rafi/aterm_experiment/block'+str(block)+'/'+str(run)+'/markers_fixed.csv'
+    # o_file = '/home/rafi/aterm_experiment/block'+str(block)+'/'+str(run)+'/objects_fixed.csv'
+
+    m_file = '/home/rafi/logging_drop/0/markers_fixed.csv'
+    o_file = '/home/rafi/logging_drop/0/objects_fixed.csv'
+
+
 
     d =  Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
     d.load_file(m_file, o_file)
-    d.play_skeleton()
+
+    t_cam = array([[ -0.655253290114, -0.106306078558, 0.747891799297, -0.302201271057] , \
+                            [ -0.725788890663, 0.363116971923, -0.584274379801, 2.68592453003] , \
+                            [ -0.209460287369, -0.925659269042, -0.315089361376, 2.25037527084] , \
+                            [ 0.0, 0.0, 0.0, 1.0]])
+    d.env.GetViewer().SetCamera(t_cam)
+
+
+    while True:
+        d.play_skeleton()
+        print "End play motion"
+        sys.stdin.readline()
