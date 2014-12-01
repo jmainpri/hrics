@@ -168,6 +168,8 @@ class TestBioHumanIk(BioHumanIk):
         human.SetDOFValues([r_offset_shoulder_elbow], [human.GetJoint("rArmTrans").GetDOFIndex()])
         human.SetDOFValues([r_offset_elbow_wrist], [human.GetJoint("rForeArmTrans").GetDOFIndex()])
 
+        # print r_offset_torso[1]
+
         if self.compute_left_arm:
             human.SetDOFValues([l_offset_torso[0]], [human.GetJoint("lShoulderTransX").GetDOFIndex()])
             human.SetDOFValues([l_offset_torso[1]], [human.GetJoint("lShoulderTransY").GetDOFIndex()])
@@ -460,6 +462,76 @@ class TestBioHumanIk(BioHumanIk):
             if i % 4 == 0:
                 del self.handles[:]
 
+            self.drawer.clear()
+            self.drawer.draw_frame_skeleton(frame)
+
+            humans = self.drawer.isolate_humans(frame)
+
+            for j, h in enumerate(self.humans):
+
+                markers_remaped = self.remap(humans[j].markers)
+
+                markers = []
+                for m in markers_remaped:
+                    markers.append(m.array)
+
+                transforms = []
+                for o in humans[j].objects:
+                    transforms.append(o.get_transform())
+
+                t_pelvis = transforms[0] * MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
+                t_head   = transforms[1]
+
+                if self.use_elbow_pads:
+                    t_elbow  = transforms[2]
+                    t_elbow  = t_elbow * MakeTransform(rodrigues([0, 0, -pi/2]), matrix([0, 0, 0]))
+                    t_elbow  = t_elbow * MakeTransform(rodrigues([0, pi/2, 0]), matrix([0, 0, 0]))
+                else:
+                    t_elbow = array(eye(4))
+
+                # self.handles.append(misc.DrawAxes(self.env, t_elbow, .2))
+
+                trunk_center = (markers[0] + markers[1])/2
+                inv_pelvis = la.inv(t_pelvis)
+                trunk_center = array(array(inv_pelvis).dot(append(trunk_center, 1)))[0:3]
+
+                self.handles.append(misc.DrawAxes(self.env, t_pelvis, .3))
+
+                markers_in_pelvis = self.get_markers_in_pelvis_frame(markers, t_pelvis)
+
+                if not self.compute_left_arm:
+                    [config, d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist] = \
+                        self.compute_ik(markers_in_pelvis, la.inv(self.t_trans) * t_elbow)
+                    d_l_torso = 0
+                    d_l_shoulder_elbow = 0
+                    d_l_elbow_wrist = 0
+                else:
+                    [config,
+                     d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist,
+                     d_l_torso, d_l_shoulder_elbow, d_l_elbow_wrist,
+                     ] = self.compute_ik(markers_in_pelvis, la.inv(self.t_trans) * t_elbow)
+
+                offset_pelvis_torso = trunk_center
+                offset_pelvis_torso -= self.offset_pelvis_torso_init
+                # offset_pelvis_torso += array([0.16, 0., 0.])
+
+                self.set_human_model_sizes(h, t_pelvis, offset_pelvis_torso,
+                                           d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist,
+                                           d_l_torso, d_l_shoulder_elbow, d_l_elbow_wrist)
+
+                q_cur = self.get_human_configuration(h, config)
+                h.SetDOFValues(q_cur[0:h.GetDOF()])
+
+                self.compute_dist_to_points(h, markers, t_elbow)
+
+                # Save to current configurations
+                if j == 0:
+                    traj = self.traj_human1
+                if j == 1:
+                    traj = self.traj_human2
+
+                traj.append([[dt], h.GetDOFValues()])
+
             self.draw_frame(frame)
 
 #                print curr_time
@@ -593,11 +665,11 @@ if __name__ == "__main__":
     o_file = folder + name + 'objects_fixed.csv'
 
     # ------
-    data_folder = '/home/rafi/logging_twelve/0/'
-    folder = data_folder
-    name = ""
-    m_file = folder + name + 'markers_fixed.csv'
-    o_file = folder + name + 'objects_fixed.csv'
+    #data_folder = '/home/rafi/logging_twelve/0/'
+    #folder = data_folder
+    #name = ""
+    #m_file = folder + name + 'markers_fixed.csv'
+    #o_file = folder + name + 'objects_fixed.csv'
 
     print "try to load file : ", m_file
     print "try to load file : ", o_file

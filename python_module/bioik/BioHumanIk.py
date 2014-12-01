@@ -108,12 +108,6 @@ class BioHumanIk():
 
             elb_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
             elb_axis = -array(transpose(t_elbow[:, 2]).tolist()[0][:3])
-            # print "t_elbow : "
-            # print t_elbow
-            # print "elb_axis : "
-            # print elb_axis
-            # print "elb_center : "
-            # print elb_center
 
             # HAND
             wrist_axis = markers[7] - markers[6]
@@ -271,12 +265,6 @@ class BioHumanIk():
 
                 elb_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
                 elb_axis = -array(transpose(t_elbow[:, 2]).tolist()[0][:3])
-                # print "t_elbow : "
-                # print t_elbow
-                # print "elb_axis : "
-                # print elb_axis
-                # print "elb_center : "
-                # print elb_center
 
                 # HAND
                 wrist_axis = markers[14] - markers[13]
