@@ -1,6 +1,7 @@
 import SegmentCSV
 import MocapCommon
 import os
+import sys
 
 # source_dir = '/home/rafi/Desktop/aterm_experiment'
 # target_dir = '/home/rafi/Desktop/experiment_segments'
@@ -8,7 +9,7 @@ import os
 
 def split_library(source_dir, target_dir):
 
-    blocks = sorted([name for name in os.listdir(source_dir) if os.path.isdir(os.path.join(base_dir, name))])
+    blocks = sorted([name for name in os.listdir(source_dir) if os.path.isdir(os.path.join(source_dir, name))])
     for block in blocks:
         path = os.path.join(source_dir, block)
         runs = sorted([name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))])
@@ -30,10 +31,10 @@ def split_library(source_dir, target_dir):
                 m_file = os.path.join(file_path,'markers_fixed.csv')
                 o_file = os.path.join(file_path,'objects_fixed.csv')
 
-                s = SegmentCSV.Segmenter(m_file, os.path.join(out_path,'markers.csv'))
+                s = SegmentCSV.Segmenter(m_file, os.path.join(out_path, 'markers.csv'))
                 s.segment(splits)
 
-                s = SegmentCSV.Segmenter(o_file, os.path.join(out_path,'objects.csv'))
+                s = SegmentCSV.Segmenter(o_file, os.path.join(out_path, 'objects.csv'))
                 s.segment(splits)
 
 if __name__ == "__main__":
@@ -41,10 +42,13 @@ if __name__ == "__main__":
     if len(sys.argv) >= 4:
         for index in range(1, len(sys.argv)):
             if sys.argv[index] == "-s" and index+1 < len(sys.argv):
-                base_dir = str(sys.argv[index+1])
+                source_dir = str(sys.argv[index+1])
             if sys.argv[index] == "-t" and index+1 < len(sys.argv):
-                base_dir = str(sys.argv[index+1])
+                target_dir = str(sys.argv[index+1])
 
-        split_library(base_dir)
+        split_library(source_dir, target_dir)
     else:
-        print "USAGE : -s PATH_TO_SOURCE_LIBRARY -t PATH_TO_TARGET_LIBRARY"
+        print "************************"
+        print "******  WARNING  *******"
+        print "************************"
+        print "USAGE -> split_library.py -s PATH_TO_SOURCE_LIBRARY -t PATH_TO_TARGET_LIBRARY"
