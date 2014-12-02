@@ -107,6 +107,8 @@ class Drawer():
         nb_lines = min(len(marker_file), len(object_file))
         self.last_frame = nb_lines
 
+        self.frames = []
+
         for row in range(nb_lines):
 
             markers = []
