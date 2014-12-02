@@ -7,6 +7,7 @@ from os import listdir
 from os.path import isfile, join
 import os
 import matplotlib.pyplot as plt
+from itertools import product
 
 # Returns a dictionary of humans.  Keys are integers 0,1,...N for N Human
 # Each human is a dictionary of markers.  Keys are ChestFront Chestback etc
@@ -49,17 +50,17 @@ def get_dt(time):
 
     # Pad with inf
     dt = np.pad(dt, (1,0), 'constant', constant_values=(np.inf, np.inf))
-
     return dt
 
-def get_velocity(dt, pos):
-    # ret = np.zeros(pos.shape)
-     # = np.diff(pos.T)
+def get_velocity(dt, pos, window):
+    ret = np.ndarray(pos.shape)
 
-    # ret[1:ret.shape[0], 1:ret.shape[1]] = pos_diff
-    # ret[0] = np.inf
+    for i,row in enumerate(pos):
+        ret[i] = np.convolve(row, window, 'same')
+        ret[i] /= dt**2
 
-    return (pos/dt).T
+    return ret
+
 
 
 
@@ -111,16 +112,18 @@ if __name__ == '__main__':
                 humans = get_human_dict(m_file)
 
                 dt = get_dt(humans[0]['time'])
-                vel = get_velocity(dt, humans[0]['rPalm'])
-                squared_vel = [np.linalg.norm(x) for x in vel]
-                cum_time = np.cumsum(dt)
+                vel = get_velocity(dt, humans[0]['rPalm'], [0., 0., -2/6., -3/6., 6/6., -1/6., 0.])
+                squared_vel = [np.linalg.norm(x) for x in vel.T]
 
                 for split in splits:
 
                     fig = plt.figure()
                     main = fig.add_axes([0.1, 0.1, 0.8, 0.8])
 
-                    main.plot(cum_time[split[0]:split[1]], squared_vel[split[0]:split[1]], label=r'Velocity')
+                    print len(range(split[0],split[1]))
+                    print len(squared_vel)
+
+                    main.plot(range(split[0],split[1]), squared_vel[split[0]:split[1]], label=r'Velocity')
                     main.set_xlabel('time')
                     main.set_ylabel('velocity')
                     main.legend(loc ='upper left')
