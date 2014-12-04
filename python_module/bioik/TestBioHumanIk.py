@@ -19,8 +19,6 @@ class TestBioHumanIk(BioHumanIk):
         self.rarm_only      = True
         self.use_elbow_pads = True
 
-        self.name = name
-
         self.handles = []
 
         self.traj_human1 = []
@@ -31,26 +29,40 @@ class TestBioHumanIk(BioHumanIk):
         #self.mapping = [-1, 6, 7, 8, 16, 17, 18, 20, 21, 22, 24, 25, 26]
         self.mapping = []
 
+        self.drawer = None
+        self.env = None
 
     def initialize(self, m_file="", o_file="", drawer=None):
 
         NB_MARKERS = get_nb_markers(self.use_elbow_pads, self.rarm_only)
 
         if drawer is None:
+
             self.drawer = Drawer(NB_MARKERS, self.nb_humans, self.use_elbow_pads, self.rarm_only)
-            self.drawer.load_file(m_file, o_file)
+            self.env = self.drawer.env
+
+            self.env.Load(self.environment_file)
+            print "loading ", self.environment_file
+
+            self.humans = self.env.GetRobots()
+            if self.nb_humans == 1:
+                self.humans = [self.env.GetRobots()[0]]
+            self.change_color_human()
+
+            # Get torso offset
+            self.offset_pelvis_torso_init = self.humans[0].GetJoint("TorsoX").GetHierarchyChildLink().GetTransform()[0:3, 3]
+
+            t_cam = array([[ -0.655253290114, -0.106306078558, 0.747891799297, -0.302201271057] , \
+                        [ -0.725788890663, 0.363116971923, -0.584274379801, 2.68592453003] , \
+                        [ -0.209460287369, -0.925659269042, -0.315089361376, 2.25037527084] , \
+                        [ 0.0, 0.0, 0.0, 1.0]])
+            self.env.GetViewer().SetCamera(t_cam)
+
         else:
             self.drawer = drawer
+            self.env = self.drawer.env
 
-        self.env = self.drawer.env
-        self.env.Load(self.environment_file)
-        print "loading ", self.environment_file
-
-        self.humans = self.env.GetRobots()
-        self.change_color_human()
-
-        if self.nb_humans == 1:
-            self.humans = [self.env.GetRobots()[0]]
+        self.drawer.load_file(m_file, o_file)
 
         self.mapping = []
         self.mapping.append(-1)
@@ -79,15 +91,6 @@ class TestBioHumanIk(BioHumanIk):
             self.mapping.append(self.humans[0].GetJoint("lWristY").GetDOFIndex())
             self.compute_left_arm = True
 
-        # Get torso offset
-        self.offset_pelvis_torso_init = self.humans[0].GetJoint("TorsoX").GetHierarchyChildLink().GetTransform()[0:3, 3]
-
-        t_cam = array([[ -0.655253290114, -0.106306078558, 0.747891799297, -0.302201271057] , \
-                        [ -0.725788890663, 0.363116971923, -0.584274379801, 2.68592453003] , \
-                        [ -0.209460287369, -0.925659269042, -0.315089361376, 2.25037527084] , \
-                        [ 0.0, 0.0, 0.0, 1.0]])
-        self.env.GetViewer().SetCamera(t_cam)
-
     def change_color_human(self):
 
         if len(self.humans) <= 1:
@@ -95,7 +98,7 @@ class TestBioHumanIk(BioHumanIk):
 
         links = []
         for jIdx, j in enumerate(self.humans[1].GetJoints()):
-            print "%s, \t%.3f, \t%.3f" % (j.GetName(), j.GetLimits()[0], j.GetLimits()[1])
+            # print "%s, \t%.3f, \t%.3f" % (j.GetName(), j.GetLimits()[0], j.GetLimits()[1])
             l = j.GetFirstAttached()
             if l is not None : links.append(l)
             l = j.GetSecondAttached()
@@ -103,7 +106,7 @@ class TestBioHumanIk(BioHumanIk):
 
         for l in links:
             for g in l.GetGeometries():
-                print g.GetDiffuseColor()
+                # print g.GetDiffuseColor()
                 if set(g.GetDiffuseColor()) & set([0.80000001, 0., 0.01]):
                     g.SetDiffuseColor([0., 0., 0.8])
 
@@ -167,6 +170,8 @@ class TestBioHumanIk(BioHumanIk):
         human.SetDOFValues([r_offset_torso[2]], [human.GetJoint("rShoulderTransZ").GetDOFIndex()])
         human.SetDOFValues([r_offset_shoulder_elbow], [human.GetJoint("rArmTrans").GetDOFIndex()])
         human.SetDOFValues([r_offset_elbow_wrist], [human.GetJoint("rForeArmTrans").GetDOFIndex()])
+
+        # print r_offset_torso[1]
 
         if self.compute_left_arm:
             human.SetDOFValues([l_offset_torso[0]], [human.GetJoint("lShoulderTransX").GetDOFIndex()])
@@ -315,9 +320,9 @@ class TestBioHumanIk(BioHumanIk):
 
         return dist
 
-    def save_file(self):
+    def save_file(self, split_name, folder="."):
 
-        print "Trying to output new file"
+        # print "Trying to output new file"
 
         #  Get the out filename
         # dir, path = os.path.split(self.m_filepath)
@@ -332,8 +337,8 @@ class TestBioHumanIk(BioHumanIk):
         # print "Trying to normalize ids"
         # self.normalize_ids()
 
-        traj_file_human1 = self.name + '_human1_.csv'
-        traj_file_human2 = self.name + '_human2_.csv'
+        traj_file_human1 = folder + "/" + split_name + '_human1_.csv'
+        traj_file_human2 = folder + "/" + split_name + '_human2_.csv'
 
         with open(traj_file_human1, 'w') as h1_file:
             with open(traj_file_human2, 'w') as h2_file:
@@ -355,9 +360,12 @@ class TestBioHumanIk(BioHumanIk):
                     line_str = line_str.rstrip(',')
                     line_str += '\n'
                 h2_file.write(line_str)
-        print "End writing !!!"
 
-    def draw_frame(self,frame,dt=None):
+        print "End writing !!!"
+        print traj_file_human1
+        print traj_file_human2
+
+    def draw_frame(self, frame, dt=None):
 
         del self.handles[:]
         self.drawer.clear()
@@ -445,13 +453,13 @@ class TestBioHumanIk(BioHumanIk):
             dt_0 = t0 - t0_prev_time
             t0_prev_time = t0
 
-            time.sleep(max(dt-(dt_0), 0.))
+            # time.sleep(max(dt-(dt_0), 0.))
 
             curr_time = frame.get_time()
             dt = curr_time - prev_time
             prev_time = curr_time
 
-            #print "dt " , dt , " dt0 : ", dt_0
+            # print "dt ", dt, " dt0 : ", dt_0
 
             if max_frame is not None:
                 if i > max_frame:
@@ -459,6 +467,76 @@ class TestBioHumanIk(BioHumanIk):
 
             if i % 4 == 0:
                 del self.handles[:]
+
+            self.drawer.clear()
+            self.drawer.draw_frame_skeleton(frame)
+
+            humans = self.drawer.isolate_humans(frame)
+
+            for j, h in enumerate(self.humans):
+
+                markers_remaped = self.remap(humans[j].markers)
+
+                markers = []
+                for m in markers_remaped:
+                    markers.append(m.array)
+
+                transforms = []
+                for o in humans[j].objects:
+                    transforms.append(o.get_transform())
+
+                t_pelvis = transforms[0] * MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
+                t_head   = transforms[1]
+
+                if self.use_elbow_pads:
+                    t_elbow  = transforms[2]
+                    t_elbow  = t_elbow * MakeTransform(rodrigues([0, 0, -pi/2]), matrix([0, 0, 0]))
+                    t_elbow  = t_elbow * MakeTransform(rodrigues([0, pi/2, 0]), matrix([0, 0, 0]))
+                else:
+                    t_elbow = array(eye(4))
+
+                # self.handles.append(misc.DrawAxes(self.env, t_elbow, .2))
+
+                trunk_center = (markers[0] + markers[1])/2
+                inv_pelvis = la.inv(t_pelvis)
+                trunk_center = array(array(inv_pelvis).dot(append(trunk_center, 1)))[0:3]
+
+                self.handles.append(misc.DrawAxes(self.env, t_pelvis, .3))
+
+                markers_in_pelvis = self.get_markers_in_pelvis_frame(markers, t_pelvis)
+
+                if not self.compute_left_arm:
+                    [config, d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist] = \
+                        self.compute_ik(markers_in_pelvis, la.inv(self.t_trans) * t_elbow)
+                    d_l_torso = 0
+                    d_l_shoulder_elbow = 0
+                    d_l_elbow_wrist = 0
+                else:
+                    [config,
+                     d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist,
+                     d_l_torso, d_l_shoulder_elbow, d_l_elbow_wrist,
+                     ] = self.compute_ik(markers_in_pelvis, la.inv(self.t_trans) * t_elbow)
+
+                offset_pelvis_torso = trunk_center
+                offset_pelvis_torso -= self.offset_pelvis_torso_init
+                # offset_pelvis_torso += array([0.16, 0., 0.])
+
+                self.set_human_model_sizes(h, t_pelvis, offset_pelvis_torso,
+                                           d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist,
+                                           d_l_torso, d_l_shoulder_elbow, d_l_elbow_wrist)
+
+                q_cur = self.get_human_configuration(h, config)
+                h.SetDOFValues(q_cur[0:h.GetDOF()])
+
+                self.compute_dist_to_points(h, markers, t_elbow)
+
+                # Save to current configurations
+                if j == 0:
+                    traj = self.traj_human1
+                if j == 1:
+                    traj = self.traj_human2
+
+                traj.append([[dt], h.GetDOFValues()])
 
             self.draw_frame(frame)
 
@@ -576,38 +654,38 @@ if __name__ == "__main__":
     # name = ll
 
     # Folder 6
-    #folder_num = '8'
-    # name = '[0629-0768]' # Replan
+    folder_num = '8'
+    name = '[0629-0768]' # Replan
 
     folder = data_folder + 'ten_runs/trials/' + folder_num + '/'
     m_file = folder + name + 'markers.csv'
     o_file = folder + name + 'objects.csv'
 
+   #
+   # m_file = folder + '[2554-2671]markers.csv'
+   # o_file = folder + '[2554-2671]objects.csv'
 
-#    m_file = folder + '[2554-2671]markers.csv'
-#    o_file = folder + '[2554-2671]objects.csv'
-
-    folder = data_folder + 'ten_runs/video/'
-    name = ""
-    m_file = folder + name + 'markers_fixed.csv'
-    o_file = folder + name + 'objects_fixed.csv'
+    # folder = data_folder + 'ten_runs/video/'
+    # name = ""
+    # m_file = folder + name + 'markers_fixed.csv'
+    # o_file = folder + name + 'objects_fixed.csv'
 
     # ------
-    data_folder = '/home/rafi/logging_twelve/0/'
-    folder = data_folder
-    name = ""
-    m_file = folder + name + 'markers_fixed.csv'
-    o_file = folder + name + 'objects_fixed.csv'
+    #data_folder = '/home/rafi/logging_twelve/0/'
+    #folder = data_folder
+    #name = ""
+    #m_file = folder + name + 'markers_fixed.csv'
+    #o_file = folder + name + 'objects_fixed.csv'
 
     print "try to load file : ", m_file
     print "try to load file : ", o_file
 
-    test = TestBioHumanIk(name)
+    test = TestBioHumanIk()
     test.initialize(m_file, o_file)
 
     while True:
         test.run()
-        test.save_file()
+        test.save_file(name)
         print "press enter to exit"
         sys.stdin.readline()
 

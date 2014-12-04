@@ -33,14 +33,14 @@ if __name__ == "__main__":
     print "try to load file : ", m_file
     print "try to load file : ", o_file
 
-    test = TestTwoArmIk(name)
+    test = TestTwoArmIk()
     test.initialize(m_file, o_file)
 
     print len(test.mapping)
 
     while True:
         test.play_skeleton()
-        test.save_file()
+        test.save_file(name)
         print "press enter to exit"
         sys.stdin.readline()
 
