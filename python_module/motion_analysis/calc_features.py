@@ -52,7 +52,16 @@ def get_dt(time):
     dt = np.pad(dt, (1,0), 'constant', constant_values=(np.inf, np.inf))
     return dt
 
-def get_velocity(dt, pos, window):
+def get_velocity(dt, pos, window=[0., 0., -2/6., -3/6., 6/6., -1/6., 0.]):
+    ret = np.ndarray(pos.shape)
+
+    for i,row in enumerate(pos):
+        ret[i] = np.convolve(row, window, 'same')
+        ret[i] /= dt**1
+
+    return ret
+
+def get_accel(dt, pos, window=[0, -1/12.0, 16/12.0, -30/12.0, 16/12.0, -1/12.0, 0]):
     ret = np.ndarray(pos.shape)
 
     for i,row in enumerate(pos):
@@ -62,12 +71,12 @@ def get_velocity(dt, pos, window):
     return ret
 
 
+# def get_curv(dt, vel):
+#     Eigen::Vector3d v1 = vel_buff[i][j].normalized();
+#     Eigen::Vector3d v2 = vel_buff[i-1][j].normalized();
 
-
-    # vel = np.zeroes(pos.shape)
-
-# def get_marker_vel(time, pos):
-#     vel = np.zeroes(pos.shape)
+#     double angle = atan2( v1.cross(v2).norm() , v1.dot(v2) ) ;
+#     curviture[i][j] = angle;
 
 
 
@@ -112,18 +121,20 @@ if __name__ == '__main__':
                 humans = get_human_dict(m_file)
 
                 dt = get_dt(humans[0]['time'])
-                vel = get_velocity(dt, humans[0]['rPalm'], [0., 0., -2/6., -3/6., 6/6., -1/6., 0.])
+                vel = get_velocity(dt, humans[0]['rPalm'])
                 squared_vel = [np.linalg.norm(x) for x in vel.T]
+                squared_accel = [np.linalg.norm(x) for x in get_accel(dt, humans[0]['rPalm']).T]
+
+                print humans[0]['rPalm'].T[0][1]
+                print humans[1]['rPalm'].T[0][1]
 
                 for split in splits:
 
                     fig = plt.figure()
                     main = fig.add_axes([0.1, 0.1, 0.8, 0.8])
 
-                    print len(range(split[0],split[1]))
-                    print len(squared_vel)
-
                     main.plot(range(split[0],split[1]), squared_vel[split[0]:split[1]], label=r'Velocity')
+                    main.plot(range(split[0],split[1]), squared_accel[split[0]:split[1]], label=r'Accel')
                     main.set_xlabel('time')
                     main.set_ylabel('velocity')
                     main.legend(loc ='upper left')
