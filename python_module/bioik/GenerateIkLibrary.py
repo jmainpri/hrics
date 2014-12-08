@@ -78,6 +78,7 @@ def generate_ik_library(source_dir, target_dir):
 if __name__ == "__main__":
 
     if len(sys.argv) >= 4:
+
         for index in range(1, len(sys.argv)):
             if sys.argv[index] == "-s" and index+1 < len(sys.argv):
                 source_dir = str(sys.argv[index+1])
@@ -85,6 +86,7 @@ if __name__ == "__main__":
                 target_dir = str(sys.argv[index+1])
 
         generate_ik_library(source_dir, target_dir)
+
     else:
         print "************************"
         print "******  WARNING  *******"

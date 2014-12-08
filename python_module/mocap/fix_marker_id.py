@@ -463,86 +463,135 @@ class MarkerFixer:
             # for marker in frame.marker_list:
             #     print len(frame.marker_list)
 
+
+def fix_simple_files(file_path):
+
+    f = MarkerFixer(os.path.join(file_path,'markers.csv'), os.path.join(file_path,'objects.csv'))
+    try:
+        with Timer() as t:
+            f.load_file()
+
+            # Filter bad markers
+
+            # Reorder marker ids to fill gaps
+            f.reorder_ids()
+
+            print "Try to find start frame"
+            f.init_first_frame()
+
+            print "starting to track ids"
+            f.track_indices()
+
+            print "Calculating statistics : "
+            f.calc_stats()
+            f.save_file()
+            t.file_runtime = f.get_runtime()
+    finally:
+        if t.file_runtime:
+            print 'Marker matching took,', t.interval, ' sec, ', (t.interval/t.file_runtime)*100, '% of total runtime'
+        else:
+            print 'Marker matching took %.03f sec.' % t.interval
+
+
 if __name__ == '__main__':
-    base_dir = '/home/rafi/aterm_experiment/'
+    
+    if len(sys.argv) < 3:
 
-    # Set constants based on setup csv
-    setup = read_setup(base_dir)
-    NB_HUMAN    = setup[0]
-    ELBOW_PADS  = setup[1]
-    RARM_ONLY   = setup[2]
-    NB_MARKERS  = get_nb_markers(ELBOW_PADS, RARM_ONLY)
-    THRESHOLD   = 0.0025
+        print "usage : python fix_marker_id.py -d /path/to/directory"
 
-    # Run fixer on all directories in the base experiment_dir
-    # Heirarchy is base / block / run
-    # Where a block is a set of runs with the same pair collaborating
-    # a run is an individual run of the ball placing experiment.
-    blocks = sorted([ name for name in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, name)) ])
-    for block in blocks:
-        path = os.path.join(base_dir, block)
-        runs = sorted([ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ])
+    else:
 
-        for run in runs:
-            file_path = os.path.join(path, run)
-            print 'Trying to fix ', os.path.join(path, run)
+        simple_fix = False
+
+        for index in range(1, len(sys.argv)):
+            if sys.argv[index] == "-d" and index+1 < len(sys.argv):
+                base_dir = str(sys.argv[index+1]) + '/'
+            if sys.argv[index] == "-simple":
+                simple_fix = True
+
+        # example of base dir
+        # base_dir = '/home/rafi/aterm_experiment/'
+
+        # Set constants based on setup csv
+        setup = read_setup(base_dir)
+        NB_HUMAN    = setup[0]
+        ELBOW_PADS  = setup[1]
+        RARM_ONLY   = setup[2]
+        NB_MARKERS  = get_nb_markers(ELBOW_PADS, RARM_ONLY)
+        THRESHOLD   = 0.0025
+
+        if simple_fix :
+
+            fix_simple_files(base_dir)
+
+        else:
+            # Run fixer on all directories in the base experiment_dir
+            # Heirarchy is base / block / run
+            # Where a block is a set of runs with the same pair collaborating
+            # a run is an individual run of the ball placing experiment.
+            blocks = sorted([ name for name in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, name)) ])
+            for block in blocks:
+                path = os.path.join(base_dir, block)
+                runs = sorted([ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ])
+
+                for run in runs:
+                    file_path = os.path.join(path, run)
+                    print 'Trying to fix ', os.path.join(path, run)
+
+                    f = MarkerFixer(os.path.join(file_path,'markers.csv'), os.path.join(file_path,'objects.csv'))
+
+                    try:
+                        with Timer() as t:
+                            f.load_file()
+
+                            # Filter bad markers
+
+                            # avg = f.get_average_position()
+                            # f.filter_threshold_outside(avg, 1.8)
+                            # f.filter_negative_x()
+                            # f.filter_pillar()
+
+                            # Reorder marker ids to fill gaps
+                            f.reorder_ids()
+
+                            print "Try to find start frame"
+                            f.init_first_frame()
+
+                            print "starting to track ids"
+                            f.track_indices()
+
+                            print "Calculating statistics : "
+                            f.calc_stats()
 
 
+                            # num_drops = 0
+                            # for frame in f.frames:
+                            #     for marker in frame.marker_list:
+                            #         if marker.times_dropped > 0:
+                            #             num_drops += 1
 
-            f = MarkerFixer(os.path.join(file_path,'markers.csv'), os.path.join(file_path,'objects.csv'))
+                            # print 'drops in og data : ', num_drops
+                            # num_drops = 0
 
-            try:
-                with Timer() as t:
-                    f.load_file()
+                            # f.interp_drops()
+                            # for frame in f.frames:
+                            #     for marker in frame.marker_list:
+                            #         if marker.times_dropped > 0:
+                            #             num_drops += 1
 
-                    # Filter bad markers
+                            # print 'drops in fixed data : ', num_drops
 
-                    # avg = f.get_average_position()
-                    # f.filter_threshold_outside(avg, 1.8)
-                    # f.filter_negative_x()
-                    # f.filter_pillar()
+                            # print "Trying to smooth markers"
+                            # f.smooth_markers(7)
 
-                    # Reorder marker ids to fill gaps
-                    f.reorder_ids()
+                            # print "Calculating statistics after smoothing : "
+                            # f.calc_stats()
 
-                    print "Try to find start frame"
-                    f.init_first_frame()
+                            f.save_file()
 
-                    print "starting to track ids"
-                    f.track_indices()
-
-                    print "Calculating statistics : "
-                    f.calc_stats()
-
-
-                    # num_drops = 0
-                    # for frame in f.frames:
-                    #     for marker in frame.marker_list:
-                    #         if marker.times_dropped > 0:
-                    #             num_drops += 1
-
-                    # print 'drops in og data : ', num_drops
-                    # num_drops = 0
-
-                    # f.interp_drops()
-                    # for frame in f.frames:
-                    #     for marker in frame.marker_list:
-                    #         if marker.times_dropped > 0:
-                    #             num_drops += 1
-
-                    # print 'drops in fixed data : ', num_drops
-
-                    # print "Trying to smooth markers"
-                    # f.smooth_markers(7)
-
-                    # print "Calculating statistics after smoothing : "
-                    # f.calc_stats()
-
-                    f.save_file()
-
-                    t.file_runtime = f.get_runtime()
-            finally:
-                if t.file_runtime:
-                    print 'Marker matching took,', t.interval, ' sec, ', (t.interval/t.file_runtime)*100, '% of total runtime'
-                else:
-                    print 'Marker matching took %.03f sec.' % t.interval
+                            t.file_runtime = f.get_runtime()
+                    finally:
+                        if t.file_runtime:
+                            print 'Marker matching took,', t.interval, ' sec, ', (t.interval/t.file_runtime)*100, '% of total runtime'
+                        else:
+                            print 'Marker matching took %.03f sec.' % t.interval

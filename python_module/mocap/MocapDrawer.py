@@ -64,7 +64,7 @@ class Human():
 
 class Drawer():
 
-    def __init__(self, nb_markers, nb_human, elbow_pads, r_arm_only):
+    def __init__(self, nb_markers, nb_human, elbow_pads, r_arm_only, environment = ""):
 
         self.nb_human = nb_human
         self.elbow_pads = elbow_pads
@@ -76,7 +76,9 @@ class Drawer():
         self.env.SetViewer('qtcoin')
         self.env.SetDebugLevel(DebugLevel.Verbose)
         self.env.Reset()
-        # self.env.Load("../../ormodels/human_wpi_bio.xml")
+
+        if not environment == "":
+            self.env.Load(environment)
 
         self.handles = []
 

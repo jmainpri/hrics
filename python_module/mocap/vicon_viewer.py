@@ -14,7 +14,7 @@ import subprocess
 import Queue
 import threading
 from openravepy import *
-from bioik.TestBioHumanIk import *
+from TestBioHumanIk import *
 
 class Tracker:
 
@@ -54,12 +54,14 @@ class Tracker:
         self.object_q = Queue.Queue()
         self.marker_q = Queue.Queue()
 
-        self.viewer = MocapDrawer.Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY)
+        environment_file = "../../ormodels/humans_env_two_arms.xml"
+
+        self.viewer = MocapDrawer.Drawer(NB_MARKERS, NB_HUMAN, ELBOW_PADS, RARM_ONLY, environment_file)
         self.ik = TestBioHumanIk()
         self.ik.nb_humans      = 1
         self.ik.rarm_only      = False
         self.ik.use_elbow_pads = False
-        self.ik.environment_file = "../../ormodels/humans_env_two_arms.xml"
+        self.ik.environment_file = environment_file
         self.ik.initialize("", "", self.viewer)
         print "done initializing"
 
@@ -74,6 +76,7 @@ class Tracker:
         rospy.spin()
 
     def marker_cb(self, msg):
+
         self.lock.acquire()
         self.marker_q.put(msg)
 

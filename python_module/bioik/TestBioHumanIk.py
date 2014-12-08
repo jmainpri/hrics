@@ -62,7 +62,13 @@ class TestBioHumanIk(BioHumanIk):
             self.drawer = drawer
             self.env = self.drawer.env
 
-        self.drawer.load_file(m_file, o_file)
+            self.humans = self.env.GetRobots()
+            if self.nb_humans == 1:
+                self.humans = [self.env.GetRobots()[0]]
+            self.change_color_human()
+
+        if m_file != "" and o_file != "":
+            self.drawer.load_file(m_file, o_file)
 
         self.mapping = []
         self.mapping.append(-1)
