@@ -434,14 +434,6 @@ class TestBioHumanIk(BioHumanIk):
 
             self.compute_dist_to_points(h, markers, t_elbow)
 
-            # Save to current configurations
-            if j == 0:
-                traj = self.traj_human1
-            if j == 1:
-                traj = self.traj_human2
-
-            traj.append([[dt], h.GetDOFValues()])
-
     def play_skeleton(self, max_frame=None):
         # for frame in self.frames:
         prev_time = self.drawer.frames[0].get_time()
@@ -453,7 +445,12 @@ class TestBioHumanIk(BioHumanIk):
         t0_end = time.time()
         dt = 0.
 
+        print "prev_time : ", prev_time
+
         for i, frame in enumerate(self.drawer.frames):
+
+            if i > 2000:
+                break
 
             t0 = time.time()
             dt_0 = t0 - t0_prev_time
@@ -461,10 +458,12 @@ class TestBioHumanIk(BioHumanIk):
 
             # time.sleep(max(dt-(dt_0), 0.))
 
+
             curr_time = frame.get_time()
             dt = curr_time - prev_time
             prev_time = curr_time
 
+            # print "curr_time : ", curr_time
             # print "dt ", dt, " dt0 : ", dt_0
 
             if max_frame is not None:
@@ -544,6 +543,12 @@ class TestBioHumanIk(BioHumanIk):
 
                 traj.append([[dt], h.GetDOFValues()])
 
+#                print traj[-1]
+                # if len(self.traj_human1) > 2:
+                # print self.traj_human1[-2]
+                # print self.traj_human1[-1]        
+
+            #print self.traj_human1
             self.draw_frame(frame)
 
 #                print curr_time

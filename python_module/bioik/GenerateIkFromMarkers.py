@@ -55,9 +55,9 @@ if __name__ == "__main__":
         print "try to load file : ", o_file
 
         test = TestTwoArmIk("")
-        test.nb_humans      = nb_humans
-        test.rarm_only      = rarm_only
-        test.use_elbow_pads = use_elbow_pads
+        test.nb_humans        = nb_humans
+        test.rarm_only        = rarm_only
+        test.use_elbow_pads   = use_elbow_pads
         test.compute_left_arm = compute_left_arm
         test.environment_file = environment_file
 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
         while True:
             test.play_skeleton()
-            test.save_file("")
+            test.save_file("no_split", data_folder)
             print "press enter to exit"
             sys.stdin.readline()
 
