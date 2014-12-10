@@ -445,12 +445,12 @@ class TestBioHumanIk(BioHumanIk):
         t0_end = time.time()
         dt = 0.
 
-        print "prev_time : ", prev_time
+        print "prev_time : %.5f" % prev_time
 
         for i, frame in enumerate(self.drawer.frames):
 
-            if i > 2000:
-                break
+            # if i > 2000:
+            #     break
 
             t0 = time.time()
             dt_0 = t0 - t0_prev_time

@@ -87,9 +87,9 @@ class LatestJointStates:
 
         if( len(self.trajectory) == 0 ): # start recording when time 
             if( time >= self.start_time ):
-                self.start_time = time
-                print "start_time : ", self.start_time
-            self.prev_time = self.start_time
+                # self.start_time = time
+                print "start_time : ", self.start_time , " , time : " , time , " , delta : " , time - self.start_time
+            self.prev_time = time
 
             # for i, name in enumerate(self.names):
             #     print "_pr2_map[\"%s\"] = %d;" % ( name , i )
@@ -143,6 +143,8 @@ if __name__ == "__main__":
     for index in range(1, len(sys.argv)):
         if sys.argv[index] == "-t" and index+1 < len(sys.argv):
             latestjointstates.start_time  = float(sys.argv[index+1])
+        if sys.argv[index] == "-d" and index+1 < len(sys.argv):
+            latestjointstates.folder = str(sys.argv[index+1])
 
     latestjointstates.start_tf_listener()
     latestjointstates.start_thread()

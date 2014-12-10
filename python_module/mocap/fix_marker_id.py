@@ -245,6 +245,23 @@ class MarkerFixer:
 
         print "Filtered ", nb_removed, ' markers'
 
+    def filter_low_z(self,z):
+        nb_removed = 0
+
+        for frame in self.frames:
+            remove_list = []
+
+            for marker in frame.marker_list:
+                if marker.z < z:
+                    remove_list.append(marker)
+                    frame.count -= 1
+                    nb_removed += 1
+
+            for r_marker in remove_list:
+                frame.marker_list.remove(r_marker)
+
+        print "Filtered ", nb_removed, ' markers'
+
     def init_first_frame(self):
         # TODO Get # Human from objects
         # TODO Check if marker and object timestamps for first_frame match up
@@ -472,6 +489,7 @@ def fix_simple_files(file_path):
             f.load_file()
 
             # Filter bad markers
+            f.filter_low_z(0.3)
 
             # Reorder marker ids to fill gaps
             f.reorder_ids()
