@@ -1,0 +1,20 @@
+<launch>
+
+  <arg name="output" default="screen"/>
+  <arg name="ormodels" default="$(find hrics_py)/../ormodels/" />
+
+  <!-- GET ENVIRONMENT VARIABLE
+  <arg name="file" default="-f $(env HOME_MOVE3D)/../assets/Pr2/pr2.p3d" /> -->
+
+  <!-- INCLUDE OTHER FILE
+  <include file="$(find archie_moveit_config)/launch/planning_context.launch" />
+  -->
+
+  <!-- Start the left arm controller -->
+  <node pkg="hrics_py" type="vicon_viewer.py" name="mocap_human_skeleton_tracker" output="$(arg output)" args="">
+    <param name="ormodels" type="string" value="$(arg ormodels)" />
+    <param name="markers_topic" type="string" value="mocap_markers" />
+    <param name="objects_topic" type="string" value="mocap_tracking" />
+  </node>
+
+</launch>

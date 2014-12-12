@@ -53,6 +53,8 @@ class TestBioHumanIk(BioHumanIk):
             # Get torso offset
             self.offset_pelvis_torso_init = self.humans[0].GetJoint("TorsoX").GetHierarchyChildLink().GetTransform()[0:3, 3]
 
+            print "self.offset_pelvis_torso_init : " , self.offset_pelvis_torso_init
+
             t_cam = array([[ -0.655253290114, -0.106306078558, 0.747891799297, -0.302201271057] , \
                         [ -0.725788890663, 0.363116971923, -0.584274379801, 2.68592453003] , \
                         [ -0.209460287369, -0.925659269042, -0.315089361376, 2.25037527084] , \
@@ -67,6 +69,8 @@ class TestBioHumanIk(BioHumanIk):
             if self.nb_humans == 1:
                 self.humans = [self.env.GetRobots()[0]]
             self.change_color_human()
+
+            self.offset_pelvis_torso_init = array([ 0.037432,  0., 0.139749])
 
         if m_file != "" and o_file != "":
             self.drawer.load_file(m_file, o_file)
@@ -365,8 +369,8 @@ class TestBioHumanIk(BioHumanIk):
 
     def draw_frame(self, frame, save_traj, dt=None):
 
-        # del self.handles[:]
-        # self.drawer.clear()
+        del self.handles[:]
+        self.drawer.clear()
         self.drawer.draw_frame_skeleton(frame)
 
         humans = self.drawer.isolate_humans(frame)
@@ -431,13 +435,14 @@ class TestBioHumanIk(BioHumanIk):
             self.compute_dist_to_points(h, markers, t_elbow, t_wrist)
 
             if save_traj:
+
                 # Save to current configurations
                 if j == 0:
                     traj = self.traj_human1
                 if j == 1:
                     traj = self.traj_human2
 
-            traj.append([[dt], h.GetDOFValues()])
+                traj.append([[dt], h.GetDOFValues()])
 
     def play_skeleton(self, max_frame=None):
         # for frame in self.frames:
