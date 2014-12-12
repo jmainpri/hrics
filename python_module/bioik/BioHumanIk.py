@@ -33,8 +33,9 @@ class BioHumanIk():
         self.t_trans = matrix(eye(4))
 
         # Mode
-        self.use_elbow_pads = False
-        self.compute_left_arm = False
+        self.elbow_pads = True
+        self.wrist_pads = False
+        self.rarm_only  = True
 
     def get_markers_in_pelvis_frame(self, markers, t_pelvis):
 
@@ -57,7 +58,7 @@ class BioHumanIk():
 
         return points_3d
 
-    def compute_ik(self, markers, t_elbow=None):
+    def compute_ik(self, markers, pads):
 
         # 0 -> 3-5 xyphoid process
         # 1 -> 6-8 T8
@@ -91,30 +92,42 @@ class BioHumanIk():
         acromion = array([markers[4][0], markers[4][1], fixedz])
         gleno_center = array([acromion[0], acromion[1], markers[5][2]])  # p_shoulder_center
 
-        if not self.use_elbow_pads:
+        # OBJECTS when using pads
+        t_elbow = pads[0]
+        t_wrist = pads[1]
+
+        if not self.elbow_pads:
 
             # ELBOW
             elb_axis = markers[6] - markers[7]
             elb_center = markers[7] + 0.5 * elb_axis  # p_elbow_center
 
-            # HAND
-            wrist_axis = markers[9] - markers[8]
-            wrist_center = markers[8] + 0.5 * wrist_axis  # p_wrist_center
-            UlnStylPro = markers[8] + 10 * wrist_axis / la.norm(wrist_axis)
-            LApY = elb_center - wrist_center  # UlnStylPro
-            hand_origin = markers[10]  # - array([0.0, 0.0, 40.0])
+            if not self.wrist_pads:
+                # HAND
+                wrist_axis = markers[9] - markers[8]
+                wrist_center = markers[8] + 0.5 * wrist_axis  # p_wrist_center
+                UlnStylPro = markers[8] + 10 * wrist_axis / la.norm(wrist_axis)
+                hand_origin = markers[10]  # - array([0.0, 0.0, 40.0])
 
         else:
 
             elb_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
             elb_axis = -array(transpose(t_elbow[:, 2]).tolist()[0][:3])
 
-            # HAND
-            wrist_axis = markers[7] - markers[6]
-            wrist_center = markers[6] + 0.5 * wrist_axis  # p_wrist_center
-            UlnStylPro = markers[6] + 10 * wrist_axis / la.norm(wrist_axis)
-            LApY = elb_center - wrist_center  # UlnStylPro
-            hand_origin = markers[8] - array([0.0, 0.0, 0.04]) # TODO perform offset in wrist frame
+            if not self.wrist_pads:
+                # HAND
+                wrist_axis = markers[7] - markers[6]
+                wrist_center = markers[6] + 0.5 * wrist_axis  # p_wrist_center
+                UlnStylPro = markers[6] + 10 * wrist_axis / la.norm(wrist_axis)
+                hand_origin = markers[8] - array([0.0, 0.0, 0.04]) # TODO perform offset in wrist frame
+
+            else :
+
+                wrist_axis   = -array(transpose(t_wrist[:, 1]).tolist()[0][:3])
+                wrist_center = array(transpose(t_wrist[:, 3]).tolist()[0][:3]) - 0.03 * array(transpose(t_wrist[:, 2]).tolist()[0][:3])
+                hand_origin  = array(transpose(t_wrist[:, 3]).tolist()[0][:3]) - array([0.0, 0.0, 0.02])  # TODO perform offset in wrist frame
+            
+        LApY = elb_center - wrist_center  # UlnStylPro
 
         # --------------------------------------------------------------------
         # Define matrices
@@ -200,7 +213,7 @@ class BioHumanIk():
         wrist_a = euler_from_matrix(hand_about_LA, 'rzxy')
         wrist_a = wrist_a * 180/math.pi
 
-        if not self.compute_left_arm:
+        if self.rarm_only:
 
             # --------------------------------------------------------------------
             # Pack arm configuration in degrees
@@ -247,7 +260,7 @@ class BioHumanIk():
             acromion = array([markers[11][0], markers[11][1], fixedz])
             gleno_center = array([acromion[0], acromion[1], markers[12][2]])  # p_shoulder_center
 
-            if not self.use_elbow_pads:
+            if not self.elbow_pads:
 
                 # ELBOW
                 elb_axis = markers[13] - markers[14]

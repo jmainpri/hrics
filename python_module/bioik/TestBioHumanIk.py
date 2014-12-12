@@ -15,9 +15,10 @@ class TestBioHumanIk(BioHumanIk):
 
         BioHumanIk.__init__(self)
 
-        self.nb_humans      = 2
-        self.rarm_only      = True
-        self.use_elbow_pads = True
+        self.nb_humans  = 2
+        self.elbow_pads = True
+        self.wrist_pads = False
+        self.rarm_only  = True
 
         self.handles = []
 
@@ -34,11 +35,11 @@ class TestBioHumanIk(BioHumanIk):
 
     def initialize(self, m_file="", o_file="", drawer=None):
 
-        NB_MARKERS = get_nb_markers(self.use_elbow_pads, self.rarm_only)
+        NB_MARKERS = get_nb_markers(self.elbow_pads, self.wrist_pads, self.rarm_only)
 
         if drawer is None:
 
-            self.drawer = Drawer(NB_MARKERS, self.nb_humans, self.use_elbow_pads, self.rarm_only)
+            self.drawer = Drawer(NB_MARKERS, self.nb_humans, self.elbow_pads, self.wrist_pads, self.rarm_only)
             self.env = self.drawer.env
 
             self.env.Load(self.environment_file)
@@ -95,7 +96,6 @@ class TestBioHumanIk(BioHumanIk):
             self.mapping.append(self.humans[0].GetJoint("lWristZ").GetDOFIndex())
             self.mapping.append(self.humans[0].GetJoint("lWristX").GetDOFIndex())
             self.mapping.append(self.humans[0].GetJoint("lWristY").GetDOFIndex())
-            self.compute_left_arm = True
 
     def change_color_human(self):
 
@@ -139,14 +139,15 @@ class TestBioHumanIk(BioHumanIk):
             print "Press return to get view matrix."
             sys.stdin.readline()
 
-    def remap(markers, in_markers):
+    def remap( self, in_markers ):
 
         out_markers = deepcopy(in_markers)
 
-        # Remap wrist
-        tmp = out_markers[6]
-        out_markers[6] = in_markers[7]
-        out_markers[7] = tmp
+        if not self.wrist_pads:
+            # Remap wrist
+            tmp = out_markers[6]
+            out_markers[6] = in_markers[7]
+            out_markers[7] = tmp
 
         return out_markers
 
@@ -179,7 +180,7 @@ class TestBioHumanIk(BioHumanIk):
 
         # print r_offset_torso[1]
 
-        if self.compute_left_arm:
+        if not self.rarm_only:
             human.SetDOFValues([l_offset_torso[0]], [human.GetJoint("lShoulderTransX").GetDOFIndex()])
             human.SetDOFValues([l_offset_torso[1]], [human.GetJoint("lShoulderTransY").GetDOFIndex()])
             human.SetDOFValues([l_offset_torso[2]], [human.GetJoint("lShoulderTransZ").GetDOFIndex()])
@@ -198,17 +199,23 @@ class TestBioHumanIk(BioHumanIk):
                     q[self.mapping[i]] = dof * pi / 180
         return q
 
-    def compute_dist_to_points(self, human, markers, t_elbow):
+    def compute_dist_to_points(self, human, markers, t_elbow, t_wrist):
 
         # Get joint centers
         p_torso_origin = (markers[0] + markers[1])/2
 
         p_r_shoulder_center = array([markers[4][0], markers[4][1], markers[5][2]])
-        if self.use_elbow_pads:
+
+        if self.elbow_pads:
             p_r_elbow_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
         else:
             p_r_elbow_center = array([0, 0, 0])
-        p_r_wrist_center = (markers[6] + markers[7])/2
+
+        if self.wrist_pads:
+            p_r_wrist_center = array(transpose(t_wrist[:, 3]).tolist()[0][:3])
+        else:
+            p_r_wrist_center = (markers[6] + markers[7])/2
+            
 
         # Get the points in the global frame
         # inv_pelvis = la.inv(t_pelvis)
@@ -220,10 +227,10 @@ class TestBioHumanIk(BioHumanIk):
         p2r = array(array(inv_pelvis).dot(append(p_r_elbow_center, 1)))[0:3]
         p3r = array(array(inv_pelvis).dot(append(p_r_wrist_center, 1)))[0:3]
 
-        if self.compute_left_arm:
+        if not self.rarm_only:
 
             p_l_shoulder_center = array([markers[11][0], markers[11][1], markers[12][2]])
-            if self.use_elbow_pads:
+            if self.elbow_pads:
                 p_l_elbow_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
             else:
                 p_l_elbow_center = array([0, 0, 0])
@@ -269,7 +276,7 @@ class TestBioHumanIk(BioHumanIk):
                 if print_dist:
                     print "dist wrist : ", dist
 
-            if self.compute_left_arm:
+            if not self.rarm_only:
 
                 if j.GetName() == "lShoulderX":
                     # self.handles.append(self.env.plot3(p_link, pointsize=0.05, colors=array([0, 0, 0]), drawstyle=1))
@@ -318,7 +325,7 @@ class TestBioHumanIk(BioHumanIk):
         self.handles.append(misc.DrawAxes(self.env, self.LAEr, .2))
         self.handles.append(misc.DrawAxes(self.env, self.handEr, .2))
 
-        if self.compute_left_arm:
+        if not self.rarm_only:
             self.handles.append(misc.DrawAxes(self.env, self.trunkEl, .2))
             self.handles.append(misc.DrawAxes(self.env, self.UAEl, .2))
             self.handles.append(misc.DrawAxes(self.env, self.LAEl, .2))
@@ -327,21 +334,6 @@ class TestBioHumanIk(BioHumanIk):
         return dist
 
     def save_file(self, split_name, folder="."):
-
-        # print "Trying to output new file"
-
-        #  Get the out filename
-        # dir, path = os.path.split(self.m_filepath)
-        # name, type = path.rsplit('.', 1)
-        # m_outpath = name + '_fixed.' + type
-        #
-        # dir, path = os.path.split(self.o_filepath)
-        # name, type = path.rsplit('.', 1)
-        # o_outpath = name + '_fixed.' + type
-
-        # No need to normalize ids.  we output marker names
-        # print "Trying to normalize ids"
-        # self.normalize_ids()
 
         traj_file_human1 = folder + "/" + split_name + '_human1_.csv'
         traj_file_human2 = folder + "/" + split_name + '_human2_.csv'
@@ -371,47 +363,47 @@ class TestBioHumanIk(BioHumanIk):
         print traj_file_human1
         print traj_file_human2
 
-    def draw_frame(self, frame, dt=None):
+    def draw_frame(self, frame, save_traj, dt=None):
 
-        del self.handles[:]
-        self.drawer.clear()
+        # del self.handles[:]
+        # self.drawer.clear()
         self.drawer.draw_frame_skeleton(frame)
 
         humans = self.drawer.isolate_humans(frame)
 
         for j, h in enumerate(self.humans):
 
-            markers_remaped = self.remap(humans[j].markers)
-
-            markers = []
-            for m in markers_remaped:
-                markers.append(m.array)
-
-            transforms = []
-            for o in humans[j].objects:
-                transforms.append(o.get_transform())
+            # Get objects in pelvis frame and add offset
+            transforms = [o.get_transform() for o in humans[j].objects]
 
             t_pelvis = transforms[0] * MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
             t_head   = transforms[1]
 
-            if self.use_elbow_pads:
+            if self.elbow_pads:
                 t_elbow  = transforms[2]
                 t_elbow  = t_elbow * MakeTransform(rodrigues([0, 0, -pi/2]), matrix([0, 0, 0]))
                 t_elbow  = t_elbow * MakeTransform(rodrigues([0, pi/2, 0]), matrix([0, 0, 0]))
             else:
                 t_elbow = array(eye(4))
 
-            # self.handles.append(misc.DrawAxes(self.env, t_elbow, .2))
+            if self.wrist_pads:
+                t_wrist  = transforms[3]
+                # t_wrist  = t_wrist * MakeTransform(rodrigues([0, 0, -pi/2]), matrix([0, 0, 0]))
+                # t_wrist  = t_wrist * MakeTransform(rodrigues([0, pi/2, 0]), matrix([0, 0, 0]))
+            else:
+                t_wrist = array(eye(4))
 
-            trunk_center = (markers[0] + markers[1])/2
-            inv_pelvis = la.inv(t_pelvis)
-            trunk_center = array(array(inv_pelvis).dot(append(trunk_center, 1)))[0:3]
+            # Store t_elbow and t_wrist in **special** see BioHumanIk pelvis frame
+            pads_in_pelvis = [la.inv(self.t_trans) * t_elbow, la.inv(self.t_trans) * t_wrist]
 
+            # Get markers in pelvis and compute self.t_trans
+            markers = [m.array for m in self.remap(humans[j].markers)]
             markers_in_pelvis = self.get_markers_in_pelvis_frame(markers, t_pelvis)
 
-            if not self.compute_left_arm:
+            if self.rarm_only:
+
                 [config, d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist] = \
-                    self.compute_ik(markers_in_pelvis, la.inv(self.t_trans) * t_elbow)
+                    self.compute_ik(markers_in_pelvis, pads_in_pelvis)
                 d_l_torso = 0
                 d_l_shoulder_elbow = 0
                 d_l_elbow_wrist = 0
@@ -419,7 +411,11 @@ class TestBioHumanIk(BioHumanIk):
                 [config,
                  d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist,
                  d_l_torso, d_l_shoulder_elbow, d_l_elbow_wrist,
-                 ] = self.compute_ik(markers_in_pelvis, la.inv(self.t_trans) * t_elbow)
+                 ] = self.compute_ik(markers_in_pelvis, pads_in_pelvis)
+
+            trunk_center = (markers[0] + markers[1])/2
+            inv_pelvis = la.inv(t_pelvis)
+            trunk_center = array(array(inv_pelvis).dot(append(trunk_center, 1)))[0:3]
 
             offset_pelvis_torso = trunk_center
             offset_pelvis_torso -= self.offset_pelvis_torso_init
@@ -432,7 +428,16 @@ class TestBioHumanIk(BioHumanIk):
             q_cur = self.get_human_configuration(h, config)
             h.SetDOFValues(q_cur[0:h.GetDOF()])
 
-            self.compute_dist_to_points(h, markers, t_elbow)
+            self.compute_dist_to_points(h, markers, t_elbow, t_wrist)
+
+            if save_traj:
+                # Save to current configurations
+                if j == 0:
+                    traj = self.traj_human1
+                if j == 1:
+                    traj = self.traj_human2
+
+            traj.append([[dt], h.GetDOFValues()])
 
     def play_skeleton(self, max_frame=None):
         # for frame in self.frames:
@@ -449,15 +454,12 @@ class TestBioHumanIk(BioHumanIk):
 
         for i, frame in enumerate(self.drawer.frames):
 
-            # if i > 2000:
+            # if i > 2000: # stop after N frames
             #     break
 
             t0 = time.time()
             dt_0 = t0 - t0_prev_time
             t0_prev_time = t0
-
-            # time.sleep(max(dt-(dt_0), 0.))
-
 
             curr_time = frame.get_time()
             dt = curr_time - prev_time
@@ -475,83 +477,7 @@ class TestBioHumanIk(BioHumanIk):
 
             self.drawer.clear()
             self.drawer.draw_frame_skeleton(frame)
-
-            humans = self.drawer.isolate_humans(frame)
-
-            for j, h in enumerate(self.humans):
-
-                markers_remaped = self.remap(humans[j].markers)
-
-                markers = []
-                for m in markers_remaped:
-                    markers.append(m.array)
-
-                transforms = []
-                for o in humans[j].objects:
-                    transforms.append(o.get_transform())
-
-                t_pelvis = transforms[0] * MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
-                t_head   = transforms[1]
-
-                if self.use_elbow_pads:
-                    t_elbow  = transforms[2]
-                    t_elbow  = t_elbow * MakeTransform(rodrigues([0, 0, -pi/2]), matrix([0, 0, 0]))
-                    t_elbow  = t_elbow * MakeTransform(rodrigues([0, pi/2, 0]), matrix([0, 0, 0]))
-                else:
-                    t_elbow = array(eye(4))
-
-                # self.handles.append(misc.DrawAxes(self.env, t_elbow, .2))
-
-                trunk_center = (markers[0] + markers[1])/2
-                inv_pelvis = la.inv(t_pelvis)
-                trunk_center = array(array(inv_pelvis).dot(append(trunk_center, 1)))[0:3]
-
-                self.handles.append(misc.DrawAxes(self.env, t_pelvis, .3))
-
-                markers_in_pelvis = self.get_markers_in_pelvis_frame(markers, t_pelvis)
-
-                if not self.compute_left_arm:
-                    [config, d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist] = \
-                        self.compute_ik(markers_in_pelvis, la.inv(self.t_trans) * t_elbow)
-                    d_l_torso = 0
-                    d_l_shoulder_elbow = 0
-                    d_l_elbow_wrist = 0
-                else:
-                    [config,
-                     d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist,
-                     d_l_torso, d_l_shoulder_elbow, d_l_elbow_wrist,
-                     ] = self.compute_ik(markers_in_pelvis, la.inv(self.t_trans) * t_elbow)
-
-                offset_pelvis_torso = trunk_center
-                offset_pelvis_torso -= self.offset_pelvis_torso_init
-                # offset_pelvis_torso += array([0.16, 0., 0.])
-
-                self.set_human_model_sizes(h, t_pelvis, offset_pelvis_torso,
-                                           d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist,
-                                           d_l_torso, d_l_shoulder_elbow, d_l_elbow_wrist)
-
-                q_cur = self.get_human_configuration(h, config)
-                h.SetDOFValues(q_cur[0:h.GetDOF()])
-
-                self.compute_dist_to_points(h, markers, t_elbow)
-
-                # Save to current configurations
-                if j == 0:
-                    traj = self.traj_human1
-                if j == 1:
-                    traj = self.traj_human2
-
-                traj.append([[dt], h.GetDOFValues()])
-
-#                print traj[-1]
-                # if len(self.traj_human1) > 2:
-                # print self.traj_human1[-2]
-                # print self.traj_human1[-1]        
-
-            #print self.traj_human1
-            self.draw_frame(frame)
-
-#                print curr_time
+            self.draw_frame(frame, True, dt)
 
             # if i % 3 == 0:
             #     print "press enter to continue"
@@ -559,10 +485,6 @@ class TestBioHumanIk(BioHumanIk):
 
             #for h in self.humans:
             #    print "robot in collision ", h.CheckSelfCollision()
-
-    def run(self):
-
-        self.play_skeleton()
 
 if __name__ == "__main__":
 
@@ -695,7 +617,7 @@ if __name__ == "__main__":
     test.initialize(m_file, o_file)
 
     while True:
-        test.run()
+        test.play_skeleton()
         test.save_file(name)
         print "press enter to exit"
         sys.stdin.readline()

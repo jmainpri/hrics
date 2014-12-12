@@ -160,7 +160,7 @@ class Frame:
         print "Couldn't find marker with name : ", name
         return None
 
-    def reorder_objects(self, nb_human, elbow_pads, r_arm_only):
+    def reorder_objects(self, nb_human, elbow_pads, wrist_pads, r_arm_only):
         new_list = []
         for i in range(nb_human):
             new_list.append( self.get_object_by_id("Pelvis" + str(i)) )
@@ -170,6 +170,11 @@ class Frame:
                 new_list.append( self.get_object_by_id("rElbow" + str(i)) )
                 if not r_arm_only:
                     new_list.append( self.get_object_by_id("lElbow" + str(i)) )
+
+            if wrist_pads:
+                new_list.append( self.get_object_by_id("Wrist" + str(i)) ) # TODO CHANGE NAME to rWrist in mocap
+                if not r_arm_only:
+                    new_list.append( self.get_object_by_id("lWrist" + str(i)) )
 
 
         # HACK for messed up object ids in third and fourth logging data
@@ -309,7 +314,7 @@ class Frame:
             if marker.id == 17:
                 marker.name = 'lPalm'
 
-    def set_marker_names(self, nb_human, nb_markers, elbow_pads, r_arm_only):
+    def set_marker_names(self, nb_human, nb_markers, elbow_pads, wrist_pads, r_arm_only):
         true_count = nb_markers*nb_human
         if (self.count is not true_count):
             print "Something went wrong when setting marker names"
@@ -324,15 +329,17 @@ class Frame:
                 self.marker_list[i+3].name = 'SternumBack'
                 self.marker_list[i+4].name = 'rShoulderFront'
                 self.marker_list[i+5].name = 'rShoulderBack'
-                self.marker_list[i+6].name = 'rWristOuter'
-                self.marker_list[i+7].name = 'rWristInner'
-                self.marker_list[i+8].name = 'rPalm'
+                if not wrist_pads:
+                    self.marker_list[i+6].name = 'rWristOuter'
+                    self.marker_list[i+7].name = 'rWristInner'
+                    self.marker_list[i+8].name = 'rPalm'
                 if not r_arm_only:
                     self.marker_list[i+9].name = 'lShoulderFront'
                     self.marker_list[i+10].name = 'lShoulderBack'
-                    self.marker_list[i+11].name = 'lWristOuter'
-                    self.marker_list[i+12].name = 'lWristInner'
-                    self.marker_list[i+13].name = 'lPalm'
+                    if not wrist_pads:
+                        self.marker_list[i+11].name = 'lWristOuter'
+                        self.marker_list[i+12].name = 'lWristInner'
+                        self.marker_list[i+13].name = 'lPalm'
         else:
             for i in range(0, true_count, nb_markers):
                 self.marker_list[i].name = 'ChestFront'
@@ -351,9 +358,10 @@ class Frame:
                     self.marker_list[i+12].name = 'lShoulderBack'
                     self.marker_list[i+13].name = 'lElbowOuter'
                     self.marker_list[i+14].name = 'lElbowInner'
-                    self.marker_list[i+15].name = 'lWristOuter'
-                    self.marker_list[i+16].name = 'lWristInner'
-                    self.marker_list[i+17].name = 'lPalm'
+                    if not wrist_pads:
+                        self.marker_list[i+15].name = 'lWristOuter'
+                        self.marker_list[i+16].name = 'lWristInner'
+                        self.marker_list[i+17].name = 'lPalm'
 
     def get_n_closest_markers(self, pelv_frame, n):
         points = []
@@ -397,7 +405,8 @@ class Frame:
         return dist_list
 
 
-def get_nb_markers(elbow_pads, r_arm_only):
+def get_nb_markers(elbow_pads, wrist_pads, r_arm_only):
+    
     if elbow_pads:
         if r_arm_only:
             nb_markers = 9
@@ -409,9 +418,16 @@ def get_nb_markers(elbow_pads, r_arm_only):
         else:
             nb_markers = 18
 
+    if wrist_pads:
+        if r_arm_only:
+            nb_markers -= 3
+        else:
+            nb_markers -= 6
+
     return nb_markers
 
-def get_nb_objects(elbow_pads, r_arm_only):
+def get_nb_objects(elbow_pads, wrist_pads, r_arm_only):
+
     if elbow_pads:
         if r_arm_only:
             nb_objects = 3
@@ -420,6 +436,12 @@ def get_nb_objects(elbow_pads, r_arm_only):
             nb_objects = 4
     else:
         nb_objects = 2
+
+    if wrist_pads:
+        if r_arm_only:
+            nb_objects += 1
+        else:
+            nb_objects += 2
 
     return nb_objects
 

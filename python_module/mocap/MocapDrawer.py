@@ -20,10 +20,11 @@ from os.path import isfile, join
 
 class Human():
 
-    def __init__(self, marker_list, object_list, elbow_pads, r_arm_only):
+    def __init__(self, marker_list, object_list, elbow_pads, wrist_pads, r_arm_only):
         self.markers = marker_list
         self.objects = object_list
         self.elbow_pads = elbow_pads
+        self.wrist_pads = wrist_pads
         self.r_arm_only = r_arm_only
 
     def get_center_points(self):
@@ -33,28 +34,34 @@ class Human():
         rShoulder = (self.markers[4].array + self.markers[5].array)/2
         if self.elbow_pads:
             rElbow = self.objects[2].array
-            rWrist = (self.markers[6].array + self.markers[7].array)/2
-            rPalm = self.markers[8].array
+            if not self.wrist_pads:
+                rWrist = (self.markers[6].array + self.markers[7].array)/2
+                rPalm = self.markers[8].array
             if not self.r_arm_only:
                 lShoulder = (self.markers[9].array + self.markers[10].array)/2
                 lElbow = self.objects[3].array
-                lWrist = (self.markers[11].array + self.markers[12].array)/2
-                lPalm = self.markers[13].array
+                if not self.wrist_pads:
+                    lWrist = (self.markers[11].array + self.markers[12].array)/2
+                    lPalm = self.markers[13].array
         else:
             rElbow = (self.markers[6].array + self.markers[7].array)/2
-            rWrist = (self.markers[8].array + self.markers[9].array)/2
-            rPalm = self.markers[10].array
+            if not self.wrist_pads:
+                rWrist = (self.markers[8].array + self.markers[9].array)/2
+                rPalm = self.markers[10].array
             if not self.r_arm_only:
                 lShoulder = (self.markers[11].array + self.markers[12].array)/2
                 lElbow = (self.markers[13].array + self.markers[14].array)/2
-                lWrist = (self.markers[15].array + self.markers[16].array)/2
-                lPalm = self.markers[17].array
+                if not self.wrist_pads:
+                    lWrist = (self.markers[15].array + self.markers[16].array)/2
+                    lPalm = self.markers[17].array
 
         Pelvis = self.objects[0].array
         Head = self.objects[1].array
 
         # Return the points
-        centers = [Chest, Sternum, rShoulder, rElbow, rWrist, rPalm]
+        centers = [Chest, Sternum, rShoulder, rElbow]
+        if not self.wrist_pads:
+            centers += [rWrist, rPalm]
         if not self.r_arm_only:
             lArm = [lShoulder, lElbow, lWrist, lPalm]
             centers += lArm
@@ -64,13 +71,14 @@ class Human():
 
 class Drawer():
 
-    def __init__(self, nb_markers, nb_human, elbow_pads, r_arm_only, environment = ""):
+    def __init__(self, nb_markers, nb_human, elbow_pads, wrist_pads, r_arm_only, environment = ""):
 
         self.nb_human = nb_human
         self.elbow_pads = elbow_pads
+        self.wrist_pads = wrist_pads
         self.r_arm_only = r_arm_only
         self.nb_markers = nb_markers
-        self.nb_objects = get_nb_objects(self.elbow_pads, self.r_arm_only)
+        self.nb_objects = get_nb_objects(self.elbow_pads, self.wrist_pads, self.r_arm_only)
 
         self.env = Environment()
         self.env.SetViewer('qtcoin')
@@ -330,7 +338,7 @@ class Drawer():
             temp_markers = frame.marker_list[i*self.nb_markers:i*self.nb_markers+self.nb_markers]
             temp_objects = frame.object_list[i*self.nb_objects:i*self.nb_objects+self.nb_objects]
 
-            humans.append( Human(temp_markers, temp_objects, self.elbow_pads, self.r_arm_only) )
+            humans.append( Human(temp_markers, temp_objects, self.elbow_pads, self.wrist_pads, self.r_arm_only) )
 
         return humans
 
@@ -431,16 +439,18 @@ class Drawer():
             self.handles.append(self.env.drawlinestrip(points=shoulders, linewidth=3.0))
 
             # Connect head
-            head = np.array( [ point_list[1], point_list[7] ] )
-            self.handles.append(self.env.drawlinestrip(points=head, linewidth=3.0))
+            # print len(point_list)
+            #head = np.array([point_list[1], point_list[7]])
+            #self.handles.append(self.env.drawlinestrip(points=head, linewidth=3.0))
 
             # Connect right arm
-            right_arm = np.array([point_list[2],point_list[3], point_list[4], point_list[5]])
+            right_arm_list = [point_list[2],point_list[3], point_list[4], point_list[5]]
+            right_arm = np.array(right_arm_list)
             self.handles.append(self.env.drawlinestrip(points=right_arm, linewidth=3.0))
 
             # Pelvis
-            pelv = np.array( [point_list[2], point_list[1], point_list[6], point_list[2]] )
-            self.handles.append(self.env.drawlinestrip(points=pelv, linewidth=3.0))
+            #pelv = np.array( [point_list[2], point_list[1], point_list[6], point_list[2]] )
+            #self.handles.append(self.env.drawlinestrip(points=pelv, linewidth=3.0))
 
     def draw_object_axes(self, object):
         # tf = MakeTransform( rotationMatrixFromQuat( array(transformation_helper.NormalizeQuaternion([object.r_w, object.r_x, object.r_y, object.r_z]) )), transpose(matrix([object.x, object.y, object.z])) )

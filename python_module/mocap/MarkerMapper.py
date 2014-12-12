@@ -77,22 +77,33 @@ class MarkerMapper:
         for i, p in enumerate(point_list):
             self.points[i] = Point( p[0], p[1] )
 
-    def assign_marker_names(self, elbow_pads, r_arm_only):
+    def assign_marker_names(self, elbow_pads, wrist_pads, r_arm_only):
         self.put_points_in_frame(self.pelv_frame)
         body = copy(self.points)
 
         # Using an elbow pad object instead of default marker setup
         if elbow_pads:
             if r_arm_only:
+
                 # Get the right arm : first 5 points with negative y
-                r_arm = sorted(body, key=lambda p: p.y, reverse=True)[0:5]
+                if wrist_pads: 
+                    r_arm = sorted(body, key=lambda p: p.y, reverse=True)[0:2]
+                else:
+                    r_arm = sorted(body, key=lambda p: p.y, reverse=True)[0:5]
+
                 for point in r_arm:
-                    print point.original_id
+                    print "point.original_id : " , point.original_id
+
                 # Remove the right arm from the body list
                 body = [ point for point in body if point not in r_arm ]
 
-                # Assign names from each list
-                self.assign_right_arm_names_pads(r_arm)
+                if wrist_pads:
+                    # Assign names from each list
+                    self.assign_right_arm_names_el_and_wr_pads(r_arm)
+                else:
+                    # Assign names from each list
+                    self.assign_right_arm_names_pads(r_arm)
+
                 self.assign_body_names(body)
             else:
                 print "Haven't set this up yet"
@@ -136,6 +147,9 @@ class MarkerMapper:
                 self.assign_right_arm_names(r_arm)
                 self.assign_left_arm_names(l_arm)
                 self.assign_body_names(body)
+
+        for point in self.points:
+            print "point.new_id : ", point.new_id
 
         id_map = [None]*self.count
         for point in self.points:
@@ -225,6 +239,24 @@ class MarkerMapper:
 
         print "Shoulders : ", rShoulderFront.original_id, rShoulderBack.original_id
 
+    def assign_right_arm_names_el_and_wr_pads(self, r_arm_points):
+
+        print "assign wrist and elbow pads"
+
+        r_arm_points.sort( key=lambda p: p.z, reverse=False )
+
+        # Shoulder
+        Shoulders = r_arm_points[0:2]
+        rShoulderFront = min(Shoulders, key=lambda p: p.x)
+        print 'rShoulderFront : ', rShoulderFront.original_id
+        self.get_point_by_id(rShoulderFront.original_id).new_id = 4
+
+        rShoulderBack = max(Shoulders, key=lambda p: p.x)
+        print 'rShoulderBack : ', rShoulderBack.original_id
+        self.get_point_by_id(rShoulderBack.original_id).new_id = 5
+
+        print "Shoulders : ", rShoulderFront.original_id, rShoulderBack.original_id
+
     def assign_left_arm_names(self, l_arm_points):
         l_arm_points.sort( key=lambda p: p.z, reverse=False )
 
@@ -292,7 +324,11 @@ class MarkerMapper:
         self.get_point_by_id(lShoulderBack.original_id).new_id = 10
 
     def assign_body_names(self, body_points):
+
         body_points.sort( key=lambda p: p.z, reverse=False )
+
+        for point in body_points:
+            print "point : " , point.x , " ",  point.y , " ",  point.z
 
         # Chest
         Chest = body_points[0:2]

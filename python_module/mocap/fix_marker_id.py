@@ -284,7 +284,7 @@ class MarkerFixer:
 
                 for pelvis in pelv_frames:
                     points = frame.get_n_closest_markers(pelvis, NB_MARKERS)
-                    maps.append(MarkerMapper(points, pelvis).assign_marker_names(ELBOW_PADS, RARM_ONLY))
+                    maps.append(MarkerMapper(points, pelvis).assign_marker_names(ELBOW_PADS, WRIST_PADS, RARM_ONLY))
 
                 # Reorder markers according to map
                 new_marker_list = []
@@ -307,7 +307,7 @@ class MarkerFixer:
             frame = self.frames[self.first_frame]
             # Now all markers are in the proper order, but names aren't set and ids are out of order
             print "Assign marker names"
-            frame.set_marker_names(NB_HUMAN, NB_MARKERS, ELBOW_PADS, RARM_ONLY)
+            frame.set_marker_names(NB_HUMAN, NB_MARKERS, ELBOW_PADS, WRIST_PADS, RARM_ONLY)
 
             # Put all ids in ascending order
             frame.reorder_ids()
@@ -330,7 +330,7 @@ class MarkerFixer:
     def reorder_ids(self):
         for frame in self.frames:
             frame.reorder_ids()
-            frame.reorder_objects(NB_HUMAN, ELBOW_PADS, RARM_ONLY)
+            frame.reorder_objects(NB_HUMAN, ELBOW_PADS, WRIST_PADS, RARM_ONLY)
 
     def smooth_markers(self, size):
         if size%2 == 0:
@@ -532,10 +532,18 @@ if __name__ == '__main__':
 
         # Set constants based on setup csv
         setup = read_setup(base_dir)
+
         NB_HUMAN    = setup[0]
         ELBOW_PADS  = setup[1]
-        RARM_ONLY   = setup[2]
-        NB_MARKERS  = get_nb_markers(ELBOW_PADS, RARM_ONLY)
+
+        if len(setup) == 3: # Setup does not contain WRIST_PADS
+            WRIST_PADS  = False
+            RARM_ONLY   = setup[2]
+        else :
+            WRIST_PADS  = setup[2]
+            RARM_ONLY   = setup[3]
+
+        NB_MARKERS  = get_nb_markers(ELBOW_PADS, WRIST_PADS, RARM_ONLY)
         THRESHOLD   = 0.0025
 
         if simple_fix :
