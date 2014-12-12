@@ -15,6 +15,11 @@
     <param name="ormodels" type="string" value="$(arg ormodels)" />
     <param name="markers_topic" type="string" value="mocap_markers" />
     <param name="objects_topic" type="string" value="mocap_tracking" />
+    <param name="human_tracker_threshold" value="0.0025" />
+    <param name="human_tracker_nb_humans" value="1" />
+    <param name="human_tracker_elbow_pads" value="true" />
+    <param name="human_tracker_wrist_pads" value="true" />
+    <param name="human_tracker_rarm_only" value="true" />
   </node>
 
 </launch>

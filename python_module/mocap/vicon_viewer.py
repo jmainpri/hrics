@@ -5,16 +5,20 @@
 from MocapCommon import *
 from MarkerMapper import *
 import MocapDrawer
+from TestBioHumanIk import *
+
+from openravepy import *
 import numpy as np
 import os
-import rospy
-from std_msgs.msg import *
-from lightweight_vicon_bridge.msg import *
 import subprocess
 import Queue
 import threading
-from openravepy import *
-from TestBioHumanIk import *
+
+import rospy
+from std_msgs.msg import String
+from sensor_msgs.msg import JointState
+from lightweight_vicon_bridge.msg import *
+
 
 class Tracker:
 
@@ -61,6 +65,8 @@ class Tracker:
             self.marker_sub = rospy.Subscriber(marker_topic, MocapMarkerArray, self.marker_cb)
         if object_topic:
             self.object_sub = rospy.Subscriber(object_topic, MocapState, self.object_cb)
+
+        self.joint_state_pub = rospy.Publisher('mocap_human_joint_state', JointState)
 
         rospy.spin()
 
@@ -133,7 +139,34 @@ class Tracker:
             #self.viewer.draw_frame_axes(frame)
             self.ik.draw_frame(frame, False)
 
+            # Publish joint state to topic
+            self.publish_joint_state()
+
         # self.frames.append(frame)
+
+        self.publish_joint_state()
+
+    def publish_joint_state(self):
+
+        joint_state = JointState()
+        joint_state.header.stamp = rospy.Time()
+
+        joints = self.ik.humans[0].GetJoints()
+
+        if len(joints) != self.ik.humans[0].GetDOF():
+            rospy.logerror("Openrave human model is not consistant")
+
+        joint_state.name        = [""]*len(joints)
+        joint_state.position    = [0.]*len(joints)
+
+        q_cur = self.ik.humans[0].GetDOFValues()
+
+        for i, joint in enumerate(joints):
+            joint_state.name[i] = joint.GetName()
+            joint_state.position[i] = q_cur[joint.GetDOFIndex()]
+
+        # Publish joint states
+        self.joint_state_pub.publish(joint_state)
 
     def try_init(self, frame):
         if frame.count == ( NB_HUMAN * NB_MARKERS):
@@ -183,17 +216,19 @@ class Tracker:
 
 if __name__ == '__main__':
 
-    THRESHOLD   = 0.0025
-    # NB_MARKERS  = 18
-    NB_HUMAN    = 1
-    ELBOW_PADS  = True
-    WRIST_PADS  = True
-    RARM_ONLY   = True
-    NB_MARKERS = get_nb_markers(ELBOW_PADS, WRIST_PADS, RARM_ONLY)
-
     rospy.init_node('mocap_human_skeleton_tracker')
+
     marker_topic = rospy.get_param("~markers_topic", "mocap_markers")
     object_topic = rospy.get_param("~objects_topic", "mocap_tracking" )
-    ORMODELS = rospy.get_param("~ormodels", "ormodels" )
+
+    ORMODELS     = rospy.get_param("~ormodels", "../ormodels" )
+
+    THRESHOLD    = rospy.get_param("~human_tracker_threshold", 0.0025)
+    NB_HUMAN     = rospy.get_param("~human_tracker_nb_humans", 1)
+    ELBOW_PADS   = rospy.get_param("~human_tracker_elbow_pads", True)
+    WRIST_PADS   = rospy.get_param("~human_tracker_wrist_pads", True)
+    RARM_ONLY    = rospy.get_param("~human_tracker_rarm_only", True)
+
+    NB_MARKERS   = get_nb_markers(ELBOW_PADS, WRIST_PADS, RARM_ONLY)
 
     t = Tracker(NB_HUMAN, ELBOW_PADS,  WRIST_PADS, RARM_ONLY, NB_MARKERS, marker_topic, object_topic)
