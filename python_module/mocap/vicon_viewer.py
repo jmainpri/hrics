@@ -154,7 +154,8 @@ class Tracker:
         joints = self.ik.humans[0].GetJoints()
 
         if len(joints) != self.ik.humans[0].GetDOF():
-            rospy.logerror("Openrave human model is not consistant")
+            rospy.logerror("OpenRave human model is not consistant")
+            return
 
         joint_state.name        = [""]*len(joints)
         joint_state.position    = [0.]*len(joints)
