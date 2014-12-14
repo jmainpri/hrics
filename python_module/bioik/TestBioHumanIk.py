@@ -32,6 +32,7 @@ class TestBioHumanIk(BioHumanIk):
 
         self.drawer = None
         self.env = None
+        self.draw = False
 
     def initialize(self, m_file="", o_file="", drawer=None):
 
@@ -369,9 +370,9 @@ class TestBioHumanIk(BioHumanIk):
 
     def draw_frame(self, frame, save_traj, dt=None):
 
-        del self.handles[:]
-        self.drawer.clear()
-        self.drawer.draw_frame_skeleton(frame)
+        if self.draw:
+
+            self.drawer.draw_frame_skeleton(frame)
 
         humans = self.drawer.isolate_humans(frame)
 
@@ -429,10 +430,13 @@ class TestBioHumanIk(BioHumanIk):
                                        d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist,
                                        d_l_torso, d_l_shoulder_elbow, d_l_elbow_wrist)
 
+
             q_cur = self.get_human_configuration(h, config)
             h.SetDOFValues(q_cur[0:h.GetDOF()])
 
-            self.compute_dist_to_points(h, markers, t_elbow, t_wrist)
+            if self.draw:
+
+                self.compute_dist_to_points(h, markers, t_elbow, t_wrist)
 
             if save_traj:
 
@@ -445,33 +449,29 @@ class TestBioHumanIk(BioHumanIk):
                 traj.append([[dt], h.GetDOFValues()])
 
     def play_skeleton(self, max_frame=None):
-        # for frame in self.frames:
-        prev_time = self.drawer.frames[0].get_time()
 
         self.traj_human1 = []
         self.traj_human2 = []
 
-        t0_prev_time = time.clock()
-        t0_end = time.time()
+        # for frame in self.frames:
+        t_prev = self.drawer.frames[0].get_time()
+        t0_prev_time = time.clock() # Clock has higher precision than time()
         dt = 0.
 
-        print "prev_time : %.5f" % prev_time
+        print "t_prev : %.5f" % t_prev
+        print "t0_prev_time : %.5f" % t0_prev_time
+
+        exec_time = 0.0
+        traj_time = 0.0
+
+        nb_overshoot = 0
+
+        t_total = time.clock()
 
         for i, frame in enumerate(self.drawer.frames):
 
-            # if i > 2000: # stop after N frames
+            #if i > 2000: # stop after N frames
             #     break
-
-            t0 = time.time()
-            dt_0 = t0 - t0_prev_time
-            t0_prev_time = t0
-
-            curr_time = frame.get_time()
-            dt = curr_time - prev_time
-            prev_time = curr_time
-
-            # print "curr_time : ", curr_time
-            # print "dt ", dt, " dt0 : ", dt_0
 
             if max_frame is not None:
                 if i > max_frame:
@@ -479,17 +479,43 @@ class TestBioHumanIk(BioHumanIk):
 
             if i % 4 == 0:
                 del self.handles[:]
+                self.drawer.clear()
 
-            self.drawer.clear()
-            self.drawer.draw_frame_skeleton(frame)
             self.draw_frame(frame, True, dt)
 
-            # if i % 3 == 0:
-            #     print "press enter to continue"
-            #     sys.stdin.readline()
+            # Trajectory time
+            t_cur = frame.get_time()
+            dt = t_cur - t_prev
+            t_prev = t_cur
+            traj_time += dt
+
+            # Execution time
+            t0 = time.clock()
+            dt_0 = t0 - t0_prev_time
+            t0_prev_time = t0
+            exec_time += dt_0
+
+            # Sleep
+            if dt < dt_0 :
+                nb_overshoot +=1
+            else:
+                # dt - dt_0 = sleep_time
+                # time.sleep(sleep_time) # sleep only of dt > dt_0 TODO: Should use C++ for good execution times
+                t = t0 + (dt - dt_0)
+                while t - time.clock() > 1e-10 :
+                    pass
 
             #for h in self.humans:
             #    print "robot in collision ", h.CheckSelfCollision()
+
+        print "------------------------"
+        print "Total time : " , float(time.clock() - t_total)
+        print "Exec time : ", exec_time
+        print "Traj time : ", traj_time
+        print "Nb. of overshoot : ", nb_overshoot
+        print "Nb. of frames : , ", len(self.drawer.frames)
+        print "%.4f percent of overshoot " % float(100. * float(nb_overshoot) / float(len(self.drawer.frames)))
+
 
 if __name__ == "__main__":
 

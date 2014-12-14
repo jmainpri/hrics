@@ -59,7 +59,6 @@ if __name__ == "__main__":
 
         test = TestTwoArmIk("")
         test.nb_humans        = nb_humans
-        test.rarm_only        = rarm_only
         test.elbow_pads       = elbow_pads
         test.wrist_pads       = wrist_pads
         test.rarm_only        = rarm_only

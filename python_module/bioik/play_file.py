@@ -7,16 +7,18 @@ import time
 from copy import deepcopy
 import csv
 
+import rospy
+from sensor_msgs.msg import JointState
 
 class PlayFile():
 
-    def __init__(self):
+    def __init__(self, environment_file):
 
         self.env = Environment()
         self.env.SetViewer('qtcoin')
         self.env.SetDebugLevel(DebugLevel.Verbose)
         self.env.Reset()
-        self.env.Load("../../ormodels/humans_bio_env.xml")
+        self.env.Load()
         self.humans = self.env.GetRobots()
         self.handles = []
         t_cam = array([[ -0.662516847837, 0.365861186797, -0.653618404214, 3.09212255478] , \
@@ -101,24 +103,71 @@ class PlayFile():
             self.humans[0].SetDOFValues(row1[1:self.humans[0].GetDOF()+1])
             self.humans[1].SetDOFValues(row2[1:self.humans[1].GetDOF()+1])
 
+            if self.joint_state_pub is not None :
+                self.publish_joint_state(joint_state)
+
+    def set_publish_joint_state(self, publish_joint_state):
+
+        if publish_joint_state:
+            self.joint_state_pub = rospy.Publisher('mocap_human_joint_state', JointState)
+        else:
+            self.joint_state_pub = None
+
+    def publish_joint_state(self):
+
+        joint_state = JointState()
+        joint_state.header.stamp = rospy.Time()
+
+        joints = self.humans[0].GetJoints()
+
+        if len(joints) != self.humans[0].GetDOF():
+            rospy.logerror("OpenRave human model is not consistant")
+            return
+
+        joint_state.name        = [""]*len(joints)
+        joint_state.position    = [0.]*len(joints)
+
+        q_cur = self.humans[0].GetDOFValues()
+
+        for i, joint in enumerate(joints):
+            joint_state.name[i] = joint.GetName()
+            joint_state.position[i] = q_cur[joint.GetDOFIndex()]
+
+        # Publish joint states
+        self.joint_state_pub.publish(joint_state)
 
 if __name__ == "__main__":
 
-    # folder = '/home/ruikun/workspace/gmm-gmr-gesture-recognition/data_ten_motions_mocap_1016/'
-    folder = 'ten_motions/'
+    environment_file = "../../ormodels/humans_bio_env.xml"
+    h1_file = None
+    h2_file = None
+    publish_joint_state = rospy.get_param("~human_tracker_publish_joint_state", False)
 
-    name = '[7395-7595]'
-    h1_file = folder + "human_one/" + name + '_human1_.csv'
-    h2_file = folder + "human_two/" + name + '_human2_.csv'
+    for index in range(1, len(sys.argv)):
+        if sys.argv[index] == "-h1" and index+1 < len(sys.argv):
+            h1_file = str(sys.argv[index+1]) + '/'
+        if sys.argv[index] == "-h2" and index+1 < len(sys.argv):
+            h2_file = int(sys.argv[index+1])
+        if sys.argv[index] == "-env" and index+1 < len(sys.argv):
+            environment_file = int(sys.argv[index+1])
 
-    print "try to load file : ", h1_file
-    print "try to load file : ", h2_file
+    if h1_file is None:
 
-    test = PlayFile()
-    test.load_files(h1_file, h2_file)
+        print "Usage : "
+        print " -h1 /path/to/directory/file1.csv   : sets the file for human1"
+        print " -h2 /path/to/directory/file1.csv   : sets the file for human2"
 
-    while True:
-        test.play_skeleton()
-        test.print_view()
-        print "press enter to exit"
-        sys.stdin.readline()
+    else :
+
+        print "try to load file : ", h1_file
+        print "try to load file : ", h2_file
+
+        test = PlayFile()
+        test.load_files(h1_file, h2_file)
+        test.set_publish_joint_state( publish_joint_state )
+
+        while True:
+            test.play_skeleton()
+            test.print_view()
+            print "press enter to play again"
+            sys.stdin.readline()

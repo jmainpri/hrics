@@ -26,7 +26,8 @@ class Tracker:
         # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_three/first/2014-07-31-15-50-15.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
         # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_fourth/0/2014-08-05-17-58-43.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
 
-        self.bag = subprocess.Popen('rosbag play /home/pr2command/workspace/test_mocap/tracker_test/0/2014-12-12-12-25-37.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+        # self.bag = subprocess.Popen('rosbag play /home/pr2command/workspace/test_mocap/tracker_test/0/2014-12-12-12-25-37.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+        self.bag = subprocess.Popen('rosbag play /home/pr2command/workspace/test_mocap/ricoun_test/0/2014-12-11-14-37-41.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
 
         self.i = 0 # Frame drawn
 
