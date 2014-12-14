@@ -32,7 +32,7 @@ class TestBioHumanIk(BioHumanIk):
 
         self.drawer = None
         self.env = None
-        self.draw = False
+        self.draw = True
 
     def initialize(self, m_file="", o_file="", drawer=None):
 
@@ -455,18 +455,16 @@ class TestBioHumanIk(BioHumanIk):
 
         # for frame in self.frames:
         t_prev = self.drawer.frames[0].get_time()
-        t0_prev_time = time.clock() # Clock has higher precision than time()
+        t0_prev_time = time.time()
         dt = 0.
 
         print "t_prev : %.5f" % t_prev
-        print "t0_prev_time : %.5f" % t0_prev_time
+        # print "t0_prev_time : %.5f" % t0_prev_time
 
         exec_time = 0.0
         traj_time = 0.0
-
         nb_overshoot = 0
-
-        t_total = time.clock()
+        t_total = time.time()
 
         for i, frame in enumerate(self.drawer.frames):
 
@@ -490,26 +488,26 @@ class TestBioHumanIk(BioHumanIk):
             traj_time += dt
 
             # Execution time
-            t0 = time.clock()
+            t0 = time.time()
             dt_0 = t0 - t0_prev_time
-            t0_prev_time = t0
-            exec_time += dt_0
 
             # Sleep
             if dt < dt_0 :
                 nb_overshoot +=1
+                # print "dt : " , dt , " dt0 , ", dt_0, " , t0 : %.5f" % t0
             else:
-                # dt - dt_0 = sleep_time
-                # time.sleep(sleep_time) # sleep only of dt > dt_0 TODO: Should use C++ for good execution times
-                t = t0 + (dt - dt_0)
-                while t - time.clock() > 1e-10 :
-                    pass
+                time.sleep(dt - dt_0) # sleep only of dt > dt_0 TODO: Should use C++ for good execution times
+                t0 = time.time()
+                dt_0 = t0 - t0_prev_time
+
+            t0_prev_time = t0
+            exec_time += dt_0
 
             #for h in self.humans:
             #    print "robot in collision ", h.CheckSelfCollision()
 
         print "------------------------"
-        print "Total time : " , float(time.clock() - t_total)
+        print "Total time : " , float(time.time() - t_total)
         print "Exec time : ", exec_time
         print "Traj time : ", traj_time
         print "Nb. of overshoot : ", nb_overshoot

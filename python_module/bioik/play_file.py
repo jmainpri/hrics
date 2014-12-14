@@ -18,7 +18,7 @@ class PlayFile():
         self.env.SetViewer('qtcoin')
         self.env.SetDebugLevel(DebugLevel.Verbose)
         self.env.Reset()
-        self.env.Load()
+        self.env.Load(environment_file)
         self.humans = self.env.GetRobots()
         self.handles = []
         t_cam = array([[ -0.662516847837, 0.365861186797, -0.653618404214, 3.09212255478] , \
@@ -31,7 +31,6 @@ class PlayFile():
         self.traj_human2 = []
 
         self.change_color_human()
-
 
     def change_color_human(self):
 
@@ -48,10 +47,9 @@ class PlayFile():
 
         for l in links:
             for g in l.GetGeometries():
-                print g.GetDiffuseColor()
+                # print g.GetDiffuseColor()
                 if set(g.GetDiffuseColor()) & set([0.80000001, 0., 0.01]):
                     g.SetDiffuseColor([0., 0., 0.8])
-
 
     def print_view(self):
 
@@ -79,32 +77,70 @@ class PlayFile():
 
         # Parse CSV files
         with open(h1_filepath, 'r') as h1_file:
-            with open(h2_filepath, 'r') as h2_file:
-                self.traj_human1 = [row for row in csv.reader(h1_file, delimiter=',')]
-                self.traj_human2 = [row for row in csv.reader(h2_file, delimiter=',')]
+            self.traj_human1 = [row for row in csv.reader(h1_file, delimiter=',')]
+            self.traj_human1 = [map(float, row) for row in self.traj_human1] # Convert to floats
 
-        # Convert to floats
-        self.traj_human1 = [map(float, row) for row in self.traj_human1]
-        self.traj_human2 = [map(float, row) for row in self.traj_human2]
+        # Parse CSV files
+        if h2_filepath is not None:
+            with open(h2_filepath, 'r') as h2_file:
+                self.traj_human2 = [row for row in csv.reader(h2_file, delimiter=',')]
+                self.traj_human2 = [map(float, row) for row in self.traj_human2] # Convert to floats
+        else:
+            self.traj_human2 = deepcopy(self.traj_human1)
 
 
     def play_skeleton(self):
         # for frame in self.frames:
         print len(self.traj_human1)
 
-        scale = 2.
+        scale = 1.
+
+        nb_dofs1 = self.humans[0].GetDOF()
+        nb_dofs2 = self.humans[1].GetDOF()
+
+        t0_prev_time = time.time()
+        t_total = time.time()
+        traj_time = 0.0
+        exec_time = 0.0
+        nb_overshoot = 0
 
         for row1, row2 in zip(self.traj_human1, self.traj_human2):
 
-            time.sleep(row1[0]*scale)
-
             del self.handles[:]
            
-            self.humans[0].SetDOFValues(row1[1:self.humans[0].GetDOF()+1])
-            self.humans[1].SetDOFValues(row2[1:self.humans[1].GetDOF()+1])
+            self.humans[0].SetDOFValues(row1[1:nb_dofs1+1])
+            self.humans[1].SetDOFValues(row2[1:nb_dofs2+1])
 
             if self.joint_state_pub is not None :
                 self.publish_joint_state(joint_state)
+
+            # Execution time
+            t0 = time.time()
+            dt_0 = t0 - t0_prev_time
+
+            # Trajectory time
+            dt = row1[0]
+            traj_time += dt
+
+            # Sleep
+            if dt < dt_0 :
+                nb_overshoot +=1
+                # print "dt : " , dt , " dt0 , ", dt_0, " , t0 : %.5f" % t0
+            else:
+                time.sleep(dt - dt_0) # sleep only of dt > dt_0 TODO: Should use C++ for good execution times
+                t0 = time.time()
+                dt_0 = t0 - t0_prev_time
+
+            t0_prev_time = t0
+            exec_time += dt_0
+
+        print "------------------------"
+        print "Total time : " , float(time.time() - t_total)
+        print "Exec time : ", exec_time
+        print "Traj time : ", traj_time
+        print "Nb. of overshoot : ", nb_overshoot
+        print "Nb. of frames : , ", len(self.traj_human1)
+        print "%.4f percent of overshoot " % float(100. * float(nb_overshoot) / float(len(self.traj_human1)))
 
     def set_publish_joint_state(self, publish_joint_state):
 
@@ -138,14 +174,14 @@ class PlayFile():
 
 if __name__ == "__main__":
 
-    environment_file = "../../ormodels/humans_bio_env.xml"
     h1_file = None
     h2_file = None
+    environment_file = "../../ormodels/humans_bio_env.xml"
     publish_joint_state = rospy.get_param("~human_tracker_publish_joint_state", False)
 
     for index in range(1, len(sys.argv)):
         if sys.argv[index] == "-h1" and index+1 < len(sys.argv):
-            h1_file = str(sys.argv[index+1]) + '/'
+            h1_file = str(sys.argv[index+1])
         if sys.argv[index] == "-h2" and index+1 < len(sys.argv):
             h2_file = int(sys.argv[index+1])
         if sys.argv[index] == "-env" and index+1 < len(sys.argv):
@@ -162,9 +198,11 @@ if __name__ == "__main__":
         print "try to load file : ", h1_file
         print "try to load file : ", h2_file
 
-        test = PlayFile()
+        rospy.init_node('mocap_trajectory_player')
+
+        test = PlayFile(environment_file)
         test.load_files(h1_file, h2_file)
-        test.set_publish_joint_state( publish_joint_state )
+        test.set_publish_joint_state(publish_joint_state)
 
         while True:
             test.play_skeleton()
