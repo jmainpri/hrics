@@ -1,0 +1,21 @@
+<launch>
+
+  <arg name="output" default="screen"/>
+  <arg name="ormodels" default="$(find hrics_py)/../ormodels/" />
+
+  <!-- GET ENVIRONMENT VARIABLE
+  <arg name="file" default="-f $(env HOME_MOVE3D)/../assets/Pr2/pr2.p3d" /> -->
+
+  <!-- INCLUDE OTHER FILE
+  <include file="$(find archie_moveit_config)/launch/planning_context.launch" />
+  -->
+
+  <!-- Start the left arm controller -->
+  <node pkg="hrics_py" type="play_file.py" name="mocap_human_trajectory_player" output="$(arg output)" args="">
+    <param name="ormodels" type="string" value="$(arg ormodels)" />
+    <param name="start_openrave" value="false" />
+    <param name="human_tracker_publish_joint_state_topic" value="true" />
+    <param name="human1_traj_file" type="string" value="$(find hrics_py)/test_mocap/ricoun_test/0/no_split_human1_.csv" />
+  </node>
+
+</launch>

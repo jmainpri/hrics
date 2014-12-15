@@ -13,38 +13,37 @@ from sensor_msgs.msg import JointState
 
 class PlayFile():
 
-    def __init__(self, environment_file):
+    def __init__(self, environment_file, start_openrave):
 
-        self.env = Environment()
-        self.env.SetViewer('qtcoin')
-        self.env.SetDebugLevel(DebugLevel.Verbose)
-        self.env.Reset()
-        self.env.Load(environment_file)
-        self.humans = self.env.GetRobots()
-        self.handles = []
-        t_cam = array([[ -0.662516847837, 0.365861186797, -0.653618404214, 3.09212255478] , \
-                        [ 0.748220341461, 0.282254919974, -0.600415256947, 2.43832302094] , \
-                        [ -0.0351816281021, -0.886835809012, -0.46074342198, 2.15959310532] , \
-                        [ 0.0, 0.0, 0.0, 1.0]])
-        self.env.GetViewer().SetCamera(t_cam)
+        if start_openrave:
+
+            self.env = Environment()
+            self.env.SetViewer('qtcoin')
+            self.env.SetDebugLevel(DebugLevel.Verbose)
+            self.env.Reset()
+            self.env.Load(environment_file)
+            self.humans = self.env.GetRobots()
+            self.handles = []
+            t_cam = array([[ -0.662516847837, 0.365861186797, -0.653618404214, 3.09212255478] , \
+                            [ 0.748220341461, 0.282254919974, -0.600415256947, 2.43832302094] , \
+                            [ -0.0351816281021, -0.886835809012, -0.46074342198, 2.15959310532] , \
+                            [ 0.0, 0.0, 0.0, 1.0]])
+            self.env.GetViewer().SetCamera(t_cam)
+            self.change_color_human()
+        else:
+            self.env = None
 
         self.traj_human1 = []
         self.traj_human2 = []
 
-        self.change_color_human()
-
+        # Joint state publisher variables
         self.joint_state_pub = None
-
-    # thread function: listen for joint_states messages
-    def joint_states_publisher(self):
-        self.joint_state_pub = rospy.Publisher('mocap_human_joint_state', JointState)
-        rospy.spin()
+        self.joint_state_topic_name = 'mocap_human_joint_state'
 
     def set_publish_joint_state(self, publish_joint_state):
 
         if publish_joint_state:
-            self.thread_joint_state = threading.Thread(target=self.joint_states_publisher)
-            self.thread_joint_state.start()
+            self.joint_state_pub = rospy.Publisher(self.joint_state_topic_name, JointState)
         else:
             self.joint_state_pub = None
 
@@ -109,7 +108,6 @@ class PlayFile():
 
         print line_str
 
-
     def load_files(self, h1_filepath, h2_filepath):
         
         print "Trying to open file"
@@ -127,15 +125,15 @@ class PlayFile():
         else:
             self.traj_human2 = deepcopy(self.traj_human1)
 
-
     def play_skeleton(self):
         # for frame in self.frames:
         print len(self.traj_human1)
 
         scale = 1.
 
-        nb_dofs1 = self.humans[0].GetDOF()
-        nb_dofs2 = self.humans[1].GetDOF()
+        if self.env is not None :
+            nb_dofs1 = self.humans[0].GetDOF()
+            nb_dofs2 = self.humans[1].GetDOF()
 
         t0_prev_time = time.time()
         t_total = time.time()
@@ -145,10 +143,12 @@ class PlayFile():
 
         for row1, row2 in zip(self.traj_human1, self.traj_human2):
 
-            del self.handles[:]
-           
-            self.humans[0].SetDOFValues(row1[1:nb_dofs1+1])
-            self.humans[1].SetDOFValues(row2[1:nb_dofs2+1])
+            if self.env is not None :
+
+                del self.handles[:]
+
+                self.humans[0].SetDOFValues(row1[1:nb_dofs1+1])
+                self.humans[1].SetDOFValues(row2[1:nb_dofs2+1])
 
             if self.joint_state_pub is not None :
                 self.publish_joint_state()
@@ -183,10 +183,13 @@ class PlayFile():
 
 if __name__ == "__main__":
 
-    h1_file = None
-    h2_file = None
-    environment_file = "../../ormodels/humans_bio_env.xml"
-    publish_joint_state = rospy.get_param("~human_tracker_publish_joint_state", True)
+    rospy.init_node('mocap_human_trajectory_player')
+
+    human1_file = rospy.get_param("~human1_traj_file", None)
+    human2_file = rospy.get_param("~human2_traj_file", None)
+    environment_file = rospy.get_param("~ormodels", "../../ormodels/humans_bio_env.xml")
+    publish_joint_state = rospy.get_param("~human_tracker_publish_joint_state", False)
+    start_openrave = rospy.get_param("~start_openrave", True)
 
     for index in range(1, len(sys.argv)):
         if sys.argv[index] == "-h1" and index+1 < len(sys.argv):
@@ -196,7 +199,7 @@ if __name__ == "__main__":
         if sys.argv[index] == "-env" and index+1 < len(sys.argv):
             environment_file = int(sys.argv[index+1])
 
-    if h1_file is None:
+    if human1_file is None:
 
         print "Usage : "
         print " -h1 /path/to/directory/file1.csv   : sets the file for human1"
@@ -204,17 +207,23 @@ if __name__ == "__main__":
 
     else :
 
-        print "try to load file : ", h1_file
-        print "try to load file : ", h2_file
+        print "try to load file : ", human1_file
+        print "try to load file : ", human2_file
 
-        rospy.init_node('mocap_trajectory_player')
-
-        test = PlayFile(environment_file)
-        test.load_files(h1_file, h2_file)
+        test = PlayFile(environment_file, start_openrave)
+        test.load_files(human1_file, human2_file)
         test.set_publish_joint_state(publish_joint_state)
 
-        while True:
-            test.play_skeleton()
-            test.print_view()
-            print "press enter to play again"
-            sys.stdin.readline()
+        if publish_joint_state:
+            print "start thread"
+            thread_player = threading.Thread(target=test.play_skeleton)
+            thread_player.start()
+            print "spin"
+            rospy.spin()
+        else :
+            while True:
+                test.play_skeleton()
+                if start_openrave:
+                    test.print_view()
+                print "press enter to play again"
+                sys.stdin.readline()
