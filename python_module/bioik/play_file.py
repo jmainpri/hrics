@@ -8,6 +8,7 @@ from copy import deepcopy
 import csv
 
 import rospy
+import threading
 from sensor_msgs.msg import JointState
 
 class PlayFile():
@@ -31,6 +32,44 @@ class PlayFile():
         self.traj_human2 = []
 
         self.change_color_human()
+
+        self.joint_state_pub = None
+
+    # thread function: listen for joint_states messages
+    def joint_states_publisher(self):
+        self.joint_state_pub = rospy.Publisher('mocap_human_joint_state', JointState)
+        rospy.spin()
+
+    def set_publish_joint_state(self, publish_joint_state):
+
+        if publish_joint_state:
+            self.thread_joint_state = threading.Thread(target=self.joint_states_publisher)
+            self.thread_joint_state.start()
+        else:
+            self.joint_state_pub = None
+
+    def publish_joint_state(self):
+
+        joint_state = JointState()
+        joint_state.header.stamp = rospy.Time()
+
+        joints = self.humans[0].GetJoints()
+
+        if len(joints) != self.humans[0].GetDOF():
+            rospy.logerror("OpenRave human model is not consistant")
+            return
+
+        joint_state.name        = [""]*len(joints)
+        joint_state.position    = [0.]*len(joints)
+
+        q_cur = self.humans[0].GetDOFValues()
+
+        for i, joint in enumerate(joints):
+            joint_state.name[i] = joint.GetName()
+            joint_state.position[i] = q_cur[joint.GetDOFIndex()]
+
+        # Publish joint states
+        self.joint_state_pub.publish(joint_state)
 
     def change_color_human(self):
 
@@ -112,7 +151,7 @@ class PlayFile():
             self.humans[1].SetDOFValues(row2[1:nb_dofs2+1])
 
             if self.joint_state_pub is not None :
-                self.publish_joint_state(joint_state)
+                self.publish_joint_state()
 
             # Execution time
             t0 = time.time()
@@ -142,42 +181,12 @@ class PlayFile():
         print "Nb. of frames : , ", len(self.traj_human1)
         print "%.4f percent of overshoot " % float(100. * float(nb_overshoot) / float(len(self.traj_human1)))
 
-    def set_publish_joint_state(self, publish_joint_state):
-
-        if publish_joint_state:
-            self.joint_state_pub = rospy.Publisher('mocap_human_joint_state', JointState)
-        else:
-            self.joint_state_pub = None
-
-    def publish_joint_state(self):
-
-        joint_state = JointState()
-        joint_state.header.stamp = rospy.Time()
-
-        joints = self.humans[0].GetJoints()
-
-        if len(joints) != self.humans[0].GetDOF():
-            rospy.logerror("OpenRave human model is not consistant")
-            return
-
-        joint_state.name        = [""]*len(joints)
-        joint_state.position    = [0.]*len(joints)
-
-        q_cur = self.humans[0].GetDOFValues()
-
-        for i, joint in enumerate(joints):
-            joint_state.name[i] = joint.GetName()
-            joint_state.position[i] = q_cur[joint.GetDOFIndex()]
-
-        # Publish joint states
-        self.joint_state_pub.publish(joint_state)
-
 if __name__ == "__main__":
 
     h1_file = None
     h2_file = None
     environment_file = "../../ormodels/humans_bio_env.xml"
-    publish_joint_state = rospy.get_param("~human_tracker_publish_joint_state", False)
+    publish_joint_state = rospy.get_param("~human_tracker_publish_joint_state", True)
 
     for index in range(1, len(sys.argv)):
         if sys.argv[index] == "-h1" and index+1 < len(sys.argv):
