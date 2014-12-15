@@ -13,16 +13,17 @@ from sensor_msgs.msg import JointState
 
 class PlayFile():
 
-    def __init__(self, environment_file, start_openrave):
+    def __init__(self, environment_file, start_viewer):
 
-        if start_openrave:
+        self.with_viewer = start_viewer
+        self.env = Environment()
+        self.env.SetDebugLevel(DebugLevel.Verbose)
+        self.env.Reset()
+        self.env.Load(environment_file)
+        self.humans = self.env.GetRobots()
 
-            self.env = Environment()
+        if self.with_viewer:
             self.env.SetViewer('qtcoin')
-            self.env.SetDebugLevel(DebugLevel.Verbose)
-            self.env.Reset()
-            self.env.Load(environment_file)
-            self.humans = self.env.GetRobots()
             self.handles = []
             t_cam = array([[ -0.662516847837, 0.365861186797, -0.653618404214, 3.09212255478] , \
                             [ 0.748220341461, 0.282254919974, -0.600415256947, 2.43832302094] , \
@@ -30,19 +31,18 @@ class PlayFile():
                             [ 0.0, 0.0, 0.0, 1.0]])
             self.env.GetViewer().SetCamera(t_cam)
             self.change_color_human()
-        else:
-            self.env = None
 
         self.traj_human1 = []
         self.traj_human2 = []
 
         # Joint state publisher variables
         self.joint_state_pub = None
-        self.joint_state_topic_name = 'mocap_human_joint_state'
+        self.joint_state_topic_name = ''
 
-    def set_publish_joint_state(self, publish_joint_state):
+    def set_publish_joint_state(self, publish_joint_state, topic_name):
 
         if publish_joint_state:
+            self.joint_state_topic_name = topic_name
             self.joint_state_pub = rospy.Publisher(self.joint_state_topic_name, JointState)
         else:
             self.joint_state_pub = None
@@ -53,7 +53,6 @@ class PlayFile():
         joint_state.header.stamp = rospy.Time()
 
         joints = self.humans[0].GetJoints()
-
         if len(joints) != self.humans[0].GetDOF():
             rospy.logerror("OpenRave human model is not consistant")
             return
@@ -131,9 +130,8 @@ class PlayFile():
 
         scale = 1.
 
-        if self.env is not None :
-            nb_dofs1 = self.humans[0].GetDOF()
-            nb_dofs2 = self.humans[1].GetDOF()
+        nb_dofs1 = self.humans[0].GetDOF()
+        nb_dofs2 = self.humans[1].GetDOF()
 
         t0_prev_time = time.time()
         t_total = time.time()
@@ -143,14 +141,15 @@ class PlayFile():
 
         for row1, row2 in zip(self.traj_human1, self.traj_human2):
 
-            if self.env is not None :
-
+            if self.with_viewer :
                 del self.handles[:]
 
-                self.humans[0].SetDOFValues(row1[1:nb_dofs1+1])
-                self.humans[1].SetDOFValues(row2[1:nb_dofs2+1])
+            self.humans[0].SetDOFValues(row1[1:nb_dofs1+1])
+            self.humans[1].SetDOFValues(row2[1:nb_dofs2+1])
 
             if self.joint_state_pub is not None :
+                if rospy.is_shutdown():
+                    break
                 self.publish_joint_state()
 
             # Execution time
@@ -173,6 +172,8 @@ class PlayFile():
             t0_prev_time = t0
             exec_time += dt_0
 
+
+
         print "------------------------"
         print "Total time : " , float(time.time() - t_total)
         print "Exec time : ", exec_time
@@ -188,7 +189,8 @@ if __name__ == "__main__":
     human1_file = rospy.get_param("~human1_traj_file", None)
     human2_file = rospy.get_param("~human2_traj_file", None)
     environment_file = rospy.get_param("~ormodels", "../../ormodels/humans_bio_env.xml")
-    publish_joint_state = rospy.get_param("~human_tracker_publish_joint_state", False)
+    publish_joint_state = rospy.get_param("~human_publish_joint_state", 'mocap_human_joint_state')
+    joint_state_topic = rospy.get_param("~human_joint_state_topic", False)
     start_openrave = rospy.get_param("~start_openrave", True)
 
     for index in range(1, len(sys.argv)):
@@ -212,7 +214,9 @@ if __name__ == "__main__":
 
         test = PlayFile(environment_file, start_openrave)
         test.load_files(human1_file, human2_file)
-        test.set_publish_joint_state(publish_joint_state)
+        test.set_publish_joint_state(publish_joint_state, joint_state_topic)
+
+        print "publish_joint_state : ", publish_joint_state
 
         if publish_joint_state:
             print "start thread"

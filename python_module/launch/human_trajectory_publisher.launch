@@ -12,9 +12,10 @@
 
   <!-- Start the left arm controller -->
   <node pkg="hrics_py" type="play_file.py" name="mocap_human_trajectory_player" output="$(arg output)" args="">
-    <param name="ormodels" type="string" value="$(arg ormodels)" />
+    <param name="ormodels" type="string" value="$(arg ormodels)/humans_bio_env.xml" />
     <param name="start_openrave" value="false" />
-    <param name="human_tracker_publish_joint_state_topic" value="true" />
+    <param name="human_publish_joint_state" value="true" />
+    <param name="human_joint_state_topic" value="mocap_human_joint_state" />
     <param name="human1_traj_file" type="string" value="$(find hrics_py)/test_mocap/ricoun_test/0/no_split_human1_.csv" />
   </node>
 
