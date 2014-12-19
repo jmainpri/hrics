@@ -27,7 +27,7 @@ class Tracker:
         # self.bag = subprocess.Popen('rosbag play /home/rafi/logging_fourth/0/2014-08-05-17-58-43.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
 
         # self.bag = subprocess.Popen('rosbag play /home/pr2command/workspace/test_mocap/tracker_test/0/2014-12-12-12-25-37.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
-        self.bag = subprocess.Popen('rosbag play /home/pr2command/workspace/test_mocap/ricoun_test/0/2014-12-11-14-37-41.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
+        # self.bag = subprocess.Popen('rosbag play /home/pr2command/workspace/test_mocap/ricoun_test/0/2014-12-11-14-37-41.bag', stdin=subprocess.PIPE, stdout=open(os.devnull, 'w'), shell=True, cwd='./')
 
         self.i = 0 # Frame drawn
 
@@ -126,6 +126,7 @@ class Tracker:
             # Couldn't initialize a marker map. Just draw the raw points
             self.viewer.clear()
             self.try_init(frame)
+            del self.ik.handles[:]
             self.viewer.draw_frame_raw(frame)
         else:
 
@@ -134,6 +135,7 @@ class Tracker:
             self.last_frame = frame
 
             # Draw the skeleton
+            del self.ik.handles[:]
             self.viewer.clear()
             #self.viewer.draw_frame_skeleton(frame)
             #self.viewer.draw_frame_raw(frame)
@@ -214,6 +216,8 @@ class Tracker:
         print "killing bag process"
         subprocess.Popen('kill ' + str(self.bag.pid), shell=True)
         # self.save_file()
+        del self.ik
+        del self.viewer
         print "done"
 
 if __name__ == '__main__':
