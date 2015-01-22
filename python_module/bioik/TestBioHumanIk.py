@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-from MocapDrawer import *
-from MocapCommon import *
+from mocap.MocapDrawer import *
+from mocap.MocapCommon import *
 from BioHumanIk import *
 
 import sys
@@ -144,7 +144,7 @@ class TestBioHumanIk(BioHumanIk):
             print "Press return to get view matrix."
             sys.stdin.readline()
 
-    def remap( self, in_markers ):
+    def remap(self, in_markers):
 
         out_markers = deepcopy(in_markers)
 
@@ -325,10 +325,10 @@ class TestBioHumanIk(BioHumanIk):
 
         # print "joint : ", self.human.GetJoint("zTorsoTrans").GetHierarchyChildLink().GetTransform()[0:3, 3]
 
-        self.handles.append(misc.DrawAxes(self.env, self.trunkEr, .2))
+        #self.handles.append(misc.DrawAxes(self.env, self.trunkEr, .2))
         self.handles.append(misc.DrawAxes(self.env, self.UAEr, .2))
         self.handles.append(misc.DrawAxes(self.env, self.LAEr, .2))
-        self.handles.append(misc.DrawAxes(self.env, self.handEr, .2))
+        #self.handles.append(misc.DrawAxes(self.env, self.handEr, .2))
 
         if not self.rarm_only:
             self.handles.append(misc.DrawAxes(self.env, self.trunkEl, .2))
@@ -378,9 +378,13 @@ class TestBioHumanIk(BioHumanIk):
 
         for j, h in enumerate(self.humans):
 
-            # Get objects in pelvis frame and add offset
+            # 1 - Get markers in list
+            markers = [m.array for m in self.remap(humans[j].markers)]
+
+            # 2 - Get objects in list
             transforms = [o.get_transform() for o in humans[j].objects]
 
+            # Modify objects transforms
             t_pelvis = transforms[0] * MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
             t_head   = transforms[1]
 
@@ -388,6 +392,8 @@ class TestBioHumanIk(BioHumanIk):
                 t_elbow  = transforms[2]
                 t_elbow  = t_elbow * MakeTransform(rodrigues([0, 0, -pi/2]), matrix([0, 0, 0]))
                 t_elbow  = t_elbow * MakeTransform(rodrigues([0, pi/2, 0]), matrix([0, 0, 0]))
+                 # self.handles.append(misc.DrawAxes(self.env, t_elbow, 1.))
+
             else:
                 t_elbow = array(eye(4))
 
@@ -396,15 +402,16 @@ class TestBioHumanIk(BioHumanIk):
                 # t_wrist  = t_wrist * MakeTransform(rodrigues([0, 0, -pi/2]), matrix([0, 0, 0]))
                 # t_wrist  = t_wrist * MakeTransform(rodrigues([0, pi/2, 0]), matrix([0, 0, 0]))
             else:
-                t_wrist = array(eye(4))
+                t_wrist = eye(4)
 
+            # Compute t_trans and get markers in t_trans
+            markers_in_pelvis = self.get_markers_in_pelvis_frame(markers, t_pelvis)
+
+            # WARNING keep after the computation of t_trans
             # Store t_elbow and t_wrist in **special** see BioHumanIk pelvis frame
             pads_in_pelvis = [la.inv(self.t_trans) * t_elbow, la.inv(self.t_trans) * t_wrist]
 
-            # Get markers in pelvis and compute self.t_trans
-            markers = [m.array for m in self.remap(humans[j].markers)]
-            markers_in_pelvis = self.get_markers_in_pelvis_frame(markers, t_pelvis)
-
+            # COMPUTE IK
             if self.rarm_only:
 
                 [config, d_r_torso, d_r_shoulder_elbow, d_r_elbow_wrist] = \
@@ -492,11 +499,11 @@ class TestBioHumanIk(BioHumanIk):
             dt_0 = t0 - t0_prev_time
 
             # Sleep
-            if dt < dt_0 :
-                nb_overshoot +=1
+            if dt < dt_0:
+                nb_overshoot += 1
                 # print "dt : " , dt , " dt0 , ", dt_0, " , t0 : %.5f" % t0
             else:
-                time.sleep(dt - dt_0) # sleep only of dt > dt_0 TODO: Should use C++ for good execution times
+                time.sleep(dt - dt_0)  # sleep only of dt > dt_0 TODO: Should use C++ for good execution times
                 t0 = time.time()
                 dt_0 = t0 - t0_prev_time
 

@@ -211,7 +211,3 @@ if __name__ == '__main__':
                 s.drawer.clear()
                 frame = s.drawer.get_frame(s.curr)
                 s.drawer.draw_frame_skeleton(frame)
-
-
-
-

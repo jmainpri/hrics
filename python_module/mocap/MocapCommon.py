@@ -451,7 +451,7 @@ def read_setup(folder):
     with open(folder + 'Setup.csv', 'r') as s_file:
         matrix = [row for row in csv.reader(s_file, delimiter=',')]
         for line in matrix:
-            setup.append( int(line[0]) )
+            setup.append(int(line[0]))
 
     return setup
 

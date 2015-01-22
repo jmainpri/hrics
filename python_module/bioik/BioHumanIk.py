@@ -111,17 +111,19 @@ class BioHumanIk():
 
         else:
 
-            elb_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
+            # elb_center = transpose(t_elbow[:, 3])
             elb_axis = -array(transpose(t_elbow[:, 2]).tolist()[0][:3])
+            elb_center = array(transpose(t_elbow[:, 3]).tolist()[0][:3])
 
             if not self.wrist_pads:
+
                 # HAND
                 wrist_axis = markers[7] - markers[6]
                 wrist_center = markers[6] + 0.5 * wrist_axis  # p_wrist_center
                 UlnStylPro = markers[6] + 10 * wrist_axis / la.norm(wrist_axis)
                 hand_origin = markers[8] - array([0.0, 0.0, 0.04]) # TODO perform offset in wrist frame
 
-            else :
+            else:
 
                 wrist_axis   = -array(transpose(t_wrist[:, 1]).tolist()[0][:3])
                 wrist_center = array(transpose(t_wrist[:, 3]).tolist()[0][:3]) - 0.03 * array(transpose(t_wrist[:, 2]).tolist()[0][:3])
@@ -133,7 +135,7 @@ class BioHumanIk():
         # Define matrices
 
         # TRUNK
-        trunkY = c7s_midpt-trunk_center
+        trunkY = c7s_midpt - trunk_center
         trunkZ = cross(trunkY, xyphoid_T8)
         trunkX = cross(trunkY, trunkZ)
         trunkX *= - 1.0
@@ -145,6 +147,7 @@ class BioHumanIk():
         # print trunkE * transpose(trunkE)
 
         # SHOULDER
+
         UAY = gleno_center - elb_center
         UAX = cross(UAY, -elb_axis)  # / la.norm(elb_axis)  # - UAZ_offset
         UAZ = cross(UAX, UAY)
@@ -164,10 +167,10 @@ class BioHumanIk():
         handE = normalize(transpose(matrix([handX, handY, handZ])))
 
         # Store matrices for drawing
-        self.trunkEr = self.t_trans * MakeTransform(trunkE, matrix(trunk_center))
-        self.UAEr = self.t_trans * MakeTransform(UAE, matrix(gleno_center))
-        self.LAEr = self.t_trans * MakeTransform(LAE, matrix(elb_center))
-        self.handEr = self.t_trans * MakeTransform(handE, matrix(wrist_center))
+        self.trunkEr    = self.t_trans * MakeTransform(trunkE, matrix(trunk_center))
+        self.UAEr       = self.t_trans * MakeTransform(UAE, matrix(gleno_center))
+        self.LAEr       = self.t_trans * MakeTransform(LAE, matrix(elb_center))
+        self.handEr     = self.t_trans * MakeTransform(handE, matrix(wrist_center))
 
         # --------------------------------------------------------------------
         # Translations

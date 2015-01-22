@@ -3,12 +3,15 @@
 # openrave-robot.py ../../ormodels/human_wpi_bio.xml --info=joints
 
 from TestBioHumanIk import *
+from mocap.MocapCommon import *
 
 import sys
 import time
 from copy import deepcopy
 import os
 import sys
+
+
 
 
 class GenerateIkLib(TestBioHumanIk):
@@ -18,9 +21,9 @@ class GenerateIkLib(TestBioHumanIk):
         TestBioHumanIk.__init__(self)
 
         self.nb_humans      = 2
-        self.rarm_only      = True
-        self.use_elbow_pads = True
-        self.compute_left_arm = False
+        self.elbow_pads     = True
+        self.wrist_pads     = False
+        self.rarm_only      = False
         self.environment_file = "../../ormodels/humans_bio_env.xml"
 
 
@@ -28,7 +31,13 @@ def generate_ik_library(source_dir, target_dir):
 
     split_id = 0
 
+    setup = read_setup(source_dir + "/")
+
     test = GenerateIkLib()
+    test.nb_humans      = setup[0]
+    test.elbow_pads     = setup[1]
+    test.wrist_pads     = False
+    test.rarm_only      = setup[2]
 
     blocks = sorted([name for name in os.listdir(source_dir) if os.path.isdir(os.path.join(source_dir, name))])
 
@@ -54,6 +63,7 @@ def generate_ik_library(source_dir, target_dir):
 
             splits = []
             for f in files:
+                print "process file : ", f
                 split, marker_type = f.split("]")
                 split += "]"
                 if split not in splits:
@@ -92,7 +102,3 @@ if __name__ == "__main__":
         print "******  WARNING  *******"
         print "************************"
         print "USAGE -> GenerateIkLibrary.py -s PATH_TO_SOURCE_LIBRARY -t PATH_TO_TARGET_LIBRARY"
-    
-    print "try to load file : ", m_file
-    print "try to load file : ", o_file
-
