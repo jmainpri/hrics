@@ -14,6 +14,7 @@ import tf
 class LatestJointStates:
 
     def __init__(self):
+
         print "init node"
         rospy.init_node('joint_states_listener')
         rospy.on_shutdown(self.on_shutdown)
@@ -39,6 +40,7 @@ class LatestJointStates:
 
     # thread for tf listener of the robot
     def start_tf_listener(self):
+
         print "lock thread tf"
         self.lock_tf = threading.Lock()
         self.thread_pose = threading.Thread(target=self.pose_listener)
@@ -46,6 +48,7 @@ class LatestJointStates:
 
     # get the transform between the base footprint and odom_combined
     def pose_listener(self):
+
         print "start listener"
         listener = tf.TransformListener()
         rate = rospy.Rate(10.0)
@@ -64,6 +67,7 @@ class LatestJointStates:
         
     # start the joint state thread
     def start_thread(self):
+
         print "lock thread joint state"
         self.lock = threading.Lock()
         self.thread_joint_state = threading.Thread(target=self.joint_states_listener)
@@ -71,6 +75,7 @@ class LatestJointStates:
         
     # thread function: listen for joint_states messages
     def joint_states_listener(self):
+
         rospy.Subscriber('joint_states', JointState, self.joint_states_callback)
         rospy.spin()
 

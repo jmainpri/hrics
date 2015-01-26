@@ -250,7 +250,7 @@ class Drawer():
 
         # IMAGE PUBLISHER
         folder = "/home/rafi/logging_ten/1"
-        images = [ f for f in listdir(folder) if isfile(join(folder,f)) and '.png' in f ]
+        images = [f for f in listdir(folder) if isfile(join(folder,f)) and '.png' in f]
         print "Num images : ", len(images)
         times = []
 

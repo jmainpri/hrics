@@ -388,6 +388,9 @@ class TestBioHumanIk(BioHumanIk):
             t_pelvis = transforms[0] * MakeTransform(rodrigues([0, 0, pi]), matrix([0, 0, 0]))
             t_head   = transforms[1]
 
+            # Draw head frame
+            self.handles.append(misc.DrawAxes(self.env, t_head, .2))
+
             if self.elbow_pads:
                 t_elbow  = transforms[2]
                 t_elbow  = t_elbow * MakeTransform(rodrigues([0, 0, -pi/2]), matrix([0, 0, 0]))
@@ -473,10 +476,11 @@ class TestBioHumanIk(BioHumanIk):
         nb_overshoot = 0
         t_total = time.time()
 
-        for i, frame in enumerate(self.drawer.frames):
+        # parameters
+        self.draw = True
+        save_traj = True
 
-            #if i > 2000: # stop after N frames
-            #     break
+        for i, frame in enumerate(self.drawer.frames):
 
             if max_frame is not None:
                 if i > max_frame:
@@ -486,20 +490,21 @@ class TestBioHumanIk(BioHumanIk):
                 del self.handles[:]
                 self.drawer.clear()
 
-            self.draw_frame(frame, True, dt)
-
             # Trajectory time
             t_cur = frame.get_time()
             dt = t_cur - t_prev
             t_prev = t_cur
             traj_time += dt
 
+            # Draw and IK
+            self.draw_frame(frame, save_traj, dt)
+
             # Execution time
             t0 = time.time()
             dt_0 = t0 - t0_prev_time
 
             # Sleep
-            if dt < dt_0:
+            if dt < dt_0 :
                 nb_overshoot += 1
                 # print "dt : " , dt , " dt0 , ", dt_0, " , t0 : %.5f" % t0
             else:

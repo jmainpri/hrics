@@ -198,6 +198,7 @@ class DrawMarkers():
         prev_time = self.frames[0].get_time()
 
         for frame in self.frames:
+
             curr_time = frame.get_time()
 
             point_list = []
@@ -208,7 +209,6 @@ class DrawMarkers():
                 point_list.append(o.array)
 
             self.draw_points(np.array(point_list))
-
 
             dt = curr_time - prev_time
             prev_time = curr_time
