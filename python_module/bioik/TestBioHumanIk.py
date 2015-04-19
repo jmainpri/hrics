@@ -34,6 +34,8 @@ class TestBioHumanIk(BioHumanIk):
         self.env = None
         self.draw = True
 
+        self.switch_humans = False
+
     def initialize(self, m_file="", o_file="", drawer=None):
 
         NB_MARKERS = get_nb_markers(self.elbow_pads, self.wrist_pads, self.rarm_only)
@@ -376,6 +378,11 @@ class TestBioHumanIk(BioHumanIk):
 
         humans = self.drawer.isolate_humans(frame)
 
+        if self.switch_humans and len(humans) > 1:
+            humman_tmp = humans[1]
+            humans[1] = humans[0]
+            humans[0] = humman_tmp
+
         for j, h in enumerate(self.humans):
 
             # 1 - Get markers in list
@@ -635,7 +642,6 @@ if __name__ == "__main__":
     m_file = folder + name + 'markers.csv'
     o_file = folder + name + 'objects.csv'
 
-   #
    # m_file = folder + '[2554-2671]markers.csv'
    # o_file = folder + '[2554-2671]objects.csv'
 
@@ -651,10 +657,42 @@ if __name__ == "__main__":
     #m_file = folder + name + 'markers_fixed.csv'
     #o_file = folder + name + 'objects_fixed.csv'
 
+
+
+    # ICRA FINAL ------------------------------------
+
+    data_folder = '/Network/Servers/davinci/Volumes/davinci/jmainpri/catkin_ws/src/hrics-or-rafi/python_module/bioik/data/2015-2-24/'
+
+    folder_num = '/Active/'
+    name = '[0649-0740]'
+    name = '[1282-1370]'
+    name = '[1593-1696]'
+    name = '[1619-1702]'
+    name = '[1696-1796]'
+
+    folder_num = '/Passive/'
+    name = '[1184-1334]'
+    name = '[1440-1567]'
+    name = '[1550-1698]'
+    name = '[1954-2076]'
+    name = '[2131-2252]'
+
+    folder = data_folder + folder_num
+    m_file = folder + name + 'markers.csv'
+    o_file = folder + name + 'objects.csv'
+
     print "try to load file : ", m_file
     print "try to load file : ", o_file
 
     test = TestBioHumanIk()
+    test.nb_humans  = 2
+    test.elbow_pads = True
+    test.wrist_pads = False
+    test.rarm_only  = True
+    test.switch_humans  = False
+
+
+
     test.initialize(m_file, o_file)
 
     while True:
