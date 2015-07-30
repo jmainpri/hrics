@@ -19,6 +19,13 @@
 
   <Robot file="human_wpi_bio.xml" name="Human2">
   </Robot>
+
+  
+  <KinBody file="./experiment_table.xml">
+    <Translation>1.93535459344 1.52358452444 0.731983444924</Translation>
+    <!-- <quat>0.292842221934 -0.00960551616364 -0.00722490713644 0.956085230421</quat> -->
+    <rotationaxis>0 0 1 146</rotationaxis>
+  </KinBody>
  
   <!-- add the floor as a box-->
 <!--  <KinBody name="floor">-->

@@ -1,0 +1,12 @@
+Riukin Experiments are defined in /usr/local/share/Experiments/
+
+    - ruikun_test_final/ : contains the trajectories
+
+To vizualize the experiments can be visualized by running: 
+
+    roslaunch hrics_py human_pr2_experiment_data_viz.launch
+
+You can change the block in the launch file or pass them as arguments
+WARNING: the bag file has to be specified, can not yet infer it.
+The trajectory_msgs from groovy are used in the bag file, so they
+have to be in the catkin folder in indingo

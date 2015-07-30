@@ -513,7 +513,7 @@ class TestBioHumanIk(BioHumanIk):
             # Sleep
             if dt < dt_0 :
                 nb_overshoot += 1
-                # print "dt : " , dt , " dt0 , ", dt_0, " , t0 : %.5f" % t0
+                # print "i : ", i , " , dt : " , dt , " dt0 , ", dt_0, " , t0 : %.5f" % t0
             else:
                 time.sleep(dt - dt_0)  # sleep only of dt > dt_0 TODO: Should use C++ for good execution times
                 t0 = time.time()
@@ -661,21 +661,21 @@ if __name__ == "__main__":
 
     # ICRA FINAL ------------------------------------
 
-    data_folder = '/Network/Servers/davinci/Volumes/davinci/jmainpri/catkin_ws/src/hrics-or-rafi/python_module/bioik/data/2015-2-24/'
+    data_folder = '/Network/Servers/davinci/Volumes/davinci/jmainpri/catkin_ws_move3d/src/hrics-or-rafi/python_module/bioik/motion_data/new_motions/2015-2-24/'
 
     folder_num = '/Active/'
     name = '[0649-0740]'
     name = '[1282-1370]'
     name = '[1593-1696]'
     name = '[1619-1702]'
-    name = '[1696-1796]'
+    #name = '[1696-1796]'
 
-    folder_num = '/Passive/'
-    name = '[1184-1334]'
-    name = '[1440-1567]'
-    name = '[1550-1698]'
-    name = '[1954-2076]'
-    name = '[2131-2252]'
+    # folder_num = '/Passive/'
+    # name = '[1184-1334]'
+    # name = '[1440-1567]'
+    # name = '[1550-1698]'
+    # name = '[1954-2076]'
+    #name = '[2131-2252]'
 
     folder = data_folder + folder_num
     m_file = folder + name + 'markers.csv'

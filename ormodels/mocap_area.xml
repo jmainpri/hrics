@@ -1,0 +1,65 @@
+<Environment>
+  <!-- set the background color of the environment-->
+  <!--<bkgndcolor>0.3 0.7 0.8</bkgndcolor>-->
+  <!-- set the initial camera translation-->
+  <!-- <camtrans>1.418 -1.234 2.963</camtrans>-->
+  <!-- set the initial camera rotation specified by rotation-axis-->
+  <!-- <camrotaxis>0.724 0.302 0.619 68</camrotaxis>-->
+ 
+  <!-- import the table model and place it somewhere-->
+  <KinBody file="./experiment_table.xml">
+    <Translation>1.93535459344 1.52358452444 0.731983444924</Translation>
+    <quat>0.292842221934 -0.00960551616364 -0.00722490713644 0.956085230421</quat> 
+<!--    <rotationaxis>0 0 1 146</rotationaxis>-->
+  </KinBody>
+
+<!--  <KinBody name="floorwalls">-->
+<!--    <Body type="static">-->
+<!--      <Translation>1.82 1.67 0</Translation>-->
+<!--      <Geom type="box">-->
+<!--        <extents>1.82 1.67 0.005</extents>-->
+<!--        <translation>0 0 -0.005</translation>-->
+<!--        <diffuseColor>.6 .6 .6</diffuseColor>-->
+<!--        <ambientColor>0.6 0.6 0.6</ambientColor>-->
+<!--      </Geom>-->
+<!--      <Geom type="box">-->
+<!--        <extents>1.82 0.01 0.2</extents>-->
+<!--        <translation>0 -1.67 0.2</translation>-->
+<!--        <diffuseColor>.6 .6 .6</diffuseColor>-->
+<!--        <ambientColor>0.6 0.6 0.6</ambientColor>-->
+<!--      </Geom>-->
+<!--      <Geom type="box">-->
+<!--        <extents>1.82 0.01 0.2</extents>-->
+<!--        <translation>0 1.67 0.2</translation>-->
+<!--        <diffuseColor>.6 .6 .6</diffuseColor>-->
+<!--        <ambientColor>0.6 0.6 0.6</ambientColor>-->
+<!--      </Geom>-->
+<!--      <Geom type="box">-->
+<!--        <extents>0.01 1.67 0.2</extents>-->
+<!--        <translation>1.82 0 0.2</translation>-->
+<!--        <diffuseColor>.6 .6 .6</diffuseColor>-->
+<!--        <ambientColor>0.6 0.6 0.6</ambientColor>-->
+<!--      </Geom>-->
+<!--      <Geom type="box">-->
+<!--        <extents>0.01 1.67 0.2</extents>-->
+<!--        <translation>-1.82 0 0.2</translation>-->
+<!--        <diffuseColor>.6 .6 .6</diffuseColor>-->
+<!--        <ambientColor>0.6 0.6 0.6</ambientColor>-->
+<!--      </Geom>-->
+<!--    </Body>-->
+<!--  </KinBody>-->
+
+<!--    <!-- add the reference pole-->-->
+<!--  <KinBody name="pole">-->
+<!--    <translation>-0.12 -0.15 1</translation>-->
+<!--    <Body type="static">-->
+<!--      <Geom type="box">-->
+<!--        <extents>0.12 0.15 1</extents>-->
+<!--        <diffuseColor>0.96 1 0.98</diffuseColor>-->
+<!--      </Geom>-->
+<!--    </Body>-->
+<!--  </KinBody>-->
+
+
+
+</Environment>

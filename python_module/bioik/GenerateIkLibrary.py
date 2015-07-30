@@ -61,6 +61,8 @@ def generate_ik_library(source_dir, target_dir):
 
             files = sorted([name for name in os.listdir(file_path)])
 
+            print files
+
             splits = []
             for f in files:
                 print "process file : ", f
@@ -102,3 +104,4 @@ if __name__ == "__main__":
         print "******  WARNING  *******"
         print "************************"
         print "USAGE -> GenerateIkLibrary.py -s PATH_TO_SOURCE_LIBRARY -t PATH_TO_TARGET_LIBRARY"
+

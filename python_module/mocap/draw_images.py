@@ -26,6 +26,7 @@ class Images():
         rospy.init_node('images_drawer')
 
         self.folder = None
+        self.print_time = False
 
 
     def play(self):
@@ -64,13 +65,14 @@ class Images():
         #         cv2.imshow('my_picture',cv_image)
         #         sys.stdin.readline()
 
-        while True:
+        while not rospy.is_shutdown():
 
             time.sleep(0.01)
             last = None
             curr_time = rospy.get_time()
-
-            print "time : ", curr_time
+            
+            if self.print_time:
+                print "time : ", curr_time
 
             try:
 
@@ -85,7 +87,7 @@ class Images():
                 if last:
 
                     image_name = self.folder + "/" + last
-                    # print image_name
+                    # print image_name	
 
                     cv_image = cv2.imread(image_name, 1)
                     cv2.imshow('Camera Data', cv_image)
@@ -108,6 +110,9 @@ if __name__ == "__main__":
 
             if sys.argv[index] == "-d" and index+1 < len(sys.argv):
                 imgs.folder = str(sys.argv[index+1])
+
+            elif sys.argv[index] == "-t":
+                imgs.print_time = True
 
         print "Images server started, waiting for queries"
         imgs.play()

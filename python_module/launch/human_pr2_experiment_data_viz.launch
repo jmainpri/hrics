@@ -1,0 +1,25 @@
+<launch>
+
+  <arg name="output" default="screen"/>
+
+  <!-- Start image drawing -->
+  <arg name="folder" default="/usr/local/share/Experiments/ruikun_test_final/2" />
+
+  <!-- Bag file to display -->
+  <arg name="bagfile" default="2014-12-18-20-58-38.bag" />
+
+  <!-- Use simulation time (from the bag file) -->
+  <param name="use_sim_time" type="bool" value="true" />
+
+  <!--Start bag -->
+  <node pkg="rosbag" type="play" name="player" output="$(arg output)" 
+		args="--clock $(arg folder)/$(arg bagfile)"/>
+
+  <!-- Start image drawing -->
+  <node pkg="hrics_py" type="draw_images.py" name="video_out" output="$(arg output)" 
+		args="-d $(arg folder)" />
+
+  <!-- Start Move3D -->
+  <include file="$(find move3d_ros)/launch/move3d_pr2_display.launch" />
+
+</launch>

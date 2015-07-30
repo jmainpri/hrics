@@ -1,0 +1,15 @@
+All experiments are in /usr/local/share/Experiments/
+
+    - aterm_experiment_splits : the split are defined in Split.csv
+    - aterm_experiment_splits_tmp : contains the splited files
+
+To visualize experiments:
+
+    roscd hrics_py/bioik/
+    ./GenerateIkLibrary.py -s /usr/local/share/Experiments/aterm_experiment_splits_tmp -t tmp/
+
+The result of this command os now stored in biok/aterm_experiment_data/
+
+Good runs:
+
+The good blocks are 5,6, and 8. 7 is also decent but I think the other 3 are better.

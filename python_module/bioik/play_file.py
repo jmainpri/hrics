@@ -184,22 +184,34 @@ class PlayFile():
 
 if __name__ == "__main__":
 
-    rospy.init_node('mocap_human_trajectory_player')
-
-    human1_file = rospy.get_param("~human1_traj_file", None)
-    human2_file = rospy.get_param("~human2_traj_file", None)
-    environment_file = rospy.get_param("~ormodels", "../../ormodels/humans_bio_env.xml")
-    publish_joint_state = rospy.get_param("~human_publish_joint_state", 'mocap_human_joint_state')
-    joint_state_topic = rospy.get_param("~human_joint_state_topic", False)
-    start_openrave = rospy.get_param("~start_openrave", True)
+    use_ros = True
+    start_openrave = True
+    environment_file = "../../ormodels/humans_aterm_userexp_env.xml"
 
     for index in range(1, len(sys.argv)):
+
+        if sys.argv[index] == "-split" and index+1 < len(sys.argv):
+            human1_file = str(sys.argv[index+1]) + "_human1_.csv"
+            human2_file = str(sys.argv[index+1]) + "_human2_.csv"
         if sys.argv[index] == "-h1" and index+1 < len(sys.argv):
-            h1_file = str(sys.argv[index+1])
+            human1_file = str(sys.argv[index+1])
         if sys.argv[index] == "-h2" and index+1 < len(sys.argv):
-            h2_file = int(sys.argv[index+1])
+            human2_file = str(sys.argv[index+1])
         if sys.argv[index] == "-env" and index+1 < len(sys.argv):
-            environment_file = int(sys.argv[index+1])
+            environment_file = str(sys.argv[index+1])
+        if sys.argv[index] == "-noros":
+            use_ros = False
+
+    if use_ros:
+
+        rospy.init_node('mocap_human_trajectory_player')
+
+        human1_file = rospy.get_param("~human1_traj_file", None)
+        human2_file = rospy.get_param("~human2_traj_file", None)
+        environment_file = rospy.get_param("~ormodels", "../../ormodels/humans_bio_env.xml")
+        publish_joint_state = rospy.get_param("~human_publish_joint_state", 'mocap_human_joint_state')
+        joint_state_topic = rospy.get_param("~human_joint_state_topic", False)
+        start_openrave = rospy.get_param("~start_openrave", True)
 
     if human1_file is None:
 
@@ -214,11 +226,12 @@ if __name__ == "__main__":
 
         test = PlayFile(environment_file, start_openrave)
         test.load_files(human1_file, human2_file)
-        test.set_publish_joint_state(publish_joint_state, joint_state_topic)
 
-        print "publish_joint_state : ", publish_joint_state
+        if use_ros:
+            test.set_publish_joint_state(publish_joint_state, joint_state_topic)
+            print "publish_joint_state : ", publish_joint_state
 
-        if publish_joint_state:
+        if use_ros and publish_joint_state:
             print "start thread"
             thread_player = threading.Thread(target=test.play_skeleton)
             thread_player.start()
