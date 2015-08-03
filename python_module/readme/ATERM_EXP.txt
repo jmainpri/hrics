@@ -17,3 +17,4 @@ The result of this command os now stored in biok/aterm_experiment_data/
 Good runs:
 
 The good blocks are 5,6, and 8. 7 is also decent but I think the other 3 are better.
+5, 6 and 8 were used for the TRO result section.
