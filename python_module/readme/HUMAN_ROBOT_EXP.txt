@@ -1,0 +1,20 @@
+All experiments are in /usr/local/share/Experiments/
+
+    - experiment_path=..._where_ever_...
+
+    - $experiment_path/human-robot-experiment/logan : the split are defined in Split.csv
+    - $experiment_path/human-robot-experiment/logan_tmp : contains the splited files
+
+To go from the Split.csv file to the splited libray
+
+    split_library.py -s $experiment_path/human-robot-experiment/logan -t $experiment_path/human-robot-experiment/logan_tmp
+    
+
+To visualize experiments:
+
+    Copy the Setup.csv file in human-robot-experiment/logan_tmp
+    roscd hrics_py/bioik/
+    ./GenerateIkLibrary.py -use_wrist_pads -s $experiment_path/human-robot-experiment/logan_tmp -t tmp/
+
+
+

@@ -32,16 +32,12 @@ from openravepy import *
 import os
 import sys 
 from numpy import *
-from TransformMatrix import *
-from rodrigues import *
-import roslib; roslib.load_manifest('wiimote')
+import roslib; #roslib.load_manifest('wiimote')
 import rospy
 from std_msgs.msg import *
 from sensor_msgs.msg import *
-from wiimote.msg import*
-import keystroke
 from time import sleep
-import segment_file
+#import segment_file
 
 
 class human():
@@ -53,8 +49,8 @@ class human():
         self.orEnv.Load("../ormodels/human_wpi.xml")
         # self.orEnv.Load("robots/pr2-beta-static.zae")
 
-        self.prob = RaveCreateProblem(self.orEnv,'Kinect')
-        self.prob.SendCommand('InitMove3D')
+        # self.prob = RaveCreateProblem(self.orEnv,'Kinect')
+        # self.prob.SendCommand('InitMove3D')
 
 if __name__ == "__main__":
     print "main function"

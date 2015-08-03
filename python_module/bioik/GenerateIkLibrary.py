@@ -27,7 +27,7 @@ class GenerateIkLib(TestBioHumanIk):
         self.environment_file = "../../ormodels/humans_bio_env.xml"
 
 
-def generate_ik_library(source_dir, target_dir):
+def generate_ik_library(source_dir, target_dir, use_wrist_pads ):
 
     split_id = 0
 
@@ -36,7 +36,7 @@ def generate_ik_library(source_dir, target_dir):
     test = GenerateIkLib()
     test.nb_humans      = setup[0]
     test.elbow_pads     = setup[1]
-    test.wrist_pads     = False
+    test.wrist_pads     = use_wrist_pads
     test.rarm_only      = setup[2]
 
     blocks = sorted([name for name in os.listdir(source_dir) if os.path.isdir(os.path.join(source_dir, name))])
@@ -91,13 +91,17 @@ if __name__ == "__main__":
 
     if len(sys.argv) >= 4:
 
+        use_wrist_pads = False
+
         for index in range(1, len(sys.argv)):
             if sys.argv[index] == "-s" and index+1 < len(sys.argv):
                 source_dir = str(sys.argv[index+1])
             if sys.argv[index] == "-t" and index+1 < len(sys.argv):
                 target_dir = str(sys.argv[index+1])
+            if sys.argv[index] == "-use_wrist_pads" :
+                use_wrist_pads = True
 
-        generate_ik_library(source_dir, target_dir)
+        generate_ik_library(source_dir, target_dir, use_wrist_pads)
 
     else:
         print "************************"

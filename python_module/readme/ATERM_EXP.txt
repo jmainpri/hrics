@@ -3,6 +3,10 @@ All experiments are in /usr/local/share/Experiments/
     - aterm_experiment_splits : the split are defined in Split.csv
     - aterm_experiment_splits_tmp : contains the splited files
 
+To go from the Split.csv file to the splited libray
+
+    split_library.py -s PATH/aterm_experiment_splits -t PATH/aterm_experiment_splits_tmp
+
 To visualize experiments:
 
     roscd hrics_py/bioik/

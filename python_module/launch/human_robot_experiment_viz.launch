@@ -1,0 +1,47 @@
+<launch>
+
+  <arg name="output" default="screen"/>
+
+  <!-- 
+    0 -> 2015-07-29-16-29-54.bag
+    1 -> 2015-07-29-16-31-27.bag
+    2 -> 2015-07-29-16-33-00.bag
+    3 -> 2015-07-29-16-34-29.bag
+    4  > 2015-07-29-16-36-10.bag
+    5  > 2015-07-29-16-37-35.bag
+    6  > 2015-07-29-16-39-22.bag
+    7  > 2015-07-29-16-40-50.bag
+    8  > 2015-07-29-16-42-13.bag
+    9  > 2015-07-29-16-43-49.bag
+    -->
+
+  <arg name="run_id" value="9" />
+  <arg name="bagfile" default="2015-07-29-16-43-49.bag" />
+
+  <!-- Start image drawing -->
+  <arg name="folder" default="/usr/local/share/Experiments/human-robot-experiment/logan/block0/$(arg run_id)" />
+
+  <!-- Save split directory -->
+  <arg name="robot_split_save" value="$(find hrics_py)/bioik/user_human_robot_experiment/block0/$(arg run_id)" />
+
+  <!-- Use simulation time (from the bag file) -->
+  <param name="use_sim_time" type="bool" value="true" />
+
+  <!-- Scenario -->
+  <arg name="p3d" default="-f $(find move3d_ros)/assets/Collaboration/HumanAndRobotTableLogan.p3d" />
+  <arg name="sce" default="-sc $(find move3d_ros)/assets/Collaboration/SCENARIOS/collaboration_human_robot_experiment.sce" />
+
+
+  <!--Start bag -->
+  <node pkg="rosbag" type="play" name="player" output="$(arg output)" 
+        args="--clock $(arg folder)/$(arg bagfile)"/>
+
+  <!-- Start Move3D -->
+  <include file="$(find move3d_ros)/launch/move3d_pr2_display.launch" >
+        <arg name="p3d" value="$(arg p3d)" />
+        <arg name="sce" value="$(arg sce)" />
+        <arg name="robot_split_file" value="$(arg folder)/Times.csv" />
+        <arg name="robot_split_save" value="$(arg robot_split_save)" />
+  </include>
+
+</launch>
