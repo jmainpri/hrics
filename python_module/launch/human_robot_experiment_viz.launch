@@ -30,6 +30,7 @@
   <!-- Scenario -->
   <arg name="p3d" default="-f $(find move3d_ros)/assets/Collaboration/HumanAndRobotTableLogan.p3d" />
   <arg name="sce" default="-sc $(find move3d_ros)/assets/Collaboration/SCENARIOS/collaboration_human_robot_experiment.sce" />
+  <arg name="guiparams" default="-setgui -not_rel_home -params $(find move3d_ros)/guiparams/pr2_collaboration_logan" />
 
 
   <!--Start bag -->
@@ -38,8 +39,11 @@
 
   <!-- Start Move3D -->
   <include file="$(find move3d_ros)/launch/move3d_pr2_display.launch" >
+
         <arg name="p3d" value="$(arg p3d)" />
         <arg name="sce" value="$(arg sce)" />
+        <arg name="guiparams" value="$(arg guiparams)" />
+
         <arg name="robot_split_file" value="$(arg folder)/Times.csv" />
         <arg name="robot_split_save" value="$(arg robot_split_save)" />
   </include>
