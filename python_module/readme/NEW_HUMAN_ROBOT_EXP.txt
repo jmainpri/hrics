@@ -1,0 +1,11 @@
+Use the script:
+
+	python_module/bioik/user_human_robot_experiment/generate_splits.py
+
+This script uses internally the launch file:
+
+	laumch/human_robot_experiment_viz.launch
+
+The data dir and save dir have to be set in the python script. 
+It will generate two folder for each block/run in the save directory
+one for the human and one for the robot with Move3D::Trajectory files.

@@ -15,23 +15,24 @@
     9  > 2015-07-29-16-43-49.bag
     -->
 
-  <arg name="run_id" value="9" />
-  <arg name="bagfile" default="2015-07-29-16-43-49.bag" />
+  <arg name="run_id" default="0" />
+  <arg name="bagfile" default="2016-01-14-13-11-58.bag" />
+  <arg name="block" default="block0" />
 
   <!-- Start image drawing -->
-  <arg name="folder" default="/usr/local/share/Experiments/human-robot-experiment/logan/block0/$(arg run_id)" />
+  <!-- <arg name="folder" default="/usr/local/share/Experiments/human-robot-experiment/logan/block0/$(arg run_id)" /> -->
+  <arg name="folder" default="/usr/local/share/Experiments/human-robot-experiment-tro/20160114_tro_full.zip/$(arg block)/$(arg run_id)" />
 
   <!-- Save split directory -->
-  <arg name="robot_split_save" value="$(find hrics_py)/bioik/user_human_robot_experiment/block0/$(arg run_id)" />
+  <arg name="robot_split_save" value="$(find hrics_py)/bioik/user_human_robot_experiment/tro_experiment/$(arg block)/$(arg run_id)" />
 
   <!-- Use simulation time (from the bag file) -->
   <param name="use_sim_time" type="bool" value="true" />
 
   <!-- Scenario -->
   <arg name="p3d" default="-f $(find move3d_ros)/assets/Collaboration/HumanAndRobotTableLogan.p3d" />
-  <arg name="sce" default="-sc $(find move3d_ros)/assets/Collaboration/SCENARIOS/collaboration_human_robot_experiment.sce" />
+  <arg name="sce" default="-sc $(find move3d_ros)/assets/Collaboration/SCENARIOS/collaboration_human_robot_experiment_tro.sce" />
   <arg name="guiparams" default="-setgui -not_rel_home -params $(find move3d_ros)/guiparams/pr2_collaboration_logan" />
-
 
   <!--Start bag -->
   <node pkg="rosbag" type="play" name="player" output="$(arg output)" 
