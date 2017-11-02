@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Copyright (c) 2013 Worcester Polytechnic Institute
-#   Author: Jim Mainrpice <jmainprice@wpi.edu>
+# Author: Jim Mainrpice <jmainprice@wpi.edu>
 #
 #   Redistribution and use in source and binary forms, with or without
 #   modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,7 @@
 
 from openravepy import *
 import os
-import sys 
+import sys
 from numpy import *
 from TransformMatrix import *
 from rodrigues import *
@@ -42,34 +42,35 @@ from rodrigues import *
 orEnv = Environment()
 h = 0
 
+
 def launch_kinect():
-    
     global orEnv
     global h
-    
+
     orEnv.SetViewer('qtcoin')
-    
+
     print "start"
     orEnv.SetDebugLevel(DebugLevel.Verbose)
     orEnv.Reset()
     #orEnv.Load("../ormodels/human_wpi.xml")
-    
+
     print "draw frame"
-    T = MakeTransform( eye(3), transpose(matrix([0,0,0]))) 
-    h = misc.DrawAxes( orEnv, matrix(T), 1 )
-    
+    T = MakeTransform(eye(3), transpose(matrix([0, 0, 0])))
+    h = misc.DrawAxes(orEnv, matrix(T), 1)
+
     print "try to create problem"
-    prob = RaveCreateProblem(orEnv,'Kinect')
-    
+    prob = RaveCreateProblem(orEnv, 'Kinect')
+
     cmdout = prob.SendCommand('SetKinectFrame 0.0 0.0 0.0 0.0 0.0')
     cmdout = prob.SendCommand('StartListening')
-    
+
     #T = MakeTransform(yaw_pitch_roll_rotation([0,0,0]),transpose(matrix([1,0,0])))
     #orEnv.GetViewer().SetCamera([0.262839 -0.733602 -0.623389 0.0642694 2.99336 -0.755646 2.81558])
     #sys.stdin.readline()
-    
+
     sys.stdin.readline()
-    
+
+
 if __name__ == "__main__":
     print "main function"
     launch_kinect()

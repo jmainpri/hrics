@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Copyright (c) 2013 Worcester Polytechnic Institute
-#   Author: Jim Mainrpice <jmainprice@wpi.edu>
+# Author: Jim Mainrpice <jmainprice@wpi.edu>
 #
 #   Redistribution and use in source and binary forms, with or without
 #   modification, are permitted provided that the following conditions are met:
@@ -38,13 +38,14 @@ import roslib;
 import rospy
 from std_msgs.msg import *
 from sensor_msgs.msg import *
-from wiimote.msg import*
+from wiimote.msg import *
 import keystroke
 from time import sleep
 import segment_file
 #/home/rafi/workspace/experiment/2/Run0/[1016#-#1112]#motion_saved_00000_00000.csv
 trajectories_directory = "/home/rafi/workspace/experiment/2/Run0/"
-trajectories_files = ["[1016#-#1112]#motion_saved_00000_00000.csv", "[1016#-#1112]#motion_saved_00001_00000.csv"]
+trajectories_files = ["[1016#-#1112]#motion_saved_00000_00000.csv",
+                      "[1016#-#1112]#motion_saved_00001_00000.csv"]
 
 #in order to use the wiimote, create a wiimote subscriber object and call run.
 
@@ -58,36 +59,34 @@ class kinect_subscriber():
         self.dir = trajectories_directory
         self.files = trajectories_files
 
-
         print "start"
         self.orEnv.SetDebugLevel(DebugLevel.Verbose)
         self.orEnv.Reset()
 
         self.orEnv.Load("../ormodels/human_wpi_new.xml")
-        if len(self.files) > 1 :
+        if len(self.files) > 1:
             self.orEnv.Load("../ormodels/human_wpi_blue.xml")
 
-
         print "try to create problem"
-        self.prob = RaveCreateProblem(self.orEnv,'Kinect')
+        self.prob = RaveCreateProblem(self.orEnv, 'Kinect')
 
         print "try to init move3d"
         self.prob.SendCommand('InitMove3D')
 
-    def play(self ):
-            self.prob.SendCommand('SetPlayType 2')
+    def play(self):
+        self.prob.SendCommand('SetPlayType 2')
 
-            for i in range(len(self.human_one)):
-                self.prob.SendCommand( 'LoadTrajectoryFile '+self.human_one[i] )
-                self.prob.SendCommand( 'LoadTrajectoryFile '+ self.human_two[i] )
-                self.prob.SendCommand('PlayTrajectoryFiles')
-                sleep(1)
-                self.prob.SendCommand('ResetTrajectoryFiles')
+        for i in range(len(self.human_one)):
+            self.prob.SendCommand('LoadTrajectoryFile ' + self.human_one[i])
+            self.prob.SendCommand('LoadTrajectoryFile ' + self.human_two[i])
+            self.prob.SendCommand('PlayTrajectoryFiles')
+            sleep(1)
+            self.prob.SendCommand('ResetTrajectoryFiles')
 
 
     def loadFiles(self, dir, files):
         for file in files:
-            self.prob.SendCommand( 'LoadTrajectoryFile '+ dir + file )
+            self.prob.SendCommand('LoadTrajectoryFile ' + dir + file)
 
 
 if __name__ == "__main__":
@@ -97,11 +96,12 @@ if __name__ == "__main__":
 
     for (dirname, dirs, files) in os.walk('/home/rafi/workspace/experiment/'):
         for filename in files:
-            if filename.endswith('.csv') and filename.startswith('[') and "replan" in dirname :
+            if filename.endswith('.csv') and filename.startswith(
+                    '[') and "replan" in dirname:
                 if ('human_one' in dirname):
-                    list_one.append(os.path.join(dirname,filename))
+                    list_one.append(os.path.join(dirname, filename))
                 else:
-                    list_two.append(os.path.join(dirname,filename))
+                    list_two.append(os.path.join(dirname, filename))
 
     list_one.sort()
     list_two.sort()

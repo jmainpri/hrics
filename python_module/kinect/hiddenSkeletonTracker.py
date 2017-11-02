@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Copyright (c) 2013 Worcester Polytechnic Institute
-#   Author: Jim Mainrpice <jmainprice@wpi.edu>
+# Author: Jim Mainrpice <jmainprice@wpi.edu>
 #
 #   Redistribution and use in source and binary forms, with or without
 #   modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,7 @@
 
 from openravepy import *
 import os
-import sys 
+import sys
 from numpy import *
 from TransformMatrix import *
 from rodrigues import *
@@ -56,17 +56,19 @@ class kinect_subscriber():
         self.orEnv.Load("../ormodels/human_wpi.xml")
 
         print "draw frame"
-        T = MakeTransform( eye(3), transpose(matrix([0,0,0]))) 
-        self.h = misc.DrawAxes( self.orEnv, matrix(T), 1 )
+        T = MakeTransform(eye(3), transpose(matrix([0, 0, 0])))
+        self.h = misc.DrawAxes(self.orEnv, matrix(T), 1)
 
         print "try to create problem"
-        self.prob = RaveCreateProblem(self.orEnv,'Kinect')
+        self.prob = RaveCreateProblem(self.orEnv, 'Kinect')
 
     def listen(self):
         print "Trying to listen"
         self.prob.SendCommand('SetCustomTracker 0')
-        self.prob.SendCommand('SetNumKinect 1') #still need to call as 1 if using default tracker.
-        self.prob.SendCommand('EnableCamera 0 /home/rafihayne/workspace/statFiles/snapshots/')
+        self.prob.SendCommand(
+            'SetNumKinect 1')  #still need to call as 1 if using default tracker.
+        self.prob.SendCommand(
+            'EnableCamera 0 /home/rafihayne/workspace/statFiles/snapshots/')
 
         print "Trying to set kinect frame"
         #Dual Kinect Across Setup.
@@ -89,6 +91,6 @@ if __name__ == "__main__":
     k = kinect_subscriber()
     k.listen()
 
-    while(1):       #Python node dies without this
+    while (1):  #Python node dies without this
         a = None
  

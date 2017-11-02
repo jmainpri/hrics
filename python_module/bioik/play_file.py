@@ -11,8 +11,8 @@ import rospy
 import threading
 from sensor_msgs.msg import JointState
 
-class PlayFile():
 
+class PlayFile:
     def __init__(self, environment_file, start_viewer):
 
         self.with_viewer = start_viewer
@@ -25,10 +25,13 @@ class PlayFile():
         if self.with_viewer:
             self.env.SetViewer('qtcoin')
             self.handles = []
-            t_cam = array([[ -0.662516847837, 0.365861186797, -0.653618404214, 3.09212255478] , \
-                            [ 0.748220341461, 0.282254919974, -0.600415256947, 2.43832302094] , \
-                            [ -0.0351816281021, -0.886835809012, -0.46074342198, 2.15959310532] , \
-                            [ 0.0, 0.0, 0.0, 1.0]])
+            t_cam = array([[-0.662516847837, 0.365861186797, -0.653618404214,
+                            3.09212255478], \
+                           [0.748220341461, 0.282254919974, -0.600415256947,
+                            2.43832302094], \
+                           [-0.0351816281021, -0.886835809012, -0.46074342198,
+                            2.15959310532], \
+                           [0.0, 0.0, 0.0, 1.0]])
             self.env.GetViewer().SetCamera(t_cam)
             self.change_color_human()
 
@@ -43,22 +46,23 @@ class PlayFile():
 
         if publish_joint_state:
             self.joint_state_topic_name = topic_name
-            self.joint_state_pub = rospy.Publisher(self.joint_state_topic_name, JointState)
+            self.joint_state_pub = rospy.Publisher(self.joint_state_topic_name,
+                                                   JointState)
         else:
             self.joint_state_pub = None
 
     def publish_joint_state(self):
 
         joint_state = JointState()
-        joint_state.header.stamp = rospy.Time()
+        joint_state.header.stamp = rospy.Time().now()
 
         joints = self.humans[0].GetJoints()
         if len(joints) != self.humans[0].GetDOF():
             rospy.logerror("OpenRave human model is not consistant")
             return
 
-        joint_state.name        = [""]*len(joints)
-        joint_state.position    = [0.]*len(joints)
+        joint_state.name = [""] * len(joints)
+        joint_state.position = [0.] * len(joints)
 
         q_cur = self.humans[0].GetDOFValues()
 
@@ -76,11 +80,14 @@ class PlayFile():
 
         links = []
         for jIdx, j in enumerate(self.humans[1].GetJoints()):
-            # print "%s, \t%.3f, \t%.3f" % (j.GetName(), j.GetLimits()[0], j.GetLimits()[1])
+            # print "%s, \t%.3f, \t%.3f" %
+            # (j.GetName(), j.GetLimits()[0], j.GetLimits()[1])
             l = j.GetFirstAttached()
-            if l is not None : links.append(l)
+            if l is not None:
+                links.append(l)
             l = j.GetSecondAttached()
-            if l is not None : links.append(l)
+            if l is not None:
+                links.append(l)
 
         for l in links:
             for g in l.GetGeometries():
@@ -108,19 +115,23 @@ class PlayFile():
         print line_str
 
     def load_files(self, h1_filepath, h2_filepath):
-        
+
         print "Trying to open file"
 
         # Parse CSV files
         with open(h1_filepath, 'r') as h1_file:
-            self.traj_human1 = [row for row in csv.reader(h1_file, delimiter=',')]
-            self.traj_human1 = [map(float, row) for row in self.traj_human1] # Convert to floats
+            self.traj_human1 = [row for row in
+                                csv.reader(h1_file, delimiter=',')]
+            self.traj_human1 = [map(float, row) for row in
+                                self.traj_human1]  # Convert to floats
 
         # Parse CSV files
         if h2_filepath is not None:
             with open(h2_filepath, 'r') as h2_file:
-                self.traj_human2 = [row for row in csv.reader(h2_file, delimiter=',')]
-                self.traj_human2 = [map(float, row) for row in self.traj_human2] # Convert to floats
+                self.traj_human2 = [row for row in
+                                    csv.reader(h2_file, delimiter=',')]
+                self.traj_human2 = [map(float, row) for row in
+                                    self.traj_human2]  # Convert to floats
         else:
             self.traj_human2 = deepcopy(self.traj_human1)
 
@@ -141,13 +152,13 @@ class PlayFile():
 
         for row1, row2 in zip(self.traj_human1, self.traj_human2):
 
-            if self.with_viewer :
+            if self.with_viewer:
                 del self.handles[:]
 
-            self.humans[0].SetDOFValues(row1[1:nb_dofs1+1])
-            self.humans[1].SetDOFValues(row2[1:nb_dofs2+1])
+            self.humans[0].SetDOFValues(row1[1:nb_dofs1 + 1])
+            self.humans[1].SetDOFValues(row2[1:nb_dofs2 + 1])
 
-            if self.joint_state_pub is not None :
+            if self.joint_state_pub is not None:
                 if rospy.is_shutdown():
                     break
                 self.publish_joint_state()
@@ -161,26 +172,28 @@ class PlayFile():
             traj_time += dt
 
             # Sleep
-            if dt < dt_0 :
-                nb_overshoot +=1
+            if dt < dt_0:
+                nb_overshoot += 1
                 # print "dt : " , dt , " dt0 , ", dt_0, " , t0 : %.5f" % t0
             else:
-                time.sleep(dt - dt_0) # sleep only of dt > dt_0 TODO: Should use C++ for good execution times
+                time.sleep(dt - dt_0)
+                # sleep only of dt > dt_0
+                # TODO: Should use C++ for good execution times
                 t0 = time.time()
                 dt_0 = t0 - t0_prev_time
 
             t0_prev_time = t0
             exec_time += dt_0
 
-
-
         print "------------------------"
-        print "Total time : " , float(time.time() - t_total)
+        print "Total time : ", float(time.time() - t_total)
         print "Exec time : ", exec_time
         print "Traj time : ", traj_time
         print "Nb. of overshoot : ", nb_overshoot
         print "Nb. of frames : , ", len(self.traj_human1)
-        print "%.4f percent of overshoot " % float(100. * float(nb_overshoot) / float(len(self.traj_human1)))
+        print "%.4f percent of overshoot " % float(
+            100. * float(nb_overshoot) / float(len(self.traj_human1)))
+
 
 if __name__ == "__main__":
 
@@ -190,26 +203,27 @@ if __name__ == "__main__":
 
     for index in range(1, len(sys.argv)):
 
-        if sys.argv[index] == "-split" and index+1 < len(sys.argv):
-            human1_file = str(sys.argv[index+1]) + "_human1_.csv"
-            human2_file = str(sys.argv[index+1]) + "_human2_.csv"
-        if sys.argv[index] == "-h1" and index+1 < len(sys.argv):
-            human1_file = str(sys.argv[index+1])
-        if sys.argv[index] == "-h2" and index+1 < len(sys.argv):
-            human2_file = str(sys.argv[index+1])
-        if sys.argv[index] == "-env" and index+1 < len(sys.argv):
-            environment_file = str(sys.argv[index+1])
+        if sys.argv[index] == "-split" and index + 1 < len(sys.argv):
+            human1_file = str(sys.argv[index + 1]) + "_human1_.csv"
+            human2_file = str(sys.argv[index + 1]) + "_human2_.csv"
+        if sys.argv[index] == "-h1" and index + 1 < len(sys.argv):
+            human1_file = str(sys.argv[index + 1])
+        if sys.argv[index] == "-h2" and index + 1 < len(sys.argv):
+            human2_file = str(sys.argv[index + 1])
+        if sys.argv[index] == "-env" and index + 1 < len(sys.argv):
+            environment_file = str(sys.argv[index + 1])
         if sys.argv[index] == "-noros":
             use_ros = False
 
     if use_ros:
-
         rospy.init_node('mocap_human_trajectory_player')
 
         human1_file = rospy.get_param("~human1_traj_file", None)
         human2_file = rospy.get_param("~human2_traj_file", None)
-        environment_file = rospy.get_param("~ormodels", "../../ormodels/humans_bio_env.xml")
-        publish_joint_state = rospy.get_param("~human_publish_joint_state", 'mocap_human_joint_state')
+        environment_file = rospy.get_param("~ormodels",
+                                           "../../ormodels/humans_bio_env.xml")
+        publish_joint_state = rospy.get_param("~human_publish_joint_state",
+                                              'mocap_human_joint_state')
         joint_state_topic = rospy.get_param("~human_joint_state_topic", False)
         start_openrave = rospy.get_param("~start_openrave", True)
 
@@ -219,7 +233,7 @@ if __name__ == "__main__":
         print " -h1 /path/to/directory/file1.csv   : sets the file for human1"
         print " -h2 /path/to/directory/file1.csv   : sets the file for human2"
 
-    else :
+    else:
 
         print "try to load file : ", human1_file
         print "try to load file : ", human2_file
@@ -237,7 +251,7 @@ if __name__ == "__main__":
             thread_player.start()
             print "spin"
             rospy.spin()
-        else :
+        else:
             while True:
                 test.play_skeleton()
                 if start_openrave:

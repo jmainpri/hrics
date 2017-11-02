@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Copyright (c) 2013 Worcester Polytechnic Institute
-#   Author: Jim Mainrpice <jmainprice@wpi.edu>
+# Author: Jim Mainrpice <jmainprice@wpi.edu>
 #
 #   Redistribution and use in source and binary forms, with or without
 #   modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,7 @@
 
 from openravepy import *
 import os
-import sys 
+import sys
 from numpy import *
 from TransformMatrix import *
 from rodrigues import *
@@ -59,21 +59,22 @@ class prediction_subscriber():
         self.orEnv.Load("../ormodels/human_wpi.xml")
 
         print "draw frame"
-        T = MakeTransform( eye(3), transpose(matrix([0,0,0]))) 
-        self.h = misc.DrawAxes( self.orEnv, matrix(T), 1 )
+        T = MakeTransform(eye(3), transpose(matrix([0, 0, 0])))
+        self.h = misc.DrawAxes(self.orEnv, matrix(T), 1)
 
         print "try to create problem"
-        self.prob = RaveCreateProblem(self.orEnv,'Prediction')
+        self.prob = RaveCreateProblem(self.orEnv, 'Prediction')
 
     def listen(self):
         print "trying to listen"
         self.prob.SendCommand('StartListening')
 
+
 if __name__ == "__main__":
     print "main function"
     p = prediction_subscriber()
     p.listen()
-    k=0
+    k = 0
     while 1:
         k
 
